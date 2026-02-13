@@ -6,6 +6,7 @@ import { EditTool } from "./tools/edit-tool";
 import { SearchTool } from "./tools/search-tool";
 import { BashTool } from "./tools/bash-tool";
 import { DefaultTool } from "./tools/default-tool";
+import { Tool, ToolHeader, ToolContent } from "@/components/ai-elements/tool";
 
 /**
  * Simplified normalizeToolCall for OpenClaw.
@@ -22,12 +23,13 @@ function normalizeToolCall<
   return toolCall;
 }
 
-const ToolPart = memo(function ToolPart({
-  toolPart,
-}: {
-  toolPart: AllToolParts;
-}) {
-  toolPart = normalizeToolCall(toolPart.agent, toolPart);
+function getToolState(toolPart: AllToolParts) {
+  if (toolPart.status === "completed") return "output-available" as const;
+  if (toolPart.status === "error") return "output-error" as const;
+  return "input-available" as const;
+}
+
+function renderToolContent(toolPart: AllToolParts) {
   switch (toolPart.name) {
     case "Read":
       return (
@@ -72,6 +74,27 @@ const ToolPart = memo(function ToolPart({
     default:
       return <DefaultTool toolPart={toolPart} />;
   }
+}
+
+const ToolPart = memo(function ToolPart({
+  toolPart,
+}: {
+  toolPart: AllToolParts;
+}) {
+  toolPart = normalizeToolCall(toolPart.agent, toolPart);
+  const state = getToolState(toolPart);
+
+  return (
+    <Tool>
+      <ToolHeader
+        title={toolPart.name}
+        type="dynamic-tool"
+        toolName={toolPart.name}
+        state={state}
+      />
+      <ToolContent>{renderToolContent(toolPart)}</ToolContent>
+    </Tool>
+  );
 });
 
 export { ToolPart };

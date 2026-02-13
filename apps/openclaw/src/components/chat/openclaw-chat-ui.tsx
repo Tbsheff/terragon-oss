@@ -6,12 +6,16 @@ import { ThreadProvider, type OpenClawThread } from "./thread-context";
 import { OpenClawChatHeader } from "./openclaw-chat-header";
 import { OpenClawPromptBox } from "./openclaw-promptbox";
 import { ChatMessages, WorkingMessage } from "./chat-messages";
-import { ScrollToBottomButton } from "./scroll-to-bottom-button";
 import { toUIMessages } from "./toUIMessages";
 import { useRealtimeThread } from "@/hooks/use-realtime";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { DBMessage, ThreadStatus } from "@/lib/types";
 import { threadDetailQueryOptions } from "@/queries/thread-queries";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
 
 type OpenClawChatUIProps = {
   threadId: string;
@@ -28,8 +32,6 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
   const queryClient = useQueryClient();
   const [dbMessages, setDbMessages] = useState<DBMessage[]>([]);
   const [isWorking, setIsWorking] = useState(false);
-  const { containerRef, messagesEndRef, isAtBottom, scrollToBottom } =
-    useScrollToBottom();
 
   // Fetch thread detail
   const { data: threadDetail } = useQuery(threadDetailQueryOptions(threadId));
@@ -118,16 +120,15 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
         <OpenClawChatHeader onArchive={handleArchive} />
 
         {/* Chat messages area */}
-        <div className="relative flex-1 overflow-hidden">
-          <div ref={containerRef} className="h-full overflow-y-auto px-4 py-4">
+        <Conversation className="flex-1">
+          <ConversationContent className="gap-4 px-4 py-4">
             {uiMessages.length === 0 && !isWorking ? (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-muted-foreground">
-                  Start a conversation to begin...
-                </p>
-              </div>
+              <ConversationEmptyState
+                title="Start a conversation"
+                description="Describe a task to begin..."
+              />
             ) : (
-              <div className="space-y-4">
+              <>
                 <ChatMessages
                   messages={uiMessages}
                   isAgentWorking={isWorking}
@@ -135,15 +136,11 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
                 {isWorking && uiMessages.length === 0 && (
                   <WorkingMessage message="Agent is starting..." />
                 )}
-                <div ref={messagesEndRef} />
-              </div>
+              </>
             )}
-          </div>
-          <ScrollToBottomButton
-            visible={!isAtBottom}
-            onClick={scrollToBottom}
-          />
-        </div>
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
 
         <OpenClawPromptBox
           onSend={handleSend}

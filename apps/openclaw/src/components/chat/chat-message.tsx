@@ -12,6 +12,9 @@ import type {
 import { MessagePart } from "./message-part";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { Message, MessageContent } from "@/components/ai-elements/message";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 type UIUserOrAgentPart =
   | UIAgentMessage["parts"][number]
@@ -153,62 +156,59 @@ export const ChatMessage = memo(function ChatMessage({
   if (message.role === "system") {
     return <SystemMessage message={message} />;
   }
+
+  const from = message.role === "user" ? "user" : "assistant";
   const groups = groupParts({
     parts: message.parts,
     isLatestMessage,
     isAgentWorking,
   });
   const lastGroupIndex = groups.length - 1;
+
   return (
-    <div
-      style={{ overflowAnchor: "none" }}
-      className={cn(
-        "p-2 rounded-md w-full break-words",
-        {
-          "bg-primary/10 ml-auto max-w-[80%] w-fit": message.role === "user",
-          "mr-auto": message.role === "agent",
-        },
-        className,
-      )}
-    >
-      <div className="flex flex-col gap-2">
-        {groups.map((group, groupIndex) => {
-          if (group.type === "collapsible-agent-activity") {
+    <Message from={from} className={cn("animate-fade-in", className)}>
+      <MessageContent>
+        <div className="flex flex-col gap-2">
+          {groups.map((group, groupIndex) => {
+            if (group.type === "collapsible-agent-activity") {
+              return (
+                <CollapsibleAgentActivityGroup
+                  key={groupIndex}
+                  agent={"agent" in message ? message.agent : null}
+                  group={group}
+                  isLatestMessage={isLatestMessage}
+                  isAgentWorking={isAgentWorking}
+                />
+              );
+            }
+            if (group.type === "image") {
+              return (
+                <ImageGroup
+                  key={groupIndex}
+                  group={group}
+                  isLatestMessage={isLatestMessage}
+                />
+              );
+            }
             return (
-              <CollapsibleAgentActivityGroup
-                key={groupIndex}
-                agent={"agent" in message ? message.agent : null}
-                group={group}
-                isLatestMessage={isLatestMessage}
-                isAgentWorking={isAgentWorking}
-              />
+              <React.Fragment key={groupIndex}>
+                {group.parts.map((part, partIndex) => {
+                  return (
+                    <MessagePart
+                      key={`${groupIndex}-${partIndex}`}
+                      part={part}
+                      isLatest={
+                        isLatestMessage && groupIndex === lastGroupIndex
+                      }
+                    />
+                  );
+                })}
+              </React.Fragment>
             );
-          }
-          if (group.type === "image") {
-            return (
-              <ImageGroup
-                key={groupIndex}
-                group={group}
-                isLatestMessage={isLatestMessage}
-              />
-            );
-          }
-          return (
-            <React.Fragment key={groupIndex}>
-              {group.parts.map((part, partIndex) => {
-                return (
-                  <MessagePart
-                    key={`${groupIndex}-${partIndex}`}
-                    part={part}
-                    isLatest={isLatestMessage && groupIndex === lastGroupIndex}
-                  />
-                );
-              })}
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </div>
+          })}
+        </div>
+      </MessageContent>
+    </Message>
   );
 });
 
@@ -299,7 +299,7 @@ function SystemMessage({ message }: { message: UISystemMessage }) {
   if (message.message_type === "git-diff") {
     const gitDiffPart = message.parts[0] as UIGitDiffPart;
     return (
-      <div className="p-2 text-sm text-muted-foreground">
+      <Card className="bg-muted/30 border-border/30 p-3 text-sm text-muted-foreground">
         <div className="font-semibold">Git Diff</div>
         {gitDiffPart.description && <div>{gitDiffPart.description}</div>}
         {gitDiffPart.diffStats && (
@@ -309,7 +309,7 @@ function SystemMessage({ message }: { message: UISystemMessage }) {
             {gitDiffPart.diffStats.deletions} deletions
           </div>
         )}
-      </div>
+      </Card>
     );
   }
   return (
@@ -385,22 +385,24 @@ function CollapsibleAgentActivityGroup({
   const numParts = group.parts.length;
   return (
     <div className="flex flex-col gap-0.5 group/item">
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="flex items-center gap-1 py-1 text-sm text-muted-foreground opacity-75 group-hover/item:opacity-100 transition-opacity"
+        className="flex w-fit items-center gap-1 px-2 py-1 text-sm text-muted-foreground"
       >
         <CollapsibleAgentActivityGroupLabel
           isLatestMessage={isLatestMessage}
           isAgentWorking={isAgentWorking}
         />
         {isCollapsed ? (
-          <ChevronRight className="h-4 w-4 shrink-0 opacity-75 group-hover/item:opacity-100 transition-opacity sm:opacity-0" />
+          <ChevronRight className="h-4 w-4 shrink-0" />
         ) : (
-          <ChevronDown className="h-4 w-4 shrink-0 opacity-75 group-hover/item:opacity-100 transition-opacity" />
+          <ChevronDown className="h-4 w-4 shrink-0" />
         )}
-      </button>
+      </Button>
       {!isCollapsed && (
-        <div className="flex flex-col gap-2 p-2 max-h-[50dvh] overflow-y-auto border rounded-md">
+        <div className="flex flex-col gap-2 p-2 max-h-[50dvh] overflow-y-auto border border-border/30 rounded-md bg-muted/30">
           {group.parts.map((part, partIndex) => {
             return (
               <MessagePart
