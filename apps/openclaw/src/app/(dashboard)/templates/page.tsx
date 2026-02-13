@@ -11,7 +11,6 @@ import {
   createPromptTemplate,
   deletePromptTemplate,
 } from "@/server-actions/templates";
-import { cn } from "@/lib/utils";
 import {
   PIPELINE_STAGES,
   PIPELINE_STAGE_LABELS,
@@ -25,6 +24,13 @@ import {
   Wand2,
   Check,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 
 export default function TemplatesPage() {
   const queryClient = useQueryClient();
@@ -50,51 +56,41 @@ export default function TemplatesPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border px-6 py-3">
+      <div className="px-6 py-3">
         <h1 className="text-lg font-semibold">Templates</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Pipeline and prompt templates for common workflows
         </p>
       </div>
 
-      {/* Tab switcher */}
-      <div className="flex border-b border-border px-6">
-        <button
-          onClick={() => setActiveTab("pipeline")}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
-            activeTab === "pipeline"
-              ? "border-primary text-foreground font-medium"
-              : "border-transparent text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <Workflow className="h-3.5 w-3.5" />
-          Pipeline Templates
-        </button>
-        <button
-          onClick={() => setActiveTab("prompt")}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
-            activeTab === "prompt"
-              ? "border-primary text-foreground font-medium"
-              : "border-transparent text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <MessageSquareText className="h-3.5 w-3.5" />
-          Prompt Templates
-        </button>
-      </div>
+      <Separator />
 
-      <div className="flex-1 overflow-y-auto p-6">
-        {activeTab === "pipeline" ? (
-          <PipelineTemplatesList
-            templates={pipelineTemplates ?? []}
-            onSeed={() => seedMutation.mutate()}
-            isSeeding={seedMutation.isPending}
-          />
-        ) : (
-          <PromptTemplatesList templates={promptTemplates ?? []} />
-        )}
+      <div className="px-6 pt-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "pipeline" | "prompt")}
+        >
+          <TabsList>
+            <TabsTrigger value="pipeline">
+              <Workflow className="h-3.5 w-3.5" />
+              Pipeline Templates
+            </TabsTrigger>
+            <TabsTrigger value="prompt">
+              <MessageSquareText className="h-3.5 w-3.5" />
+              Prompt Templates
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="pipeline" className="mt-6">
+            <PipelineTemplatesList
+              templates={pipelineTemplates ?? []}
+              onSeed={() => seedMutation.mutate()}
+              isSeeding={seedMutation.isPending}
+            />
+          </TabsContent>
+          <TabsContent value="prompt" className="mt-6">
+            <PromptTemplatesList templates={promptTemplates ?? []} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
@@ -132,22 +128,20 @@ function PipelineTemplatesList({
         </p>
         <div className="flex gap-2">
           {templates.length === 0 && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onSeed}
               disabled={isSeeding}
-              className="flex items-center gap-1.5 rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
             >
               <Wand2 className="h-3.5 w-3.5" />
               {isSeeding ? "Seeding..." : "Seed Defaults"}
-            </button>
+            </Button>
           )}
-          <button
-            onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
+          <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
             <Plus className="h-3.5 w-3.5" />
             Create
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -159,44 +153,40 @@ function PipelineTemplatesList({
         {templates.map((t) => {
           const stages: PipelineStage[] = JSON.parse(t.stages);
           return (
-            <div
-              key={t.id}
-              className="rounded-lg border border-border bg-card p-4"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-medium">{t.name}</h3>
-                    {t.isDefault && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                        Default
-                      </span>
+            <Card key={t.id} className="py-0">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium">{t.name}</h3>
+                      {t.isDefault && (
+                        <Badge variant="secondary">Default</Badge>
+                      )}
+                    </div>
+                    {t.description && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {t.description}
+                      </p>
                     )}
                   </div>
-                  {t.description && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {t.description}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => deleteMutation.mutate(t.id)}
-                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {stages.map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => deleteMutation.mutate(t.id)}
                   >
-                    {PIPELINE_STAGE_LABELS[s]}
-                  </span>
-                ))}
-              </div>
-            </div>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {stages.map((s) => (
+                    <Badge key={s} variant="outline" className="text-[10px]">
+                      {PIPELINE_STAGE_LABELS[s]}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
@@ -226,64 +216,63 @@ function CreatePipelineTemplateForm({ onClose }: { onClose: () => void }) {
   });
 
   return (
-    <div className="rounded-lg border border-primary/30 bg-card p-4 space-y-3">
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Template name"
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-      />
-      <input
-        type="text"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Description (optional)"
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-      />
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-1.5">
-          Stages
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {PIPELINE_STAGES.map((s) => (
-            <button
-              key={s}
-              onClick={() => {
-                const next = new Set(selectedStages);
-                if (next.has(s)) next.delete(s);
-                else next.add(s);
-                setSelectedStages(next);
-              }}
-              className={cn(
-                "flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs transition-colors",
-                selectedStages.has(s)
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/50",
-              )}
-            >
-              {selectedStages.has(s) && <Check className="h-3 w-3" />}
-              {PIPELINE_STAGE_LABELS[s]}
-            </button>
-          ))}
+    <Card className="border-primary/30 py-0">
+      <CardContent className="p-4 space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="pipeline-name">Name</Label>
+          <Input
+            id="pipeline-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Template name"
+          />
         </div>
-      </div>
-      <div className="flex gap-2 justify-end">
-        <button
-          onClick={onClose}
-          className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => createMutation.mutate()}
-          disabled={!name.trim() || selectedStages.size === 0}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
-          Create
-        </button>
-      </div>
-    </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="pipeline-description">Description</Label>
+          <Input
+            id="pipeline-description"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description (optional)"
+          />
+        </div>
+        <div>
+          <Label className="mb-1.5">Stages</Label>
+          <div className="flex flex-wrap gap-2">
+            {PIPELINE_STAGES.map((s) => (
+              <Button
+                key={s}
+                variant={selectedStages.has(s) ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  const next = new Set(selectedStages);
+                  if (next.has(s)) next.delete(s);
+                  else next.add(s);
+                  setSelectedStages(next);
+                }}
+              >
+                {selectedStages.has(s) && <Check className="h-3 w-3" />}
+                {PIPELINE_STAGE_LABELS[s]}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => createMutation.mutate()}
+            disabled={!name.trim() || selectedStages.size === 0}
+          >
+            Create
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -325,84 +314,93 @@ function PromptTemplatesList({
         <p className="text-sm text-muted-foreground">
           {templates.length} template{templates.length !== 1 ? "s" : ""}
         </p>
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
+        <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
           <Plus className="h-3.5 w-3.5" />
           Create
-        </button>
+        </Button>
       </div>
 
       {showCreate && (
-        <div className="rounded-lg border border-primary/30 bg-card p-4 space-y-3">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Template name"
-            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
-          <textarea
-            value={template}
-            onChange={(e) => setTemplate(e.target.value)}
-            placeholder="Template text — use {variable} for fill-in fields"
-            rows={3}
-            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => setShowCreate(false)}
-              className="rounded-md px-3 py-1.5 text-xs text-muted-foreground"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => createMutation.mutate()}
-              disabled={!name.trim() || !template.trim()}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              Create
-            </button>
-          </div>
-        </div>
+        <Card className="border-primary/30 py-0">
+          <CardContent className="p-4 space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="prompt-name">Name</Label>
+              <Input
+                id="prompt-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Template name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="prompt-template">Template</Label>
+              <textarea
+                id="prompt-template"
+                value={template}
+                onChange={(e) => setTemplate(e.target.value)}
+                placeholder="Template text — use {variable} for fill-in fields"
+                rows={3}
+                className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm font-mono resize-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCreate(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => createMutation.mutate()}
+                disabled={!name.trim() || !template.trim()}
+              >
+                Create
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid gap-3">
         {templates.map((t) => {
           const vars: string[] = t.variables ? JSON.parse(t.variables) : [];
           return (
-            <div
-              key={t.id}
-              className="rounded-lg border border-border bg-card p-4"
-            >
-              <div className="flex items-start justify-between">
-                <h3 className="text-sm font-medium">{t.name}</h3>
-                <button
-                  onClick={() => deleteMutation.mutate(t.id)}
-                  className="text-muted-foreground hover:text-destructive p-1"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <p className="mt-1.5 text-xs font-mono text-muted-foreground bg-muted/50 rounded-md px-2 py-1.5">
-                {t.template}
-              </p>
-              {vars.length > 0 && (
-                <div className="mt-2 flex gap-1.5">
-                  {vars.map((v) => (
-                    <span
-                      key={v}
-                      className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
-                    >
-                      {"{"}
-                      {v}
-                      {"}"}
-                    </span>
-                  ))}
+            <Card key={t.id} className="py-0">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <h3 className="text-sm font-medium">{t.name}</h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => deleteMutation.mutate(t.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
-              )}
-            </div>
+                <p className="mt-1.5 text-xs font-mono text-muted-foreground bg-muted/50 rounded-md px-2 py-1.5">
+                  {t.template}
+                </p>
+                {vars.length > 0 && (
+                  <div className="mt-2 flex gap-1.5">
+                    {vars.map((v) => (
+                      <Badge
+                        key={v}
+                        variant="secondary"
+                        className="text-[10px]"
+                      >
+                        {"{"}
+                        {v}
+                        {"}"}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           );
         })}
       </div>
