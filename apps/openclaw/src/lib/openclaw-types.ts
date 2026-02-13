@@ -37,18 +37,47 @@ export type OpenClawFrame = OpenClawResponse | OpenClawEvent;
 export type ConnectChallengeEvent = {
   type: "event";
   event: "connect.challenge";
-  payload: { challenge: string };
+  payload: { nonce: string; ts: number };
   seq: number;
 };
 
 export type ConnectParams = {
+  minProtocol: number;
+  maxProtocol: number;
+  client: {
+    id: string;
+    version: string;
+    platform: string;
+    mode: string;
+    instanceId?: string;
+  };
+  role: string;
   scopes: string[];
-  token?: string;
+  device?: {
+    id: string;
+    publicKey: string;
+    signature: string;
+    signedAt: number;
+    nonce?: string;
+  };
+  caps: string[];
+  auth?: { token?: string; password?: string };
+  userAgent?: string;
+  locale?: string;
 };
 
 export type HelloPayload = {
-  version: string;
-  serverName: string;
+  type?: "hello-ok";
+  protocol: number;
+  features?: { methods?: string[]; events?: string[] };
+  snapshot?: unknown;
+  auth?: {
+    deviceToken?: string;
+    role?: string;
+    scopes?: string[];
+    issuedAtMs?: number;
+  };
+  policy?: { tickIntervalMs?: number };
 };
 
 // ─────────────────────────────────────────────────

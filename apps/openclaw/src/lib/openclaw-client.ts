@@ -26,6 +26,16 @@ import type {
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
+const CLIENT_ID = "gateway-client";
+const CLIENT_MODE = "backend";
+const CLIENT_VERSION = "0.1.0";
+const CONNECT_ROLE = "operator";
+const CONNECT_SCOPES = [
+  "operator.admin",
+  "operator.approvals",
+  "operator.pairing",
+];
+
 // ─────────────────────────────────────────────────
 // Pending request tracker
 // ─────────────────────────────────────────────────
@@ -59,12 +69,10 @@ export class OpenClawClient {
   private pending = new Map<string, PendingRequest>();
   private listeners = new Map<string, Set<EventCallback<any>>>();
   private state: ConnectionState = "disconnected";
-  private token: string | null = null;
 
   // ── Lifecycle ──────────────────────────────────
 
   async connect(url: string, token: string): Promise<HelloPayload> {
-    this.token = token;
     this.setState("connecting");
 
     return new Promise<HelloPayload>((resolve, reject) => {
@@ -78,53 +86,25 @@ export class OpenClawClient {
 
       let handshakeResolved = false;
 
-      // Temporary handler for the auth challenge during initial connect
-      const onChallengeMessage = (event: MessageEvent) => {
-        try {
-          const frame = JSON.parse(
-            typeof event.data === "string" ? event.data : event.data.toString(),
-          ) as OpenClawFrame;
-
-          if (frame.type === "event" && frame.event === "connect.challenge") {
-            this.setState("authenticating");
-            this.sendRequest<HelloPayload>("connect", {
-              scopes: ["*"],
-              token,
-            } satisfies ConnectParams)
-              .then((hello) => {
-                handshakeResolved = true;
-                this.setState("connected");
-                this.emit("connected", hello);
-                resolve(hello);
-              })
-              .catch((err) => {
-                if (!handshakeResolved) {
-                  handshakeResolved = true;
-                  reject(err);
-                }
-              });
-          }
-        } catch {
-          // ignore malformed frames during handshake
-        }
-      };
-
-      this.ws.addEventListener("message", onChallengeMessage);
-
-      // Once the main message handler is wired, remove the temporary one
-      this.ws.addEventListener("open", () => {
-        // On reconnect, re-do handshake automatically
-        if (handshakeResolved) {
-          this.setState("reconnecting");
-          this.rejectAllPending("Connection lost — reconnecting");
-        }
+      const buildConnectParams = (): ConnectParams => ({
+        minProtocol: 3,
+        maxProtocol: 3,
+        client: {
+          id: CLIENT_ID,
+          version: CLIENT_VERSION,
+          platform: process.platform ?? "node",
+          mode: CLIENT_MODE,
+        },
+        role: CONNECT_ROLE,
+        scopes: CONNECT_SCOPES,
+        caps: [],
+        auth: token ? { token } : undefined,
+        userAgent: `openclaw-dashboard/${CLIENT_VERSION} node/${process.version}`,
+        locale: "en",
       });
 
+      // Handle all messages (challenge + normal)
       this.ws.addEventListener("message", (event: MessageEvent) => {
-        // The challenge handler above takes care of the initial challenge.
-        // All subsequent messages are routed here.
-        if (!handshakeResolved) return;
-
         try {
           const frame = JSON.parse(
             typeof event.data === "string" ? event.data : event.data.toString(),
@@ -132,20 +112,30 @@ export class OpenClawClient {
 
           if (frame.type === "res") {
             this.handleResponse(frame);
-          } else if (frame.type === "event") {
-            // Re-auth on reconnect challenge
-            if (frame.event === "connect.challenge" && this.token) {
+            return;
+          }
+
+          if (frame.type === "event") {
+            // Auth challenge — send connect params
+            if (frame.event === "connect.challenge") {
               this.setState("authenticating");
-              this.sendRequest<HelloPayload>("connect", {
-                scopes: ["*"],
-                token: this.token,
-              } satisfies ConnectParams)
+              this.sendRequest<HelloPayload>(
+                "connect",
+                buildConnectParams() as unknown as Record<string, unknown>,
+              )
                 .then((hello) => {
                   this.setState("connected");
                   this.emit("connected", hello);
+                  if (!handshakeResolved) {
+                    handshakeResolved = true;
+                    resolve(hello);
+                  }
                 })
-                .catch(() => {
-                  // auth failed on reconnect
+                .catch((err) => {
+                  if (!handshakeResolved) {
+                    handshakeResolved = true;
+                    reject(err);
+                  }
                 });
               return;
             }
@@ -153,6 +143,14 @@ export class OpenClawClient {
           }
         } catch {
           // ignore unparseable messages
+        }
+      });
+
+      this.ws.addEventListener("open", () => {
+        // On reconnect, re-do handshake automatically
+        if (handshakeResolved) {
+          this.setState("reconnecting");
+          this.rejectAllPending("Connection lost — reconnecting");
         }
       });
 
@@ -173,7 +171,6 @@ export class OpenClawClient {
       this.ws.close();
       this.ws = null;
     }
-    this.token = null;
     this.setState("disconnected");
     this.emit("disconnected", { reason: "client initiated" });
   }

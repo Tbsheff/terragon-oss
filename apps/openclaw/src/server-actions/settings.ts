@@ -137,7 +137,7 @@ export async function testConnection(): Promise<{
     return {
       success: true,
       status: health.status,
-      version: hello.version ?? health.version,
+      version: health.version ?? `protocol-v${hello.protocol}`,
     };
   } catch (err) {
     const now = new Date().toISOString();
