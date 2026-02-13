@@ -134,7 +134,7 @@ export async function testConnection(): Promise<{
     }
 
     const protocol = conn.useTls ? "wss" : "ws";
-    const url = `${protocol}://${conn.host}:${conn.port}`;
+    const url = `${protocol}://${conn.host}:${conn.port}/ws`;
 
     const client = new OpenClawClient();
     const hello = await client.connect(url, conn.authToken ?? "");
