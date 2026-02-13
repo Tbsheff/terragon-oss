@@ -61,7 +61,7 @@ export default function SettingsPage() {
             <Link
               key={section.href}
               href={section.href}
-              className="animate-fade-in opacity-0 [animation-fill-mode:forwards]"
+              className="animate-fade-in"
               style={{ animationDelay: `${index * 80}ms` }}
             >
               <Card className="cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-muted/30">

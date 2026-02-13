@@ -110,7 +110,7 @@ export function OpenClawTaskList() {
             return (
               <SidebarMenuItem
                 key={t.id}
-                className="animate-fade-in opacity-0 [animation-fill-mode:forwards]"
+                className="animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <SidebarMenuButton

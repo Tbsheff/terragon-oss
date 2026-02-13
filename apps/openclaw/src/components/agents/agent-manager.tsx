@@ -86,12 +86,12 @@ export function AgentManager() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
             Agent Roster
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Manage your specialized coding agents
           </p>
         </div>
@@ -282,7 +282,7 @@ function AgentCard({
   return (
     <Link
       href={`/agents/${agent.id}`}
-      className="animate-fade-in group block opacity-0 [animation-fill-mode:forwards]"
+      className="animate-fade-in group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <Card className="transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1">

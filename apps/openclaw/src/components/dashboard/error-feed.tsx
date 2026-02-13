@@ -24,7 +24,7 @@ export function ErrorFeed({ errors }: ErrorFeedProps) {
   return (
     <Card
       className="animate-fade-in bg-card/50 backdrop-blur-sm"
-      style={{ animationDelay: "350ms", animationFillMode: "both" }}
+      style={{ animationDelay: "350ms" }}
     >
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 font-[var(--font-cabin)] text-base tracking-tight">

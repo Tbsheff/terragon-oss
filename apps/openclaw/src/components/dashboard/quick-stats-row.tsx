@@ -16,17 +16,17 @@ type StatCardProps = {
 function StatCard({ label, value, icon: Icon, color, delay }: StatCardProps) {
   return (
     <Card
-      className="animate-fade-in bg-card/50 backdrop-blur-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
-      style={{ animationDelay: `${delay}ms`, animationFillMode: "both" }}
+      className="animate-fade-in border-border/60 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+      style={{ animationDelay: `${delay}ms` }}
     >
-      <CardContent className="flex items-center gap-4 py-4">
+      <CardContent className="flex items-center gap-3 px-4 py-3.5">
         <div
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
             color,
           )}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-4.5 w-4.5" />
         </div>
         <div className="min-w-0">
           <p className="text-2xl font-bold font-[var(--font-cabin)] tabular-nums leading-none">
@@ -45,7 +45,7 @@ type QuickStatsRowProps = {
 
 export function QuickStatsRow({ stats }: QuickStatsRowProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <StatCard
         label="Active Agents"
         value={stats?.activeCount ?? 0}

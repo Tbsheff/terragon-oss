@@ -59,7 +59,7 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
   return (
     <Card
       className="animate-fade-in bg-card/50 backdrop-blur-sm"
-      style={{ animationDelay: "300ms", animationFillMode: "both" }}
+      style={{ animationDelay: "300ms" }}
     >
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 font-[var(--font-cabin)] text-base tracking-tight">
@@ -88,7 +88,6 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
                   )}
                   style={{
                     animationDelay: `${350 + i * 40}ms`,
-                    animationFillMode: "both",
                   }}
                 >
                   <Icon

@@ -116,7 +116,7 @@ export function OpenClawDashboard() {
           {/* New Task Card (existing form, compressed) */}
           <Card
             className="animate-fade-in shadow-sm border-t-2 border-t-primary/20 bg-card/50 backdrop-blur-sm [&:has(textarea:focus-visible)]:ring-1 [&:has(textarea:focus-visible)]:ring-primary/10 transition-shadow duration-200"
-            style={{ animationDelay: "100ms", animationFillMode: "both" }}
+            style={{ animationDelay: "100ms" }}
           >
             <CardHeader className="pb-3">
               <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
@@ -176,7 +176,6 @@ export function OpenClawDashboard() {
                         )}
                         style={{
                           animationDelay: `${150 + i * 40}ms`,
-                          animationFillMode: "both",
                         }}
                       >
                         <t.icon

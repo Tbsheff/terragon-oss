@@ -27,7 +27,7 @@ export function ActiveAgentsPanel({ threads }: ActiveAgentsPanelProps) {
   return (
     <Card
       className="animate-fade-in bg-card/50 backdrop-blur-sm"
-      style={{ animationDelay: "200ms", animationFillMode: "both" }}
+      style={{ animationDelay: "200ms" }}
     >
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 font-[var(--font-cabin)] text-base tracking-tight">
@@ -87,7 +87,6 @@ function AgentCard({
       )}
       style={{
         animationDelay: `${250 + index * 60}ms`,
-        animationFillMode: "both",
       }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">

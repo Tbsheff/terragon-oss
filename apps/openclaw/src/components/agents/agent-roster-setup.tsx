@@ -163,7 +163,7 @@ function RosterProgressItem({
   return (
     <div
       className={cn(
-        "animate-fade-in opacity-0 [animation-fill-mode:forwards]",
+        "animate-fade-in",
         "flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors duration-200",
         item.status === "done" && "border-green-500/30 bg-green-500/5",
         item.status === "error" && "border-destructive/30 bg-destructive/5",

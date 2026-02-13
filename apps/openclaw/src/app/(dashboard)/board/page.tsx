@@ -121,7 +121,7 @@ function BoardCard({
           "cursor-pointer transition-all duration-200 gap-0 py-0 shadow-none text-xs",
           "hover:-translate-y-0.5 hover:shadow-md hover:bg-card/80",
           "active:translate-y-0 active:shadow-sm",
-          "opacity-0 animate-fade-in [animation-fill-mode:forwards]",
+          "animate-fade-in",
           stage !== "none" && stage !== "done"
             ? cn(STAGE_COLORS[stage], "hover:border-opacity-100")
             : "",
