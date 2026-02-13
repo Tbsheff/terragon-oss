@@ -26,6 +26,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const TRIGGER_ICONS = {
   cron: Clock,
@@ -38,6 +43,12 @@ const TRIGGER_LABELS = {
   linear: "Linear Issue",
   "github-pr": "GitHub PR",
 } as const;
+
+const TRIGGER_BADGE_COLORS: Record<string, string> = {
+  cron: "border-blue-500/30 text-blue-600 dark:text-blue-400",
+  linear: "border-purple-500/30 text-purple-600 dark:text-purple-400",
+  "github-pr": "border-orange-500/30 text-orange-600 dark:text-orange-400",
+};
 
 export default function AutomationsPage() {
   const queryClient = useQueryClient();
@@ -66,7 +77,9 @@ export default function AutomationsPage() {
       <div className="px-6 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold">Automations</h1>
+            <h1 className="text-lg font-semibold font-[var(--font-cabin)]">
+              Automations
+            </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Scheduled and event-triggered task pipelines
             </p>
@@ -94,7 +107,10 @@ export default function AutomationsPage() {
             return (
               <Card
                 key={auto.id}
-                className={cn("py-0", !auto.enabled && "opacity-60")}
+                className={cn(
+                  "py-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200",
+                  !auto.enabled && "opacity-60",
+                )}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
@@ -110,37 +126,58 @@ export default function AutomationsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() =>
-                          toggleMut.mutate({
-                            id: auto.id,
-                            enabled: !auto.enabled,
-                          })
-                        }
-                        title={auto.enabled ? "Disable" : "Enable"}
-                      >
-                        {auto.enabled ? (
-                          <Power className="h-3.5 w-3.5 text-emerald-500" />
-                        ) : (
-                          <PowerOff className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => deleteMut.mutate(auto.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-7 w-7",
+                              auto.enabled &&
+                                "text-emerald-500 hover:bg-emerald-500/10",
+                            )}
+                            onClick={() =>
+                              toggleMut.mutate({
+                                id: auto.id,
+                                enabled: !auto.enabled,
+                              })
+                            }
+                          >
+                            {auto.enabled ? (
+                              <Power className="h-3.5 w-3.5" />
+                            ) : (
+                              <PowerOff className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {auto.enabled ? "Disable" : "Enable"}
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => deleteMut.mutate(auto.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete automation</TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[10px]",
+                        TRIGGER_BADGE_COLORS[auto.triggerType],
+                      )}
+                    >
                       {
                         TRIGGER_LABELS[
                           auto.triggerType as keyof typeof TRIGGER_LABELS
@@ -149,25 +186,40 @@ export default function AutomationsPage() {
                     </Badge>
                     {config.type === "cron" && (
                       <Badge
-                        variant="secondary"
-                        className="text-[10px] font-mono"
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] font-mono",
+                          TRIGGER_BADGE_COLORS[auto.triggerType],
+                        )}
                       >
                         {config.expression}
                       </Badge>
                     )}
                     {config.type === "linear" && (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px]",
+                          TRIGGER_BADGE_COLORS[auto.triggerType],
+                        )}
+                      >
                         label: {config.labelFilter}
                       </Badge>
                     )}
                     {config.type === "github-pr" && (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px]",
+                          TRIGGER_BADGE_COLORS[auto.triggerType],
+                        )}
+                      >
                         {config.repoFullName} ({config.event})
                       </Badge>
                     )}
                   </div>
 
-                  <p className="mt-2 text-xs text-muted-foreground/70 truncate font-mono">
+                  <p className="mt-2 text-xs text-muted-foreground/70 truncate font-mono rounded-md bg-muted/30 px-2 py-1 border border-border/30">
                     {auto.prompt}
                   </p>
                 </CardContent>
@@ -176,7 +228,7 @@ export default function AutomationsPage() {
           })}
 
           {(automationList ?? []).length === 0 && !showCreate && (
-            <Card>
+            <Card className="animate-fade-in">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Zap className="h-8 w-8 text-muted-foreground/30" />
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -186,6 +238,7 @@ export default function AutomationsPage() {
                   Create one to run tasks on a schedule or in response to events
                 </p>
                 <Button
+                  variant="outline"
                   size="sm"
                   className="mt-4"
                   onClick={() => setShowCreate(true)}
@@ -240,7 +293,7 @@ function CreateAutomationForm({ onClose }: { onClose: () => void }) {
   });
 
   return (
-    <Card className="border-primary/30 py-0">
+    <Card className="border-primary/30 py-0 animate-fade-in">
       <CardContent className="p-4 space-y-3">
         <div className="space-y-1.5">
           <Label htmlFor="automation-name" className="text-xs">

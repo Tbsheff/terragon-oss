@@ -16,6 +16,7 @@ import {
   PIPELINE_STAGE_LABELS,
   type PipelineStage,
 } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import {
   Workflow,
   MessageSquareText,
@@ -23,6 +24,7 @@ import {
   Trash2,
   Wand2,
   Check,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +33,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+const STAGE_BADGE_COLORS: Record<string, string> = {
+  brainstorm: "border-primary/30 text-primary",
+  plan: "border-blue-500/30 text-blue-600 dark:text-blue-400",
+  implement: "border-cyan-500/30 text-cyan-600 dark:text-cyan-400",
+  review: "border-amber-500/30 text-amber-600 dark:text-amber-400",
+  test: "border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
+  ci: "border-indigo-500/30 text-indigo-600 dark:text-indigo-400",
+};
 
 export default function TemplatesPage() {
   const queryClient = useQueryClient();
@@ -57,7 +73,9 @@ export default function TemplatesPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="px-6 py-3">
-        <h1 className="text-lg font-semibold">Templates</h1>
+        <h1 className="text-lg font-semibold font-[var(--font-cabin)]">
+          Templates
+        </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Pipeline and prompt templates for common workflows
         </p>
@@ -149,18 +167,40 @@ function PipelineTemplatesList({
         <CreatePipelineTemplateForm onClose={() => setShowCreate(false)} />
       )}
 
+      {templates.length === 0 && !showCreate && (
+        <Card className="animate-fade-in">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Workflow className="h-8 w-8 text-muted-foreground/30" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              No pipeline templates yet
+            </p>
+            <p className="text-xs text-muted-foreground/60">
+              Create a template or seed defaults to get started
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-3">
         {templates.map((t) => {
           const stages: PipelineStage[] = JSON.parse(t.stages);
           return (
-            <Card key={t.id} className="py-0">
+            <Card
+              key={t.id}
+              className="py-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-medium">{t.name}</h3>
                       {t.isDefault && (
-                        <Badge variant="secondary">Default</Badge>
+                        <Badge
+                          variant="secondary"
+                          className="bg-primary/10 text-primary border border-primary/20"
+                        >
+                          Default
+                        </Badge>
                       )}
                     </div>
                     {t.description && (
@@ -169,18 +209,27 @@ function PipelineTemplatesList({
                       </p>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => deleteMutation.mutate(t.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => deleteMutation.mutate(t.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete template</TooltipContent>
+                  </Tooltip>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {stages.map((s) => (
-                    <Badge key={s} variant="outline" className="text-[10px]">
+                    <Badge
+                      key={s}
+                      variant="outline"
+                      className={cn("text-[10px]", STAGE_BADGE_COLORS[s])}
+                    >
                       {PIPELINE_STAGE_LABELS[s]}
                     </Badge>
                   ))}
@@ -216,7 +265,7 @@ function CreatePipelineTemplateForm({ onClose }: { onClose: () => void }) {
   });
 
   return (
-    <Card className="border-primary/30 py-0">
+    <Card className="border-primary/30 py-0 animate-fade-in">
       <CardContent className="p-4 space-y-3">
         <div className="space-y-1.5">
           <Label htmlFor="pipeline-name">Name</Label>
@@ -321,7 +370,7 @@ function PromptTemplatesList({
       </div>
 
       {showCreate && (
-        <Card className="border-primary/30 py-0">
+        <Card className="border-primary/30 py-0 animate-fade-in">
           <CardContent className="p-4 space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="prompt-name">Name</Label>
@@ -364,24 +413,46 @@ function PromptTemplatesList({
         </Card>
       )}
 
+      {templates.length === 0 && !showCreate && (
+        <Card className="animate-fade-in">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <FileText className="h-8 w-8 text-muted-foreground/30" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              No prompt templates yet
+            </p>
+            <p className="text-xs text-muted-foreground/60">
+              Create reusable prompt templates with variable placeholders
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-3">
         {templates.map((t) => {
           const vars: string[] = t.variables ? JSON.parse(t.variables) : [];
           return (
-            <Card key={t.id} className="py-0">
+            <Card
+              key={t.id}
+              className="py-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <h3 className="text-sm font-medium">{t.name}</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => deleteMutation.mutate(t.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => deleteMutation.mutate(t.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete template</TooltipContent>
+                  </Tooltip>
                 </div>
-                <p className="mt-1.5 text-xs font-mono text-muted-foreground bg-muted/50 rounded-md px-2 py-1.5">
+                <p className="mt-1.5 text-xs font-mono text-muted-foreground bg-muted/50 rounded-md px-2 py-1.5 border border-border/50">
                   {t.template}
                 </p>
                 {vars.length > 0 && (
