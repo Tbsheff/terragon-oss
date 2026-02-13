@@ -40,19 +40,19 @@ const statusConfig: Record<
   },
   passed: {
     icon: Check,
-    color: "text-green-400",
+    color: "text-green-600 dark:text-green-400",
     bg: "bg-green-500/10",
     border: "border-green-500/30",
   },
   failed: {
     icon: X,
-    color: "text-red-400",
+    color: "text-red-600 dark:text-red-400",
     bg: "bg-red-500/10",
     border: "border-red-500/30",
   },
   skipped: {
     icon: SkipForward,
-    color: "text-muted-foreground/60",
+    color: "text-muted-foreground opacity-60",
     bg: "bg-muted/30",
     border: "border-border/50",
   },

@@ -125,8 +125,8 @@ export function PipelineStatus({
           <span
             className={cn(
               "font-medium",
-              isDone && allPassed && "text-green-400",
-              isDone && !allPassed && "text-red-400",
+              isDone && allPassed && "text-green-600 dark:text-green-400",
+              isDone && !allPassed && "text-red-600 dark:text-red-400",
               !isDone && "text-primary",
             )}
           >
@@ -143,15 +143,17 @@ export function PipelineStatus({
       </div>
 
       {/* Stage progress bar */}
-      <div className="flex items-center gap-0">
-        {stagesToShow.map((stage, idx) => {
-          const { status, retryCount } = getStageStatus(stage, state);
-          const entries = state?.stageHistory.filter((h) => h.stage === stage);
-          const latestEntry = entries?.[entries.length - 1];
+      <div className="space-y-1">
+        <div className="flex items-center">
+          {stagesToShow.map((stage, idx) => {
+            const { status, retryCount } = getStageStatus(stage, state);
+            const entries = state?.stageHistory.filter(
+              (h) => h.stage === stage,
+            );
+            const latestEntry = entries?.[entries.length - 1];
 
-          return (
-            <div key={stage} className="flex flex-col items-center gap-0.5">
-              <div className="flex items-center">
+            return (
+              <div key={stage} className="flex items-center">
                 {idx > 0 && <StageConnector status={status} />}
                 <StageBadge
                   stage={stage}
@@ -161,10 +163,28 @@ export function PipelineStatus({
                   compact={compact}
                 />
               </div>
-              <StageDuration entry={latestEntry} />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        {/* Durations row */}
+        {!compact && (
+          <div className="flex items-center">
+            {stagesToShow.map((stage, idx) => {
+              const entries = state?.stageHistory.filter(
+                (h) => h.stage === stage,
+              );
+              const latestEntry = entries?.[entries.length - 1];
+              return (
+                <div key={stage} className="flex items-center justify-center">
+                  {idx > 0 && <div className="min-w-3 max-w-8 flex-1" />}
+                  <div className="flex items-center justify-center">
+                    <StageDuration entry={latestEntry} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -33,9 +33,9 @@ const statusLabel: Record<string, string> = {
 
 const statusColor: Record<string, string> = {
   draft: "text-muted-foreground",
-  open: "text-green-500",
-  merged: "text-purple-500",
-  closed: "text-red-500",
+  open: "text-green-600 dark:text-green-400",
+  merged: "text-purple-600 dark:text-purple-400",
+  closed: "text-red-600 dark:text-red-400",
 };
 
 const mergeableLabel: Record<string, string> = {

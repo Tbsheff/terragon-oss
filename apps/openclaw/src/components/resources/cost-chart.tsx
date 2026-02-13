@@ -155,14 +155,14 @@ export function CostChart({ entries }: { entries: CostEntry[] }) {
                       {formatCost(entry.totalCost)}
                     </span>
                   </div>
-                  <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted/30">
+                  <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted/50">
                     <div
-                      className="bg-blue-500 transition-all duration-300"
+                      className="bg-chart-2 transition-all duration-300"
                       style={{ width: `${inputPct}%` }}
                       title={`Input: ${entry.inputTokens.toLocaleString()} tokens`}
                     />
                     <div
-                      className="bg-violet-500 transition-all duration-300"
+                      className="bg-chart-4 transition-all duration-300"
                       style={{ width: `${outputPct}%` }}
                       title={`Output: ${entry.outputTokens.toLocaleString()} tokens`}
                     />
@@ -172,11 +172,11 @@ export function CostChart({ entries }: { entries: CostEntry[] }) {
             })}
             <div className="flex items-center gap-4 pt-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                <div className="h-2 w-2 rounded-full bg-chart-2" />
                 Input tokens
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-violet-500" />
+                <div className="h-2 w-2 rounded-full bg-chart-4" />
                 Output tokens
               </div>
             </div>

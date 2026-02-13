@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
-  draft: "border-muted text-muted-foreground bg-muted/30",
-  open: "border-green-500/30 text-green-500 bg-green-500/10",
-  merged: "border-purple-500/30 text-purple-500 bg-purple-500/10",
-  closed: "border-red-500/30 text-red-500 bg-red-500/10",
+  draft: "border-muted-foreground/20 text-muted-foreground bg-muted/30",
+  open: "border-green-500/20 text-green-600 dark:text-green-400 bg-green-500/10",
+  merged:
+    "border-purple-500/20 text-purple-600 dark:text-purple-400 bg-purple-500/10",
+  closed: "border-red-500/20 text-red-600 dark:text-red-400 bg-red-500/10",
 };
 
 const checksDot: Record<string, string> = {
@@ -50,7 +51,7 @@ export function PRStatusBadge({
       <GitPullRequest className="h-3 w-3" />
       PR #{prNumber}
       {checksStatus && checksStatus !== "none" && (
-        <span className={cn("h-1.5 w-1.5 rounded-full", dotColor)} />
+        <span className={cn("h-2 w-2 rounded-full", dotColor)} />
       )}
     </Badge>
   );

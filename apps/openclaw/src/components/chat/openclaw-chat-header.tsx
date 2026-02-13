@@ -5,6 +5,7 @@ import { parsePipelineState } from "@/hooks/use-pipeline";
 import { useElapsedTime } from "@/hooks/use-elapsed-time";
 import { PIPELINE_STAGE_LABELS, type PipelineStage } from "@/lib/constants";
 import { getActivityLabel } from "@/lib/activity-label";
+import { cn, formatCost } from "@/lib/utils";
 import { ConnectionStatusBadge } from "@/components/connection-status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import { PRStatusBadge } from "@/components/github/pr-status-badge";
 import { threadPRsQueryOptions } from "@/queries/github-queries";
 import { threadErrorsQueryOptions } from "@/queries/thread-queries";
 import { parseTokenUsage, formatTokenCount } from "@/lib/token-usage";
-import { formatCost } from "@/lib/utils";
 
 export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   const { thread } = useThread();
@@ -166,10 +166,54 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   );
 }
 
+const STAGE_PILL_COLORS: Record<
+  PipelineStage,
+  { bg: string; text: string; dot: string }
+> = {
+  brainstorm: { bg: "bg-primary/15", text: "text-primary", dot: "bg-primary" },
+  plan: {
+    bg: "bg-blue-500/15",
+    text: "text-blue-600 dark:text-blue-400",
+    dot: "bg-blue-500",
+  },
+  implement: {
+    bg: "bg-cyan-500/15",
+    text: "text-cyan-600 dark:text-cyan-400",
+    dot: "bg-cyan-500",
+  },
+  review: {
+    bg: "bg-amber-500/15",
+    text: "text-amber-600 dark:text-amber-400",
+    dot: "bg-amber-500",
+  },
+  test: {
+    bg: "bg-emerald-500/15",
+    text: "text-emerald-600 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+  },
+  ci: {
+    bg: "bg-indigo-500/15",
+    text: "text-indigo-600 dark:text-indigo-400",
+    dot: "bg-indigo-500",
+  },
+};
+
 function PipelineStagePill({ stage }: { stage: PipelineStage }) {
+  const colors = STAGE_PILL_COLORS[stage];
   return (
-    <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
-      <span className="h-1.5 w-1.5 rounded-full bg-primary opacity-75 animate-pulse" />
+    <span
+      className={cn(
+        "flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        colors.bg,
+        colors.text,
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full opacity-75 animate-pulse",
+          colors.dot,
+        )}
+      />
       {PIPELINE_STAGE_LABELS[stage]}
     </span>
   );

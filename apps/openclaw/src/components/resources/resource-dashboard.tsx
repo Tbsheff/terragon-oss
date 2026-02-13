@@ -106,6 +106,7 @@ export function ResourceDashboard({
     );
   }
 
+  const hasHealth = health != null;
   const cpuPercent = health?.cpu ?? 0;
   const memPercent = health?.memory ?? 0;
   const activeSessions = health?.activeSessions ?? 0;
@@ -116,42 +117,48 @@ export function ResourceDashboard({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="CPU Usage"
-          value={`${cpuPercent.toFixed(1)}%`}
-          subtitle="Current processor load"
+          value={hasHealth ? `${cpuPercent.toFixed(1)}%` : "--"}
+          subtitle={hasHealth ? "Current processor load" : "No data available"}
           icon={Cpu}
-          barValue={cpuPercent}
-          barMax={100}
+          barValue={hasHealth ? cpuPercent : undefined}
+          barMax={hasHealth ? 100 : undefined}
           barColor={
-            cpuPercent > 80
-              ? "bg-red-500"
-              : cpuPercent > 50
-                ? "bg-yellow-500"
-                : "bg-emerald-500"
+            hasHealth
+              ? cpuPercent > 80
+                ? "bg-red-500"
+                : cpuPercent > 50
+                  ? "bg-amber-500"
+                  : "bg-emerald-500"
+              : undefined
           }
         />
         <MetricCard
           title="Memory"
-          value={`${memPercent.toFixed(1)}%`}
-          subtitle="RAM utilization"
+          value={hasHealth ? `${memPercent.toFixed(1)}%` : "--"}
+          subtitle={hasHealth ? "RAM utilization" : "No data available"}
           icon={HardDrive}
-          barValue={memPercent}
-          barMax={100}
+          barValue={hasHealth ? memPercent : undefined}
+          barMax={hasHealth ? 100 : undefined}
           barColor={
-            memPercent > 80
-              ? "bg-red-500"
-              : memPercent > 60
-                ? "bg-yellow-500"
-                : "bg-blue-500"
+            hasHealth
+              ? memPercent > 80
+                ? "bg-red-500"
+                : memPercent > 60
+                  ? "bg-amber-500"
+                  : "bg-chart-3"
+              : undefined
           }
         />
         <MetricCard
           title="Active Agents"
-          value={`${activeSessions}`}
-          subtitle={`of ${maxCapacity} capacity`}
+          value={hasHealth ? `${activeSessions}` : "--"}
+          subtitle={
+            hasHealth ? `of ${maxCapacity} capacity` : "No data available"
+          }
           icon={Users}
-          barValue={activeSessions}
-          barMax={maxCapacity}
-          barColor="bg-violet-500"
+          barValue={hasHealth ? activeSessions : undefined}
+          barMax={hasHealth ? maxCapacity : undefined}
+          barColor={hasHealth ? "bg-chart-1" : undefined}
         />
         <MetricCard
           title="Queue Depth"
