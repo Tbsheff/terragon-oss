@@ -15,7 +15,12 @@ export function Wordmark({ size = "md", className }: WordmarkProps) {
   const s = sizes[size];
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div
+      className={cn(
+        "flex items-center gap-2 transition-transform duration-200 hover:scale-[1.02]",
+        className,
+      )}
+    >
       <div
         className={cn(
           "flex items-center justify-center rounded-md bg-primary font-bold text-primary-foreground",

@@ -34,6 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   getSettings,
@@ -141,13 +146,20 @@ export default function GitHubSettingsPage() {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/settings">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="size-4" />
-          </Button>
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="size-4" />
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Back to settings</TooltipContent>
+        </Tooltip>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">GitHub</h1>
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+            GitHub
+          </h1>
           <p className="text-sm text-muted-foreground">
             Configure GitHub integration and PR settings
           </p>
@@ -157,7 +169,7 @@ export default function GitHubSettingsPage() {
 
       <div className="space-y-6">
         {/* PAT Card */}
-        <Card>
+        <Card className="animate-fade-in">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -201,7 +213,7 @@ export default function GitHubSettingsPage() {
 
             {validationResult && (
               <div
-                className={`flex items-center gap-2 rounded-md border p-3 text-sm ${
+                className={`animate-fade-in flex items-center gap-2 rounded-md border p-3 text-sm ${
                   validationResult.valid
                     ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                     : "border-red-500/30 bg-red-500/10 text-red-400"
@@ -227,7 +239,7 @@ export default function GitHubSettingsPage() {
         </Card>
 
         {/* PR Settings Card */}
-        <Card>
+        <Card className="animate-fade-in">
           <CardHeader>
             <CardTitle>Pull Request Settings</CardTitle>
             <CardDescription>

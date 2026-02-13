@@ -25,6 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   getGatewayConfig,
@@ -122,13 +127,20 @@ export default function GatewaySettingsPage() {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/settings">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="size-4" />
-          </Button>
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="size-4" />
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Back to settings</TooltipContent>
+        </Tooltip>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gateway Config</h1>
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+            Gateway Config
+          </h1>
           <p className="text-sm text-muted-foreground">
             Configure the OpenClaw gateway runtime settings
           </p>
@@ -137,7 +149,7 @@ export default function GatewaySettingsPage() {
       <Separator className="mb-6" />
 
       {configError || isError ? (
-        <Card>
+        <Card className="animate-fade-in">
           <CardContent className="py-8">
             <div className="flex flex-col items-center text-center">
               <Server className="mb-3 size-10 text-muted-foreground/40" />
@@ -157,7 +169,7 @@ export default function GatewaySettingsPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          <Card>
+          <Card className="animate-fade-in">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>

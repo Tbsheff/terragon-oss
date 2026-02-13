@@ -112,7 +112,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
 
   if (filesQuery.isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="animate-fade-in flex items-center justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         <span className="ml-2 text-sm text-muted-foreground">
           Loading files...
@@ -123,7 +123,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
 
   if (filesQuery.isError) {
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+      <div className="animate-fade-in rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
         Failed to load agent files: {filesQuery.error.message}
       </div>
     );
@@ -141,7 +141,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
               <TabsTrigger key={f} value={f} className="relative">
                 {f}
                 {dirty[f] && (
-                  <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                 )}
               </TabsTrigger>
             ))}
@@ -169,7 +169,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
               placeholder={`# ${f}\n\nStart writing...`}
               spellCheck={false}
               className={cn(
-                "w-full min-h-[500px] resize-y rounded-lg border bg-muted/30 p-4",
+                "w-full min-h-[500px] resize-y rounded-lg border bg-muted/30 p-4 shadow-inner",
                 "font-mono text-sm leading-relaxed text-foreground",
                 "placeholder:text-muted-foreground/50",
                 "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
@@ -191,7 +191,7 @@ function SaveStatusIndicator({ status }: { status: SaveStatus }) {
   return (
     <span
       className={cn(
-        "flex items-center gap-1 text-xs",
+        "animate-fade-in flex items-center gap-1 text-xs",
         status === "saving" && "text-muted-foreground",
         status === "saved" && "text-green-400",
         status === "error" && "text-destructive",

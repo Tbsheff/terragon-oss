@@ -26,6 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   listCredentials,
@@ -128,13 +133,20 @@ export default function CredentialsSettingsPage() {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/settings">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="size-4" />
-          </Button>
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="size-4" />
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Back to settings</TooltipContent>
+        </Tooltip>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Credentials</h1>
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+            Credentials
+          </h1>
           <p className="text-sm text-muted-foreground">
             Manage API keys for AI providers
           </p>
@@ -142,7 +154,7 @@ export default function CredentialsSettingsPage() {
       </div>
       <Separator className="mb-6" />
 
-      <Card>
+      <Card className="animate-fade-in">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -239,7 +251,7 @@ export default function CredentialsSettingsPage() {
               {creds.map((cred) => (
                 <div
                   key={cred.id}
-                  className="flex items-center justify-between px-4 py-3"
+                  className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <Key className="size-4 text-muted-foreground" />

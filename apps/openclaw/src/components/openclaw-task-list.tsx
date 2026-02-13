@@ -15,12 +15,14 @@ import {
   Loader2,
   Archive,
   Clock,
+  Leaf,
 } from "lucide-react";
 import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
@@ -40,15 +42,21 @@ function StatusIcon({ status }: { status: string }) {
 function StageBadge({ stage }: { stage: PipelineStage | "done" }) {
   if (stage === "done") {
     return (
-      <span className="rounded-full bg-green-500/20 px-1.5 py-0.5 text-[10px] font-medium text-green-500">
+      <Badge
+        variant="outline"
+        className="text-[10px] text-green-500 border-green-500/30 px-1.5 py-0"
+      >
         Done
-      </span>
+      </Badge>
     );
   }
   return (
-    <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+    <Badge
+      variant="outline"
+      className="text-[10px] text-primary border-primary/30 px-1.5 py-0"
+    >
       {PIPELINE_STAGE_LABELS[stage]}
-    </span>
+    </Badge>
   );
 }
 
@@ -78,11 +86,12 @@ export function OpenClawTaskList() {
       {/* Active tasks */}
       <SidebarMenu>
         {activeThreads.length === 0 ? (
-          <p className="px-2 py-4 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-            No active tasks
-          </p>
+          <div className="flex flex-col items-center gap-1.5 px-2 py-6 text-muted-foreground group-data-[collapsible=icon]:hidden">
+            <Leaf className="h-5 w-5 opacity-40" />
+            <p className="text-xs">No active tasks</p>
+          </div>
         ) : (
-          activeThreads.map((t) => {
+          activeThreads.map((t, index) => {
             const isActive = pathname === `/task/${t.id}`;
             const pipeline = parsePipelineState(t.pipelineState);
             const isTaskWorking =
@@ -94,7 +103,11 @@ export function OpenClawTaskList() {
             );
 
             return (
-              <SidebarMenuItem key={t.id}>
+              <SidebarMenuItem
+                key={t.id}
+                className="animate-fade-in opacity-0 [animation-fill-mode:forwards]"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
                 <SidebarMenuButton
                   asChild
                   isActive={isActive}
@@ -140,7 +153,7 @@ export function OpenClawTaskList() {
       {/* Archived tasks */}
       {archivedThreads.length > 0 && (
         <div className="border-t border-sidebar-border pt-2 group-data-[collapsible=icon]:hidden">
-          <h3 className="mb-1 flex items-center gap-1 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <h3 className="mb-1 flex items-center gap-1 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider font-[var(--font-cabin)]">
             <Archive className="h-3 w-3" />
             Archived ({archivedThreads.length})
           </h3>

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle2, XCircle, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -124,14 +125,14 @@ export function AgentRosterSetup({ onComplete }: { onComplete?: () => void }) {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           {progress.map((item, i) => (
-            <RosterProgressItem key={i} item={item} />
+            <RosterProgressItem key={i} item={item} index={i} />
           ))}
         </div>
 
         <Button
           onClick={() => setupMutation.mutate()}
           disabled={isRunning}
-          className="w-full"
+          className="w-full gap-2"
         >
           {isRunning ? (
             <>
@@ -152,15 +153,23 @@ export function AgentRosterSetup({ onComplete }: { onComplete?: () => void }) {
 
 // ─────────────────────────────────────────────────
 
-function RosterProgressItem({ item }: { item: SetupProgress }) {
+function RosterProgressItem({
+  item,
+  index,
+}: {
+  item: SetupProgress;
+  index: number;
+}) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-md border px-3 py-2 text-sm",
+        "animate-fade-in opacity-0 [animation-fill-mode:forwards]",
+        "flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors duration-200",
         item.status === "done" && "border-green-500/30 bg-green-500/5",
         item.status === "error" && "border-destructive/30 bg-destructive/5",
         item.status === "creating" && "border-primary/30 bg-primary/5",
       )}
+      style={{ animationDelay: `${index * 75}ms` }}
     >
       <span className="text-lg">{item.agent.emoji}</span>
       <div className="flex-1">
@@ -173,9 +182,7 @@ function RosterProgressItem({ item }: { item: SetupProgress }) {
         )}
       </div>
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <span className="rounded bg-muted px-1.5 py-0.5">
-          {item.agent.model}
-        </span>
+        <Badge variant="outline">{item.agent.model}</Badge>
         <StatusIcon status={item.status} />
       </div>
     </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Globe, Key, Github, Server, type LucideIcon } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -6,6 +7,13 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+
+const iconMap: Record<string, LucideIcon> = {
+  globe: Globe,
+  key: Key,
+  github: Github,
+  server: Server,
+};
 
 const settingsSections = [
   {
@@ -38,23 +46,40 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+          Settings
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Configure your OpenClaw dashboard and gateway connection
         </p>
       </div>
       <Separator className="mb-6" />
       <div className="grid gap-4">
-        {settingsSections.map((section) => (
-          <Link key={section.href} href={section.href}>
-            <Card className="transition-colors hover:bg-muted/30 cursor-pointer">
-              <CardHeader>
-                <CardTitle className="text-base">{section.title}</CardTitle>
-                <CardDescription>{section.description}</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-        ))}
+        {settingsSections.map((section, index) => {
+          const Icon = iconMap[section.icon];
+          return (
+            <Link
+              key={section.href}
+              href={section.href}
+              className="animate-fade-in opacity-0 [animation-fill-mode:forwards]"
+              style={{ animationDelay: `${index * 80}ms` }}
+            >
+              <Card className="cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-muted/30">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    {Icon && <Icon className="size-5 text-muted-foreground" />}
+                    <div>
+                      <CardTitle className="text-base">
+                        {section.title}
+                      </CardTitle>
+                      <CardDescription>{section.description}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

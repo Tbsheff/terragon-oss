@@ -21,6 +21,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   getConnection,
@@ -112,13 +117,20 @@ export default function ConnectionSettingsPage() {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/settings">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="size-4" />
-          </Button>
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="size-4" />
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Back to settings</TooltipContent>
+        </Tooltip>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Connection</h1>
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+            Connection
+          </h1>
           <p className="text-sm text-muted-foreground">
             Configure the Mac Mini gateway connection
           </p>
@@ -126,7 +138,7 @@ export default function ConnectionSettingsPage() {
       </div>
       <Separator className="mb-6" />
 
-      <Card>
+      <Card className="animate-fade-in">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Gateway Connection</CardTitle>
@@ -221,7 +233,7 @@ export default function ConnectionSettingsPage() {
 
           {testResult && (
             <div
-              className={`rounded-md border p-3 text-sm ${
+              className={`animate-fade-in rounded-md border p-3 text-sm ${
                 testResult.success
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                   : "border-red-500/30 bg-red-500/10 text-red-400"

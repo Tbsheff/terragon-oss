@@ -50,7 +50,7 @@ export function ConnectionStatusBadge() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-sidebar-accent transition-colors">
+        <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-sidebar-accent transition-colors animate-fade-in">
           <span className="relative flex h-2 w-2 shrink-0">
             {status === "connected" && (
               <span
