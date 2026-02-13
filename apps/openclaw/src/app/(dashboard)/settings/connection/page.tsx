@@ -4,7 +4,14 @@ import { useState, useTransition } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Wifi, WifiOff } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Wifi,
+  WifiOff,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -218,10 +225,18 @@ export default function ConnectionSettingsPage() {
                 })
               }
             />
+            <p className="text-xs text-muted-foreground">
+              Maximum number of agents that can run simultaneously (1-20)
+            </p>
           </div>
 
           <div className="flex items-center justify-between">
-            <Label htmlFor="useTls">Use TLS (wss://)</Label>
+            <div>
+              <Label htmlFor="useTls">Use TLS</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Connect to gateway using wss:// instead of ws://
+              </p>
+            </div>
             <Switch
               id="useTls"
               checked={currentForm.useTls}
@@ -233,15 +248,28 @@ export default function ConnectionSettingsPage() {
 
           {testResult && (
             <div
-              className={`animate-fade-in rounded-md border p-3 text-sm ${
+              className={`animate-fade-in flex items-center gap-2 rounded-md border p-3 text-sm ${
                 testResult.success
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                   : "border-red-500/30 bg-red-500/10 text-red-400"
               }`}
             >
-              {testResult.success
-                ? `Connected successfully. Status: ${testResult.status ?? "ok"}${testResult.version ? `, Version: ${testResult.version}` : ""}`
-                : `Connection failed: ${testResult.error}`}
+              {testResult.success ? (
+                <>
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  <span>
+                    Connected successfully. Status: {testResult.status ?? "ok"}
+                    {testResult.version
+                      ? `, Version: ${testResult.version}`
+                      : ""}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="size-4 shrink-0" />
+                  <span>Connection failed: {testResult.error}</span>
+                </>
+              )}
             </div>
           )}
         </CardContent>

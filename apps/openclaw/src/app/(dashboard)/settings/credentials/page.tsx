@@ -186,7 +186,7 @@ export default function CredentialsSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {showAdd && (
-            <div className="rounded-md border p-4 space-y-3">
+            <div className="animate-fade-in rounded-md border bg-muted/20 p-4 space-y-3">
               <div className="space-y-2">
                 <Label>Provider</Label>
                 <Select

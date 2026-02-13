@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { Globe, Key, Github, Server, type LucideIcon } from "lucide-react";
+import {
+  Globe,
+  Key,
+  Github,
+  Server,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -54,26 +61,33 @@ export default function SettingsPage() {
         </p>
       </div>
       <Separator className="mb-6" />
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {settingsSections.map((section, index) => {
           const Icon = iconMap[section.icon];
           return (
             <Link
               key={section.href}
               href={section.href}
-              className="animate-fade-in"
+              className="group animate-fade-in"
               style={{ animationDelay: `${index * 80}ms` }}
             >
-              <Card className="cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-muted/30">
-                <CardHeader>
+              <Card className="cursor-pointer transition-all duration-200 hover:shadow-md hover:bg-muted/30">
+                <CardHeader className="py-4">
                   <div className="flex items-center gap-3">
-                    {Icon && <Icon className="size-5 text-muted-foreground" />}
-                    <div>
+                    {Icon && (
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
+                        <Icon className="size-4 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-base">
                         {section.title}
                       </CardTitle>
-                      <CardDescription>{section.description}</CardDescription>
+                      <CardDescription className="line-clamp-1">
+                        {section.description}
+                      </CardDescription>
                     </div>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
                   </div>
                 </CardHeader>
               </Card>

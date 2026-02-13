@@ -249,8 +249,10 @@ export default function GatewaySettingsPage() {
 
                   {config && (
                     <div className="space-y-2">
-                      <Label>Current Config</Label>
-                      <pre className="overflow-auto rounded-md border bg-muted/30 p-3 text-xs font-mono max-h-[200px]">
+                      <Label className="text-muted-foreground">
+                        Current Config
+                      </Label>
+                      <pre className="overflow-auto rounded-md border bg-muted/20 p-3 text-xs font-mono max-h-[200px] leading-relaxed">
                         {JSON.stringify(config, null, 2)}
                       </pre>
                     </div>
