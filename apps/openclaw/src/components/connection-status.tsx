@@ -50,8 +50,8 @@ export function ConnectionStatusBadge() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium">
-          <span className="relative flex h-2 w-2">
+        <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-sidebar-accent transition-colors">
+          <span className="relative flex h-2 w-2 shrink-0">
             {status === "connected" && (
               <span
                 className={cn(
@@ -67,7 +67,7 @@ export function ConnectionStatusBadge() {
               )}
             />
           </span>
-          <span className="text-muted-foreground">
+          <span className="text-muted-foreground group-data-[collapsible=icon]:hidden">
             {isLoading ? "Checking..." : config.label}
           </span>
         </div>

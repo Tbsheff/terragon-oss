@@ -48,7 +48,7 @@ const prStatusConfig: Record<
   merged: {
     label: "Merged",
     icon: GitMerge,
-    colorClass: "bg-purple-900/40 text-purple-400 border-purple-700/50",
+    colorClass: "bg-primary/10 text-primary border-primary/30",
   },
   closed: {
     label: "Closed",

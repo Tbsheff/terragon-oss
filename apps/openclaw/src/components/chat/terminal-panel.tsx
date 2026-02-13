@@ -61,7 +61,7 @@ export function TerminalPanel({
   return (
     <div
       className={cn(
-        "flex flex-col border-t border-border bg-[#0d0d14] transition-all",
+        "flex flex-col border-t border-border bg-sidebar transition-all",
         isExpanded ? "h-[60%]" : "h-64",
       )}
     >

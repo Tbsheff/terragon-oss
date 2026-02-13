@@ -3,11 +3,15 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { threadListQueryOptions } from "@/queries/thread-queries";
 import { parsePipelineState } from "@/hooks/use-pipeline";
 import { PIPELINE_STAGE_LABELS, type PipelineStage } from "@/lib/constants";
 import { Circle, CheckCircle2, XCircle, Loader2, Archive } from "lucide-react";
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar";
 
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
@@ -50,14 +54,11 @@ export function OpenClawTaskList() {
   );
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col gap-2">
       {/* Active tasks */}
-      <div className="flex-1 overflow-y-auto px-2 py-2">
-        <h3 className="mb-1 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Active
-        </h3>
+      <SidebarMenu>
         {activeThreads.length === 0 ? (
-          <p className="px-2 py-4 text-xs text-muted-foreground">
+          <p className="px-2 py-4 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
             No active tasks
           </p>
         ) : (
@@ -66,57 +67,60 @@ export function OpenClawTaskList() {
             const pipeline = parsePipelineState(t.pipelineState);
 
             return (
-              <Link
-                key={t.id}
-                href={`/task/${t.id}`}
-                className={cn(
-                  "flex items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
-                )}
-              >
-                <StatusIcon status={t.status} />
-                <div className="flex-1 min-w-0">
-                  <div className="truncate text-xs font-medium">
-                    {t.name ?? "Untitled Task"}
-                  </div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    {pipeline?.currentStage && (
-                      <StageBadge stage={pipeline.currentStage} />
-                    )}
-                    {t.githubRepoFullName && (
-                      <span className="text-[10px] text-muted-foreground truncate">
-                        {t.githubRepoFullName.split("/")[1]}
+              <SidebarMenuItem key={t.id}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  tooltip={t.name ?? "Untitled Task"}
+                >
+                  <Link href={`/task/${t.id}`}>
+                    <StatusIcon status={t.status} />
+                    <span className="flex flex-col gap-0.5 min-w-0">
+                      <span className="truncate text-xs font-medium">
+                        {t.name ?? "Untitled Task"}
                       </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
+                      <span className="flex items-center gap-1">
+                        {pipeline?.currentStage && (
+                          <StageBadge stage={pipeline.currentStage} />
+                        )}
+                        {t.githubRepoFullName && (
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            {t.githubRepoFullName.split("/")[1]}
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             );
           })
         )}
-      </div>
+      </SidebarMenu>
 
       {/* Archived tasks */}
       {archivedThreads.length > 0 && (
-        <div className="border-t border-border px-2 py-2">
+        <div className="border-t border-sidebar-border pt-2 group-data-[collapsible=icon]:hidden">
           <h3 className="mb-1 flex items-center gap-1 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             <Archive className="h-3 w-3" />
             Archived ({archivedThreads.length})
           </h3>
-          <div className="max-h-32 overflow-y-auto">
+          <SidebarMenu>
             {archivedThreads.slice(0, 10).map((t) => (
-              <Link
-                key={t.id}
-                href={`/task/${t.id}`}
-                className="flex items-center gap-2 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-sidebar-accent/50 transition-colors"
-              >
-                <StatusIcon status={t.status} />
-                <span className="truncate">{t.name ?? "Untitled"}</span>
-              </Link>
+              <SidebarMenuItem key={t.id}>
+                <SidebarMenuButton
+                  asChild
+                  size="sm"
+                  tooltip={t.name ?? "Untitled"}
+                >
+                  <Link href={`/task/${t.id}`}>
+                    <StatusIcon status={t.status} />
+                    <span className="truncate">{t.name ?? "Untitled"}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             ))}
-          </div>
+          </SidebarMenu>
         </div>
       )}
     </div>

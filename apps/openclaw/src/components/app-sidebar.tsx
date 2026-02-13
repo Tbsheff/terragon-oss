@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   Columns3,
@@ -10,8 +11,31 @@ import {
   Zap,
   Settings,
   Plus,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Wordmark } from "@/components/shared/wordmark";
 import { OpenClawTaskList } from "./openclaw-task-list";
 import { ConnectionStatusBadge } from "./connection-status";
 
@@ -21,71 +45,138 @@ const NAV_ITEMS = [
   { href: "/agents", icon: Bot, label: "Agents" },
   { href: "/templates", icon: FileText, label: "Templates" },
   { href: "/automations", icon: Zap, label: "Automations" },
-  { href: "/settings", icon: Settings, label: "Settings" },
 ] as const;
+
+function ThemeToggle() {
+  const { setTheme, theme } = useTheme();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <SidebarMenuButton tooltip="Toggle theme">
+          <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="group-data-[collapsible=icon]:hidden">Theme</span>
+        </SidebarMenuButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="start">
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          <Sun className="size-4" />
+          Light
+          {theme === "light" && <span className="ml-auto text-primary">*</span>}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          <Moon className="size-4" />
+          Dark
+          {theme === "dark" && <span className="ml-auto text-primary">*</span>}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          <Monitor className="size-4" />
+          System
+          {theme === "system" && (
+            <span className="ml-auto text-primary">*</span>
+          )}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-border bg-sidebar">
-      {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-          OC
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <div className="flex items-center justify-between">
+          <Wordmark />
+          <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
         </div>
-        <span className="text-sm font-semibold text-sidebar-foreground">
-          OpenClaw
-        </span>
-        <div className="ml-auto">
-          <ConnectionStatusBadge />
-        </div>
-      </div>
+      </SidebarHeader>
 
-      {/* New Task button */}
-      <div className="px-3 py-2">
-        <Link
-          href="/"
-          className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-            "bg-primary text-primary-foreground hover:bg-primary/90 transition-colors",
-          )}
-        >
-          <Plus className="h-4 w-4" />
-          New Task
-        </Link>
-      </div>
+      <SidebarContent>
+        {/* Primary nav */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {/* New Task */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="New Task">
+                  <Link href="/">
+                    <Plus className="size-4" />
+                    <span>New Task</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-      {/* Navigation */}
-      <nav className="px-3 py-1">
-        {NAV_ITEMS.map((item) => {
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
+              {/* Nav items */}
+              {NAV_ITEMS.map((item) => {
+                const isActive =
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname.startsWith(item.href);
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.label}
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="size-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-      {/* Task List */}
-      <div className="flex-1 overflow-hidden border-t border-border mt-2">
-        <OpenClawTaskList />
-      </div>
-    </aside>
+        {/* Configure */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Configure</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith("/settings")}
+                  tooltip="Settings"
+                >
+                  <Link href="/settings">
+                    <Settings className="size-4" />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Tasks */}
+        <SidebarGroup className="flex-1 overflow-hidden">
+          <SidebarGroupLabel>Tasks</SidebarGroupLabel>
+          <SidebarGroupContent className="overflow-y-auto">
+            <OpenClawTaskList />
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <ConnectionStatusBadge />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <ThemeToggle />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
   );
 }

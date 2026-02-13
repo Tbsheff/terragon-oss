@@ -1,0 +1,37 @@
+import { cn } from "@/lib/utils";
+
+type WordmarkProps = {
+  size?: "sm" | "md" | "lg";
+  className?: string;
+};
+
+const sizes = {
+  sm: { badge: "h-5 w-5 text-[10px]", text: "text-sm" },
+  md: { badge: "h-7 w-7 text-xs", text: "text-sm" },
+  lg: { badge: "h-8 w-8 text-sm", text: "text-base" },
+};
+
+export function Wordmark({ size = "md", className }: WordmarkProps) {
+  const s = sizes[size];
+
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-md bg-primary font-bold text-primary-foreground",
+          s.badge,
+        )}
+      >
+        OC
+      </div>
+      <span
+        className={cn(
+          "font-[var(--font-cabin)] font-extrabold text-foreground group-data-[collapsible=icon]:hidden",
+          s.text,
+        )}
+      >
+        OpenClaw
+      </span>
+    </div>
+  );
+}

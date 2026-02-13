@@ -27,7 +27,7 @@ function parsePipelineStage(
 }
 
 const STAGE_COLORS: Record<PipelineStage, string> = {
-  brainstorm: "border-purple-500/50",
+  brainstorm: "border-primary/50",
   plan: "border-blue-500/50",
   implement: "border-cyan-500/50",
   review: "border-amber-500/50",
