@@ -79,19 +79,17 @@ function createDb(): Db {
       authToken: process.env.TURSO_AUTH_TOKEN,
     });
 
-    // Wrap client methods with retry logic for transient failures
-    const retryClient = new Proxy(client, {
-      get(target: Record<string, unknown>, prop: string) {
-        if (prop === "execute" || prop === "batch") {
-          return (...args: unknown[]) =>
-            withRetry(() => (target[prop] as Function)(...args));
-        }
-        return target[prop];
-      },
-    });
+    // Patch client methods with retry logic for transient failures.
+    // We can't use Proxy here — private class fields (#field) are bound
+    // to the original instance and break when accessed through a Proxy.
+    const origExecute = client.execute.bind(client);
+    const origBatch = client.batch.bind(client);
+    client.execute = (...args: unknown[]) =>
+      withRetry(() => origExecute(...args));
+    client.batch = (...args: unknown[]) => withRetry(() => origBatch(...args));
 
     console.log(`[db] Connected to remote libSQL at ${tursoUrl}`);
-    return drizzle(retryClient, { schema }) as Db;
+    return drizzle(client, { schema }) as Db;
   }
 
   // Local SQLite fallback
