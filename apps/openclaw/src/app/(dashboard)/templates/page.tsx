@@ -40,12 +40,14 @@ import {
 } from "@/components/ui/tooltip";
 
 const STAGE_BADGE_COLORS: Record<string, string> = {
-  brainstorm: "border-primary/30 text-primary",
-  plan: "border-blue-500/30 text-blue-600 dark:text-blue-400",
-  implement: "border-cyan-500/30 text-cyan-600 dark:text-cyan-400",
-  review: "border-amber-500/30 text-amber-600 dark:text-amber-400",
-  test: "border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
-  ci: "border-indigo-500/30 text-indigo-600 dark:text-indigo-400",
+  brainstorm: "bg-primary/10 text-primary border-primary/20",
+  plan: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  implement:
+    "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
+  review:
+    "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  test: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  ci: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
 };
 
 export default function TemplatesPage() {
@@ -83,11 +85,12 @@ export default function TemplatesPage() {
 
       <Separator />
 
-      <div className="px-6 pt-4">
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "pipeline" | "prompt")}
-        >
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as "pipeline" | "prompt")}
+        className="flex flex-1 flex-col min-h-0"
+      >
+        <div className="px-6 pt-4">
           <TabsList>
             <TabsTrigger value="pipeline">
               <Workflow className="h-3.5 w-3.5" />
@@ -98,6 +101,8 @@ export default function TemplatesPage() {
               Prompt Templates
             </TabsTrigger>
           </TabsList>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
           <TabsContent value="pipeline" className="mt-6">
             <PipelineTemplatesList
               templates={pipelineTemplates ?? []}
@@ -108,8 +113,8 @@ export default function TemplatesPage() {
           <TabsContent value="prompt" className="mt-6">
             <PromptTemplatesList templates={promptTemplates ?? []} />
           </TabsContent>
-        </Tabs>
-      </div>
+        </div>
+      </Tabs>
     </div>
   );
 }
@@ -169,14 +174,24 @@ function PipelineTemplatesList({
 
       {templates.length === 0 && !showCreate && (
         <Card className="animate-fade-in">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Workflow className="h-8 w-8 text-muted-foreground/30" />
-            <p className="mt-2 text-sm text-muted-foreground">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Workflow className="h-10 w-10 text-muted-foreground/40" />
+            <p className="mt-3 text-sm font-medium text-muted-foreground">
               No pipeline templates yet
             </p>
-            <p className="text-xs text-muted-foreground/60">
+            <p className="mt-1 text-xs text-muted-foreground/60">
               Create a template or seed defaults to get started
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={onSeed}
+              disabled={isSeeding}
+            >
+              <Wand2 className="h-3.5 w-3.5" />
+              {isSeeding ? "Seeding..." : "Seed Defaults"}
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -187,11 +202,11 @@ function PipelineTemplatesList({
           return (
             <Card
               key={t.id}
-              className="py-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              className="group py-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-medium">{t.name}</h3>
                       {t.isDefault && (
@@ -214,7 +229,7 @@ function PipelineTemplatesList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         onClick={() => deleteMutation.mutate(t.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -287,25 +302,32 @@ function CreatePipelineTemplateForm({ onClose }: { onClose: () => void }) {
             placeholder="Description (optional)"
           />
         </div>
-        <div>
-          <Label className="mb-1.5">Stages</Label>
+        <div className="space-y-1.5">
+          <Label>Stages</Label>
           <div className="flex flex-wrap gap-2">
-            {PIPELINE_STAGES.map((s) => (
-              <Button
-                key={s}
-                variant={selectedStages.has(s) ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  const next = new Set(selectedStages);
-                  if (next.has(s)) next.delete(s);
-                  else next.add(s);
-                  setSelectedStages(next);
-                }}
-              >
-                {selectedStages.has(s) && <Check className="h-3 w-3" />}
-                {PIPELINE_STAGE_LABELS[s]}
-              </Button>
-            ))}
+            {PIPELINE_STAGES.map((s) => {
+              const isSelected = selectedStages.has(s);
+              return (
+                <Button
+                  key={s}
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  className={cn(
+                    !isSelected &&
+                      "text-muted-foreground hover:text-foreground",
+                  )}
+                  onClick={() => {
+                    const next = new Set(selectedStages);
+                    if (next.has(s)) next.delete(s);
+                    else next.add(s);
+                    setSelectedStages(next);
+                  }}
+                >
+                  {isSelected && <Check className="h-3 w-3" />}
+                  {PIPELINE_STAGE_LABELS[s]}
+                </Button>
+              );
+            })}
           </div>
         </div>
         <div className="flex gap-2 justify-end">
@@ -390,7 +412,7 @@ function PromptTemplatesList({
                 onChange={(e) => setTemplate(e.target.value)}
                 placeholder="Template text — use {variable} for fill-in fields"
                 rows={3}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm font-mono resize-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
+                className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm font-mono resize-none shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               />
             </div>
             <div className="flex gap-2 justify-end">
@@ -415,14 +437,23 @@ function PromptTemplatesList({
 
       {templates.length === 0 && !showCreate && (
         <Card className="animate-fade-in">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-8 w-8 text-muted-foreground/30" />
-            <p className="mt-2 text-sm text-muted-foreground">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <FileText className="h-10 w-10 text-muted-foreground/40" />
+            <p className="mt-3 text-sm font-medium text-muted-foreground">
               No prompt templates yet
             </p>
-            <p className="text-xs text-muted-foreground/60">
+            <p className="mt-1 text-xs text-muted-foreground/60">
               Create reusable prompt templates with variable placeholders
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => setShowCreate(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Create Template
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -433,7 +464,7 @@ function PromptTemplatesList({
           return (
             <Card
               key={t.id}
-              className="py-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              className="group py-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -443,7 +474,7 @@ function PromptTemplatesList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         onClick={() => deleteMutation.mutate(t.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -452,16 +483,16 @@ function PromptTemplatesList({
                     <TooltipContent>Delete template</TooltipContent>
                   </Tooltip>
                 </div>
-                <p className="mt-1.5 text-xs font-mono text-muted-foreground bg-muted/50 rounded-md px-2 py-1.5 border border-border/50">
+                <p className="mt-1.5 text-xs font-mono text-muted-foreground bg-muted/50 rounded-md px-2.5 py-2 border border-border/50 whitespace-pre-wrap line-clamp-4 leading-relaxed">
                   {t.template}
                 </p>
                 {vars.length > 0 && (
-                  <div className="mt-2 flex gap-1.5">
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {vars.map((v) => (
                       <Badge
                         key={v}
-                        variant="secondary"
-                        className="text-[10px]"
+                        variant="outline"
+                        className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 font-mono"
                       >
                         {"{"}
                         {v}
