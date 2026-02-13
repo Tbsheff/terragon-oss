@@ -24,11 +24,10 @@ import { parseTokenUsage, formatTokenCount } from "@/lib/token-usage";
 export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   const { thread } = useThread();
 
-  if (!thread) return null;
-
-  const pipeline = parsePipelineState(thread.pipelineState);
+  const pipeline = thread ? parsePipelineState(thread.pipelineState) : null;
   const currentStage = pipeline?.currentStage ?? null;
-  const isWorking = thread.status === "working" || thread.status === "stopping";
+  const isWorking =
+    thread?.status === "working" || thread?.status === "stopping";
 
   // Elapsed time for active stage
   const activeEntry = pipeline?.stageHistory.find(
@@ -42,25 +41,29 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
     isWorking ? (firstEntry?.startedAt ?? null) : null,
   );
 
-  const activityLabel = getActivityLabel(currentStage, thread.status);
-  const tokenUsage = parseTokenUsage(thread.tokenUsage);
+  const activityLabel = thread
+    ? getActivityLabel(currentStage, thread.status)
+    : null;
+  const tokenUsage = thread ? parseTokenUsage(thread.tokenUsage) : null;
   const totalTokens = tokenUsage
     ? tokenUsage.inputTokens + tokenUsage.outputTokens
     : 0;
 
-  const isError = thread.status === "working-error";
+  const isError = thread?.status === "working-error";
   const { data: threadErrors } = useQuery({
-    ...threadErrorsQueryOptions(thread.id),
-    enabled: isError,
+    ...threadErrorsQueryOptions(thread?.id ?? ""),
+    enabled: isError && !!thread,
   });
   const latestError = threadErrors?.[0];
 
   // PR status badge -- only fetch when thread has a GitHub repo
   const { data: prs } = useQuery({
-    ...threadPRsQueryOptions(thread.id),
-    enabled: !!thread.githubRepoFullName,
+    ...threadPRsQueryOptions(thread?.id ?? ""),
+    enabled: !!thread?.githubRepoFullName,
   });
   const latestPR = prs?.at(-1) ?? null;
+
+  if (!thread) return null;
 
   const hasSecondaryInfo =
     stageElapsed || totalElapsed || (tokenUsage && totalTokens > 0) || latestPR;
