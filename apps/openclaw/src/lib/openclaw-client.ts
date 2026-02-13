@@ -99,7 +99,7 @@ export class OpenClawClient {
         scopes: CONNECT_SCOPES,
         caps: [],
         auth: token ? { token } : undefined,
-        userAgent: `openclaw-dashboard/${CLIENT_VERSION} node/${process.version}`,
+        userAgent: `openclaw-dashboard/${CLIENT_VERSION} node/${process.version ?? "unknown"}`,
         locale: "en",
       });
 

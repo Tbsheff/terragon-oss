@@ -158,6 +158,7 @@ export async function testConnection(): Promise<{
       version: health.version ?? `protocol-v${hello.protocol}`,
     };
   } catch (err) {
+    console.error("[testConnection] failed:", err);
     const now = new Date().toISOString();
     await db
       .update(openclawConnection)
