@@ -77,9 +77,9 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
 
   if (agentQuery.isLoading) {
     return (
-      <div className="animate-fade-in flex items-center justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-sm text-muted-foreground">
+      <div className="animate-fade-in flex flex-col items-center justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
+        <span className="mt-3 text-sm text-muted-foreground">
           Loading agent...
         </span>
       </div>
@@ -91,19 +91,21 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       <div className="space-y-4">
         <Link
           href="/agents"
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 -ml-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="-ml-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to agents
         </Link>
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="flex items-center gap-3 py-4">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <div>
+        <Card className="animate-fade-in border-destructive/50 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 px-5 py-5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="h-4.5 w-4.5 text-destructive" />
+            </div>
+            <div className="min-w-0">
               <p className="text-sm font-medium text-destructive">
                 Failed to load agent
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {agentQuery.error.message}
               </p>
             </div>
@@ -120,7 +122,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       {/* Back link */}
       <Link
         href="/agents"
-        className="inline-flex items-center gap-1 rounded-md px-2 py-1 -ml-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        className="-ml-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to agents
@@ -129,27 +131,32 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       {/* Agent info card */}
       <Card className="animate-fade-in">
         <CardHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-2xl">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-2xl">
                 {agent.emoji ?? "🤖"}
               </span>
-              <div>
+              <div className="min-w-0">
                 <CardTitle className="text-xl">{agent.name}</CardTitle>
                 {agent.model && (
-                  <Badge variant="secondary" className="mt-1">
+                  <Badge variant="secondary" className="mt-1.5">
                     {agent.model}
                   </Badge>
                 )}
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={startEditing}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={startEditing}
+            >
               <Pencil className="h-3.5 w-3.5" />
               Edit
             </Button>
           </div>
           {agent.description && (
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               {agent.description}
             </p>
           )}
@@ -158,8 +165,8 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
 
       {/* Edit dialog (inline) */}
       {editing && (
-        <Card className="animate-fade-in border-primary/30">
-          <CardHeader>
+        <Card className="animate-fade-in border-primary/20 bg-primary/[0.02]">
+          <CardHeader className="pb-2">
             <CardTitle className="text-base">Edit Agent</CardTitle>
           </CardHeader>
           <CardContent>
@@ -168,28 +175,30 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
                 e.preventDefault();
                 updateMutation.mutate();
               }}
-              className="space-y-4"
+              className="space-y-5"
             >
-              <div className="space-y-2">
-                <Label>Name</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-name">Name</Label>
                 <Input
+                  id="edit-name"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Emoji</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-emoji">Emoji</Label>
                   <Input
+                    id="edit-emoji"
                     value={editEmoji}
                     onChange={(e) => setEditEmoji(e.target.value)}
                     maxLength={4}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Model</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-model">Model</Label>
                   <Select value={editModel} onValueChange={setEditModel}>
-                    <SelectTrigger>
+                    <SelectTrigger id="edit-model">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -200,13 +209,15 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-description">Description</Label>
                 <Input
+                  id="edit-description"
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                 />
               </div>
+              <Separator />
               <div className="flex justify-end gap-2">
                 <Button
                   type="button"
@@ -236,8 +247,8 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
 
       {/* Workspace files */}
       <div>
-        <Separator className="mb-4" />
-        <h2 className="font-[var(--font-cabin)] mb-3 text-lg font-semibold">
+        <Separator className="mb-6" />
+        <h2 className="font-[var(--font-cabin)] mb-4 text-lg font-semibold tracking-tight">
           Workspace Files
         </h2>
         <AgentFileEditor agentId={agentId} />

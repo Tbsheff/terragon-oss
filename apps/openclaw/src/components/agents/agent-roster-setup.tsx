@@ -7,13 +7,6 @@ import { Loader2, CheckCircle2, XCircle, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SPECIALIZED_ROSTER, type SetupProgress } from "@/lib/agent-roster";
 import { createAgent, setAgentFile } from "@/server-actions/agents";
@@ -111,43 +104,31 @@ export function AgentRosterSetup({ onComplete }: { onComplete?: () => void }) {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          One-Click Roster Setup
-        </CardTitle>
-        <CardDescription>
-          Create 5 specialized agents pre-configured with SOUL.md files for
-          brainstorming, planning, coding, reviewing, and testing.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          {progress.map((item, i) => (
-            <RosterProgressItem key={i} item={item} index={i} />
-          ))}
-        </div>
+    <div className="space-y-5">
+      <div className="space-y-2.5">
+        {progress.map((item, i) => (
+          <RosterProgressItem key={i} item={item} index={i} />
+        ))}
+      </div>
 
-        <Button
-          onClick={() => setupMutation.mutate()}
-          disabled={isRunning}
-          className="w-full gap-2"
-        >
-          {isRunning ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Setting up roster...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Create All 5 Agents
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+      <Button
+        onClick={() => setupMutation.mutate()}
+        disabled={isRunning}
+        className="w-full"
+      >
+        {isRunning ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Setting up roster...
+          </>
+        ) : (
+          <>
+            <Sparkles className="h-4 w-4" />
+            Create All 5 Agents
+          </>
+        )}
+      </Button>
+    </div>
   );
 }
 
@@ -163,26 +144,31 @@ function RosterProgressItem({
   return (
     <div
       className={cn(
-        "animate-fade-in",
-        "flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors duration-200",
-        item.status === "done" && "border-green-500/30 bg-green-500/5",
+        "animate-fade-in opacity-0 [animation-fill-mode:forwards]",
+        "flex items-center gap-3 rounded-lg border px-3.5 py-2.5 text-sm transition-colors duration-200",
+        item.status === "pending" && "border-border bg-card",
+        item.status === "done" && "border-primary/30 bg-primary/5",
         item.status === "error" && "border-destructive/30 bg-destructive/5",
-        item.status === "creating" && "border-primary/30 bg-primary/5",
+        item.status === "creating" && "border-primary/40 bg-primary/10",
       )}
       style={{ animationDelay: `${index * 75}ms` }}
     >
-      <span className="text-lg">{item.agent.emoji}</span>
-      <div className="flex-1">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-base">
+        {item.agent.emoji}
+      </span>
+      <div className="min-w-0 flex-1">
         <div className="font-medium">{item.agent.name}</div>
-        <div className="text-xs text-muted-foreground">
+        <div className="truncate text-xs text-muted-foreground">
           {item.agent.description}
         </div>
         {item.error && (
           <div className="mt-1 text-xs text-destructive">{item.error}</div>
         )}
       </div>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Badge variant="outline">{item.agent.model}</Badge>
+      <div className="flex shrink-0 items-center gap-2">
+        <Badge variant="outline" className="text-[10px]">
+          {item.agent.model}
+        </Badge>
         <StatusIcon status={item.status} />
       </div>
     </div>
@@ -193,12 +179,12 @@ function StatusIcon({ status }: { status: SetupProgress["status"] }) {
   switch (status) {
     case "pending":
       return (
-        <div className="h-4 w-4 rounded-full border border-muted-foreground/30" />
+        <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/20" />
       );
     case "creating":
       return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
     case "done":
-      return <CheckCircle2 className="h-4 w-4 text-green-400" />;
+      return <CheckCircle2 className="h-4 w-4 text-primary" />;
     case "error":
       return <XCircle className="h-4 w-4 text-destructive" />;
   }

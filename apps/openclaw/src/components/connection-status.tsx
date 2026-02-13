@@ -2,11 +2,7 @@
 
 import { useConnection, type ConnectionStatus } from "@/hooks/use-connection";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { SidebarMenuButton } from "@/components/ui/sidebar";
 
 const statusConfig: Record<
   ConnectionStatus,
@@ -29,6 +25,33 @@ const statusConfig: Record<
   },
 };
 
+function StatusDot({
+  status,
+  config,
+}: {
+  status: ConnectionStatus;
+  config: (typeof statusConfig)[ConnectionStatus];
+}) {
+  return (
+    <span className="relative flex size-4 items-center justify-center shrink-0">
+      {status === "connected" && (
+        <span
+          className={cn(
+            "absolute inline-flex h-2 w-2 animate-ping rounded-full opacity-75",
+            config.pulseColor,
+          )}
+        />
+      )}
+      <span
+        className={cn(
+          "relative inline-flex h-2 w-2 rounded-full",
+          config.color,
+        )}
+      />
+    </span>
+  );
+}
+
 export function ConnectionStatusBadge() {
   const { status, lastCheck, health, isLoading } = useConnection();
 
@@ -45,36 +68,17 @@ export function ConnectionStatusBadge() {
         health?.error ? `Error: ${health.error}` : null,
       ]
         .filter(Boolean)
-        .join("\n");
+        .join(" \u00b7 ");
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-sidebar-accent transition-colors animate-fade-in">
-          <span className="relative flex h-2 w-2 shrink-0">
-            {status === "connected" && (
-              <span
-                className={cn(
-                  "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-                  config.pulseColor,
-                )}
-              />
-            )}
-            <span
-              className={cn(
-                "relative inline-flex h-2 w-2 rounded-full",
-                config.color,
-              )}
-            />
-          </span>
-          <span className="text-muted-foreground group-data-[collapsible=icon]:hidden">
-            {isLoading ? "Checking..." : config.label}
-          </span>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="whitespace-pre-line text-xs">
-        {tooltipLines}
-      </TooltipContent>
-    </Tooltip>
+    <SidebarMenuButton
+      tooltip={tooltipLines}
+      className="cursor-default hover:bg-transparent active:bg-transparent"
+    >
+      <StatusDot status={status} config={config} />
+      <span className="text-muted-foreground text-xs">
+        {isLoading ? "Checking..." : config.label}
+      </span>
+    </SidebarMenuButton>
   );
 }

@@ -6,9 +6,9 @@ type WordmarkProps = {
 };
 
 const sizes = {
-  sm: { badge: "h-5 w-5 text-[10px]", text: "text-sm" },
-  md: { badge: "h-7 w-7 text-xs", text: "text-sm" },
-  lg: { badge: "h-8 w-8 text-sm", text: "text-base" },
+  sm: { badge: "size-5 text-[10px]", text: "text-sm" },
+  md: { badge: "size-7 text-xs", text: "text-sm" },
+  lg: { badge: "size-8 text-sm", text: "text-base" },
 };
 
 export function Wordmark({ size = "md", className }: WordmarkProps) {

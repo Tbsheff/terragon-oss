@@ -149,9 +149,9 @@ export function AgentManager() {
 
       {/* Loading */}
       {agentsQuery.isLoading && (
-        <div className="animate-fade-in flex items-center justify-center py-12">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-sm text-muted-foreground">
+        <div className="animate-fade-in flex flex-col items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
+          <span className="mt-3 text-sm text-muted-foreground">
             Loading agents...
           </span>
         </div>
@@ -159,21 +159,23 @@ export function AgentManager() {
 
       {/* Error */}
       {agentsQuery.isError && (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="flex items-center gap-3 py-4">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <div>
+        <Card className="animate-fade-in border-destructive/50 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 px-5 py-5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="h-4.5 w-4.5 text-destructive" />
+            </div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-destructive">
                 Failed to load agents
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {agentsQuery.error.message}
               </p>
             </div>
             <Button
               size="sm"
               variant="outline"
-              className="ml-auto"
+              className="shrink-0"
               onClick={() => agentsQuery.refetch()}
             >
               Retry
@@ -184,16 +186,19 @@ export function AgentManager() {
 
       {/* Empty state */}
       {agentsQuery.data && agentsQuery.data.length === 0 && (
-        <Card className="animate-fade-in">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Bot className="h-14 w-14 text-muted-foreground/30 drop-shadow-sm" />
-            <p className="mt-4 text-sm font-medium text-muted-foreground">
+        <Card className="animate-fade-in border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <Bot className="h-8 w-8 text-muted-foreground/50" />
+            </div>
+            <p className="mt-5 font-[var(--font-cabin)] text-base font-semibold text-foreground">
               No agents yet
             </p>
-            <p className="mt-1 text-xs text-muted-foreground/70">
-              Create one manually or use One-Click Setup for the full roster.
+            <p className="mt-1.5 max-w-xs text-center text-sm text-muted-foreground">
+              Create one manually or use One-Click Setup to scaffold the full
+              roster of specialized agents.
             </p>
-            <div className="mt-4 flex gap-2">
+            <div className="mt-6 flex gap-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -282,16 +287,20 @@ function AgentCard({
   return (
     <Link
       href={`/agents/${agent.id}`}
-      className="animate-fade-in group block"
+      className="animate-fade-in group block opacity-0 [animation-fill-mode:forwards]"
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      <Card className="transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1">
+      <Card className="flex h-full flex-col transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{agent.emoji ?? "🤖"}</span>
-              <div>
-                <CardTitle className="text-base">{agent.name}</CardTitle>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xl">
+                {agent.emoji ?? "🤖"}
+              </span>
+              <div className="min-w-0">
+                <CardTitle className="truncate text-base">
+                  {agent.name}
+                </CardTitle>
                 {agent.model && (
                   <Badge variant="secondary" className="mt-1 text-[10px]">
                     {agent.model}
@@ -304,7 +313,7 @@ function AgentCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -318,13 +327,11 @@ function AgentCard({
             </Tooltip>
           </div>
         </CardHeader>
-        {agent.description && (
-          <CardContent className="pt-0">
-            <CardDescription className="line-clamp-2">
-              {agent.description}
-            </CardDescription>
-          </CardContent>
-        )}
+        <CardContent className="flex-1 pt-0">
+          <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+            {agent.description || "No description"}
+          </CardDescription>
+        </CardContent>
       </Card>
     </Link>
   );
@@ -367,11 +374,12 @@ function CreateAgentForm({ onCreated }: { onCreated: () => void }) {
         if (!name.trim()) return;
         mutation.mutate();
       }}
-      className="space-y-4"
+      className="space-y-5"
     >
-      <div className="space-y-2">
-        <Label>Name *</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="agent-name">Name *</Label>
         <Input
+          id="agent-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. coder"
@@ -380,9 +388,10 @@ function CreateAgentForm({ onCreated }: { onCreated: () => void }) {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Emoji</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="agent-emoji">Emoji</Label>
           <Input
+            id="agent-emoji"
             value={emoji}
             onChange={(e) => setEmoji(e.target.value)}
             placeholder="🤖"
@@ -390,10 +399,10 @@ function CreateAgentForm({ onCreated }: { onCreated: () => void }) {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>Model</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="agent-model">Model</Label>
           <Select value={model} onValueChange={setModel}>
-            <SelectTrigger>
+            <SelectTrigger id="agent-model">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -405,16 +414,17 @@ function CreateAgentForm({ onCreated }: { onCreated: () => void }) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Description</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="agent-description">Description</Label>
         <Input
+          id="agent-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="What does this agent do?"
         />
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="pt-2">
         <Button type="submit" disabled={!name.trim() || mutation.isPending}>
           {mutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />

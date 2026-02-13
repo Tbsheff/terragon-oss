@@ -24,6 +24,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 
@@ -31,14 +32,16 @@ function StatusIcon({ status }: { status: string }) {
   switch (status) {
     case "complete":
     case "working-done":
-      return <CheckCircle2 className="h-3 w-3 text-green-500" />;
+      return <CheckCircle2 className="size-3.5 text-green-500 shrink-0" />;
     case "working":
     case "stopping":
-      return <Loader2 className="h-3 w-3 text-primary animate-spin" />;
+      return (
+        <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
+      );
     case "working-error":
-      return <XCircle className="h-3 w-3 text-destructive" />;
+      return <XCircle className="size-3.5 text-destructive shrink-0" />;
     default:
-      return <Circle className="h-3 w-3 text-muted-foreground" />;
+      return <Circle className="size-3.5 text-muted-foreground shrink-0" />;
   }
 }
 
@@ -47,7 +50,7 @@ function StageBadge({ stage }: { stage: PipelineStage | "done" }) {
     return (
       <Badge
         variant="outline"
-        className="text-[10px] text-green-500 border-green-500/30 px-1.5 py-0"
+        className="text-[10px] leading-none text-green-500 border-green-500/30 px-1 py-0 rounded-sm"
       >
         Done
       </Badge>
@@ -56,7 +59,7 @@ function StageBadge({ stage }: { stage: PipelineStage | "done" }) {
   return (
     <Badge
       variant="outline"
-      className="text-[10px] text-primary border-primary/30 px-1.5 py-0"
+      className="text-[10px] leading-none text-primary border-primary/30 px-1 py-0 rounded-sm"
     >
       {PIPELINE_STAGE_LABELS[stage]}
     </Badge>
@@ -67,8 +70,8 @@ function ElapsedBadge({ startedAt }: { startedAt: string | null }) {
   const elapsed = useElapsedTime(startedAt);
   if (!elapsed) return null;
   return (
-    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-      <Clock className="h-2.5 w-2.5" />
+    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground tabular-nums">
+      <Clock className="size-2.5" />
       {elapsed}
     </span>
   );
@@ -85,12 +88,12 @@ export function OpenClawTaskList() {
   );
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col">
       {/* Active tasks */}
       <SidebarMenu>
         {activeThreads.length === 0 ? (
           <div className="flex flex-col items-center gap-1.5 px-2 py-6 text-muted-foreground group-data-[collapsible=icon]:hidden">
-            <Leaf className="h-5 w-5 opacity-40" />
+            <Leaf className="size-5 opacity-40" />
             <p className="text-xs">No active tasks</p>
           </div>
         ) : (
@@ -117,16 +120,18 @@ export function OpenClawTaskList() {
                   asChild
                   isActive={isActive}
                   tooltip={t.name ?? "Untitled Task"}
+                  className="h-auto py-1.5"
                 >
                   <Link href={`/task/${t.id}`}>
                     <StatusIcon status={t.status} />
                     <span className="flex flex-col gap-0.5 min-w-0">
-                      <span className="flex items-center gap-1 min-w-0">
-                        <span className="truncate text-xs font-medium">
+                      {/* Row 1: Task name + error/elapsed indicators */}
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <span className="truncate text-xs font-medium leading-snug">
                           {t.name ?? "Untitled Task"}
                         </span>
                         {isError && (
-                          <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                          <AlertTriangle className="size-3 text-destructive shrink-0" />
                         )}
                         {isTaskWorking && (
                           <ElapsedBadge
@@ -134,23 +139,25 @@ export function OpenClawTaskList() {
                           />
                         )}
                       </span>
+                      {/* Row 2: Activity label (only when working) */}
                       {isTaskWorking && activityLabel && (
-                        <span className="text-[10px] text-muted-foreground truncate">
+                        <span className="text-[10px] leading-tight text-muted-foreground truncate">
                           {activityLabel}
                         </span>
                       )}
-                      <span className="flex items-center gap-1">
+                      {/* Row 3: Stage + metadata */}
+                      <span className="flex items-center gap-1.5 min-w-0">
                         {pipeline?.currentStage && (
                           <StageBadge stage={pipeline.currentStage} />
                         )}
                         {tokenUsage?.totalCost != null &&
                           tokenUsage.totalCost > 0 && (
-                            <span className="text-[10px] text-muted-foreground font-mono">
+                            <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
                               {formatCost(tokenUsage.totalCost)}
                             </span>
                           )}
                         {t.githubRepoFullName && (
-                          <span className="text-[10px] text-muted-foreground truncate">
+                          <span className="text-[10px] text-muted-foreground truncate ml-auto">
                             {t.githubRepoFullName.split("/")[1]}
                           </span>
                         )}
@@ -166,11 +173,12 @@ export function OpenClawTaskList() {
 
       {/* Archived tasks */}
       {archivedThreads.length > 0 && (
-        <div className="border-t border-sidebar-border pt-2 group-data-[collapsible=icon]:hidden">
-          <h3 className="mb-1 flex items-center gap-1 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider font-[var(--font-cabin)]">
-            <Archive className="h-3 w-3" />
+        <div className="group-data-[collapsible=icon]:hidden">
+          <SidebarSeparator className="my-2" />
+          <div className="mb-1 flex items-center gap-1.5 px-2 text-[11px] font-medium text-sidebar-foreground/70 uppercase tracking-wider">
+            <Archive className="size-3" />
             Archived ({archivedThreads.length})
-          </h3>
+          </div>
           <SidebarMenu>
             {archivedThreads.slice(0, 10).map((t) => (
               <SidebarMenuItem key={t.id}>
@@ -178,10 +186,13 @@ export function OpenClawTaskList() {
                   asChild
                   size="sm"
                   tooltip={t.name ?? "Untitled"}
+                  className="text-muted-foreground"
                 >
                   <Link href={`/task/${t.id}`}>
                     <StatusIcon status={t.status} />
-                    <span className="truncate">{t.name ?? "Untitled"}</span>
+                    <span className="truncate text-xs">
+                      {t.name ?? "Untitled"}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -112,9 +112,9 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
 
   if (filesQuery.isLoading) {
     return (
-      <div className="animate-fade-in flex items-center justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-sm text-muted-foreground">
+      <div className="animate-fade-in flex flex-col items-center justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
+        <span className="mt-3 text-sm text-muted-foreground">
           Loading files...
         </span>
       </div>
@@ -123,19 +123,27 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
 
   if (filesQuery.isError) {
     return (
-      <div className="animate-fade-in rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-        Failed to load agent files: {filesQuery.error.message}
+      <div className="animate-fade-in flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-4 text-sm text-destructive">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+          <span className="text-xs">!</span>
+        </div>
+        <div>
+          <p className="font-medium">Failed to load agent files</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {filesQuery.error.message}
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="animate-fade-in flex flex-col gap-3">
       <Tabs
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as WorkspaceFile)}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <TabsList>
             {WORKSPACE_FILES.map((f) => (
               <TabsTrigger key={f} value={f} className="relative">
@@ -162,18 +170,18 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
         </div>
 
         {WORKSPACE_FILES.map((f) => (
-          <TabsContent key={f} value={f}>
+          <TabsContent key={f} value={f} className="mt-3">
             <textarea
               value={buffers[f] ?? ""}
               onChange={(e) => handleChange(f, e.target.value)}
               placeholder={`# ${f}\n\nStart writing...`}
               spellCheck={false}
               className={cn(
-                "w-full min-h-[500px] resize-y rounded-lg border bg-muted/30 p-4 shadow-inner",
+                "w-full min-h-[480px] resize-y rounded-lg border border-border/80 bg-card p-4",
                 "font-mono text-sm leading-relaxed text-foreground",
-                "placeholder:text-muted-foreground/50",
-                "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
-                "scrollbar-thin",
+                "placeholder:text-muted-foreground/40",
+                "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40",
+                "transition-colors duration-150",
               )}
             />
           </TabsContent>
@@ -191,9 +199,9 @@ function SaveStatusIndicator({ status }: { status: SaveStatus }) {
   return (
     <span
       className={cn(
-        "animate-fade-in flex items-center gap-1 text-xs",
+        "animate-fade-in flex items-center gap-1.5 text-xs font-medium",
         status === "saving" && "text-muted-foreground",
-        status === "saved" && "text-green-400",
+        status === "saved" && "text-primary",
         status === "error" && "text-destructive",
       )}
     >

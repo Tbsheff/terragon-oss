@@ -14,6 +14,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  Check,
 } from "lucide-react";
 import {
   Sidebar,
@@ -27,6 +28,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
@@ -63,18 +65,22 @@ function ThemeToggle() {
         <DropdownMenuItem onClick={() => setTheme("light")}>
           <Sun className="size-4" />
           Light
-          {theme === "light" && <span className="ml-auto text-primary">*</span>}
+          {theme === "light" && (
+            <Check className="ml-auto size-3.5 text-primary" />
+          )}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("dark")}>
           <Moon className="size-4" />
           Dark
-          {theme === "dark" && <span className="ml-auto text-primary">*</span>}
+          {theme === "dark" && (
+            <Check className="ml-auto size-3.5 text-primary" />
+          )}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")}>
           <Monitor className="size-4" />
           System
           {theme === "system" && (
-            <span className="ml-auto text-primary">*</span>
+            <Check className="ml-auto size-3.5 text-primary" />
           )}
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -87,21 +93,25 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center justify-between">
+      <SidebarHeader className="pb-0">
+        <div className="flex h-10 items-center justify-between">
           <Wordmark />
           <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Primary nav */}
+        {/* New Task + Primary nav */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* New Task */}
+              {/* New Task - prominent CTA */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="New Task">
+                <SidebarMenuButton
+                  asChild
+                  tooltip="New Task"
+                  className="bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary font-medium"
+                >
                   <Link href="/">
                     <Plus className="size-4" />
                     <span>New Task</span>
@@ -166,6 +176,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        <SidebarSeparator />
         <SidebarMenu>
           <SidebarMenuItem>
             <ConnectionStatusBadge />
