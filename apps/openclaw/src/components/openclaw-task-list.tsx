@@ -5,8 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { threadListQueryOptions } from "@/queries/thread-queries";
 import { parsePipelineState } from "@/hooks/use-pipeline";
+import { useElapsedTime } from "@/hooks/use-elapsed-time";
 import { PIPELINE_STAGE_LABELS, type PipelineStage } from "@/lib/constants";
-import { Circle, CheckCircle2, XCircle, Loader2, Archive } from "lucide-react";
+import { getActivityLabel } from "@/lib/activity-label";
+import {
+  Circle,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Archive,
+  Clock,
+} from "lucide-react";
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -43,6 +52,17 @@ function StageBadge({ stage }: { stage: PipelineStage | "done" }) {
   );
 }
 
+function ElapsedBadge({ startedAt }: { startedAt: string | null }) {
+  const elapsed = useElapsedTime(startedAt);
+  if (!elapsed) return null;
+  return (
+    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+      <Clock className="h-2.5 w-2.5" />
+      {elapsed}
+    </span>
+  );
+}
+
 export function OpenClawTaskList() {
   const pathname = usePathname();
 
@@ -65,6 +85,13 @@ export function OpenClawTaskList() {
           activeThreads.map((t) => {
             const isActive = pathname === `/task/${t.id}`;
             const pipeline = parsePipelineState(t.pipelineState);
+            const isTaskWorking =
+              t.status === "working" || t.status === "stopping";
+            const firstEntry = pipeline?.stageHistory[0];
+            const activityLabel = getActivityLabel(
+              pipeline?.currentStage ?? null,
+              t.status,
+            );
 
             return (
               <SidebarMenuItem key={t.id}>
@@ -76,9 +103,21 @@ export function OpenClawTaskList() {
                   <Link href={`/task/${t.id}`}>
                     <StatusIcon status={t.status} />
                     <span className="flex flex-col gap-0.5 min-w-0">
-                      <span className="truncate text-xs font-medium">
-                        {t.name ?? "Untitled Task"}
+                      <span className="flex items-center gap-1 min-w-0">
+                        <span className="truncate text-xs font-medium">
+                          {t.name ?? "Untitled Task"}
+                        </span>
+                        {isTaskWorking && (
+                          <ElapsedBadge
+                            startedAt={firstEntry?.startedAt ?? null}
+                          />
+                        )}
                       </span>
+                      {isTaskWorking && activityLabel && (
+                        <span className="text-[10px] text-muted-foreground truncate">
+                          {activityLabel}
+                        </span>
+                      )}
                       <span className="flex items-center gap-1">
                         {pipeline?.currentStage && (
                           <StageBadge stage={pipeline.currentStage} />

@@ -6,8 +6,13 @@ import {
   PIPELINE_STAGE_LABELS,
   type PipelineStage,
 } from "@/lib/constants";
-import type { PipelineState, PipelineStageStatus } from "@/hooks/use-pipeline";
+import type {
+  PipelineState,
+  PipelineStageStatus,
+  PipelineStageHistory,
+} from "@/hooks/use-pipeline";
 import { StageBadge } from "./stage-badge";
+import { useElapsedTime, formatDuration } from "@/hooks/use-elapsed-time";
 
 // ─────────────────────────────────────────────────
 // Helpers
@@ -55,6 +60,28 @@ function StageConnector({ status }: { status: PipelineStageStatus }) {
       )}
     />
   );
+}
+
+function StageDuration({ entry }: { entry: PipelineStageHistory | undefined }) {
+  const liveElapsed = useElapsedTime(
+    entry?.status === "running" ? entry.startedAt : null,
+  );
+
+  if (!entry) return null;
+
+  if (entry.status === "running" && liveElapsed) {
+    return <span className="text-[10px] text-primary">{liveElapsed}</span>;
+  }
+
+  if (entry.completedAt) {
+    return (
+      <span className="text-[10px] text-muted-foreground">
+        {formatDuration(entry.startedAt, entry.completedAt)}
+      </span>
+    );
+  }
+
+  return null;
 }
 
 // ─────────────────────────────────────────────────
@@ -119,15 +146,21 @@ export function PipelineStatus({
       <div className="flex items-center gap-0">
         {stagesToShow.map((stage, idx) => {
           const { status, retryCount } = getStageStatus(stage, state);
+          const entries = state?.stageHistory.filter((h) => h.stage === stage);
+          const latestEntry = entries?.[entries.length - 1];
+
           return (
-            <div key={stage} className="flex items-center">
-              {idx > 0 && <StageConnector status={status} />}
-              <StageBadge
-                stage={stage}
-                status={status}
-                retryCount={retryCount}
-                compact={compact}
-              />
+            <div key={stage} className="flex flex-col items-center gap-0.5">
+              <div className="flex items-center">
+                {idx > 0 && <StageConnector status={status} />}
+                <StageBadge
+                  stage={stage}
+                  status={status}
+                  retryCount={retryCount}
+                  compact={compact}
+                />
+              </div>
+              <StageDuration entry={latestEntry} />
             </div>
           );
         })}

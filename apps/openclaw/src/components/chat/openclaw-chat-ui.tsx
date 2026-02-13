@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ThreadProvider, type OpenClawThread } from "./thread-context";
 import { OpenClawChatHeader } from "./openclaw-chat-header";
 import { OpenClawPromptBox } from "./openclaw-promptbox";
 import { ChatMessages, WorkingMessage } from "./chat-messages";
+import { ScrollToBottomButton } from "./scroll-to-bottom-button";
 import { toUIMessages } from "./toUIMessages";
 import { useRealtimeThread } from "@/hooks/use-realtime";
+import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { DBMessage, ThreadStatus } from "@/lib/types";
 import { threadDetailQueryOptions } from "@/queries/thread-queries";
 
@@ -26,7 +28,8 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
   const queryClient = useQueryClient();
   const [dbMessages, setDbMessages] = useState<DBMessage[]>([]);
   const [isWorking, setIsWorking] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { containerRef, messagesEndRef, isAtBottom, scrollToBottom } =
+    useScrollToBottom();
 
   // Fetch thread detail
   const { data: threadDetail } = useQuery(threadDetailQueryOptions(threadId));
@@ -67,11 +70,6 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
       );
     }
   }, [threadDetail?.status]);
-
-  // Auto-scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [uiMessages.length]);
 
   const handleSend = useCallback(
     async (message: string) => {
@@ -120,22 +118,31 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
         <OpenClawChatHeader onArchive={handleArchive} />
 
         {/* Chat messages area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          {uiMessages.length === 0 && !isWorking ? (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">
-                Start a conversation to begin...
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <ChatMessages messages={uiMessages} isAgentWorking={isWorking} />
-              {isWorking && uiMessages.length === 0 && (
-                <WorkingMessage message="Agent is starting..." />
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
+        <div className="relative flex-1 overflow-hidden">
+          <div ref={containerRef} className="h-full overflow-y-auto px-4 py-4">
+            {uiMessages.length === 0 && !isWorking ? (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-sm text-muted-foreground">
+                  Start a conversation to begin...
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <ChatMessages
+                  messages={uiMessages}
+                  isAgentWorking={isWorking}
+                />
+                {isWorking && uiMessages.length === 0 && (
+                  <WorkingMessage message="Agent is starting..." />
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
+          <ScrollToBottomButton
+            visible={!isAtBottom}
+            onClick={scrollToBottom}
+          />
         </div>
 
         <OpenClawPromptBox
