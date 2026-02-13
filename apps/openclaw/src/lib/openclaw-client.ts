@@ -70,10 +70,15 @@ export class OpenClawClient {
   private listeners = new Map<string, Set<EventCallback<any>>>();
   private state: ConnectionState = "disconnected";
 
+  // Gate non-connect requests until handshake completes
+  private readyResolve: (() => void) | null = null;
+  private readyPromise: Promise<void> | null = null;
+
   // ── Lifecycle ──────────────────────────────────
 
   async connect(url: string, token: string): Promise<HelloPayload> {
     this.setState("connecting");
+    this.resetReady();
 
     return new Promise<HelloPayload>((resolve, reject) => {
       this.ws = new ReconnectingWebSocket(url, [], {
@@ -125,6 +130,7 @@ export class OpenClawClient {
               )
                 .then((hello) => {
                   this.setState("connected");
+                  this.markReady();
                   this.emit("connected", hello);
                   if (!handshakeResolved) {
                     handshakeResolved = true;
@@ -150,6 +156,7 @@ export class OpenClawClient {
         // On reconnect, re-do handshake automatically
         if (handshakeResolved) {
           this.setState("reconnecting");
+          this.resetReady();
           this.rejectAllPending("Connection lost — reconnecting");
         }
       });
@@ -314,6 +321,17 @@ export class OpenClawClient {
     this.state = next;
   }
 
+  private resetReady(): void {
+    this.readyPromise = new Promise<void>((resolve) => {
+      this.readyResolve = resolve;
+    });
+  }
+
+  private markReady(): void {
+    this.readyResolve?.();
+    this.readyResolve = null;
+  }
+
   private emit(event: string, payload: Record<string, unknown>): void {
     const cbs = this.listeners.get(event);
     if (!cbs) return;
@@ -326,9 +344,14 @@ export class OpenClawClient {
     }
   }
 
-  private sendRequest<
+  private async sendRequest<
     T extends Record<string, unknown> = Record<string, unknown>,
   >(method: string, params?: Record<string, unknown>): Promise<T> {
+    // Gate non-connect requests until handshake completes
+    if (method !== "connect" && this.readyPromise) {
+      await this.readyPromise;
+    }
+
     return new Promise<T>((resolve, reject) => {
       if (!this.ws) {
         reject(new Error("Not connected"));
