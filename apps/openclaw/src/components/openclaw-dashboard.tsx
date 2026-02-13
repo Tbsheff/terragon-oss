@@ -12,6 +12,17 @@ import {
   TestTube,
   Sparkles,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 const QUICK_TEMPLATES = [
   {
@@ -69,86 +80,85 @@ export function OpenClawDashboard() {
   return (
     <div className="flex h-full flex-col items-center justify-center px-8">
       <div className="w-full max-w-2xl">
-        <h1 className="text-2xl font-bold tracking-tight mb-1">New Task</h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          Describe what you want the agents to build
-        </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>New Task</CardTitle>
+            <CardDescription>
+              Describe what you want the agents to build
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Prompt input */}
+            <div>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="e.g., Add a new tRPC endpoint for user preferences with Zod validation and Vitest tests"
+                rows={4}
+                className="w-full rounded-lg border border-input bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none resize-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    handleCreate();
+                  }
+                }}
+              />
+            </div>
 
-        {/* Prompt input */}
-        <div className="mb-4">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="e.g., Add a new tRPC endpoint for user preferences with Zod validation and Vitest tests"
-            rows={4}
-            className="w-full rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                handleCreate();
-              }
-            }}
-          />
-        </div>
+            {/* Repo input */}
+            <div className="space-y-1">
+              <Label htmlFor="repo">Repository (optional)</Label>
+              <Input
+                id="repo"
+                type="text"
+                value={repoFullName}
+                onChange={(e) => setRepoFullName(e.target.value)}
+                placeholder="owner/repo"
+              />
+            </div>
 
-        {/* Repo input */}
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-muted-foreground mb-1">
-            Repository (optional)
-          </label>
-          <input
-            type="text"
-            value={repoFullName}
-            onChange={(e) => setRepoFullName(e.target.value)}
-            placeholder="owner/repo"
-            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
-        </div>
+            <Separator className="my-4" />
 
-        {/* Pipeline template selection */}
-        <div className="mb-6">
-          <label className="block text-xs font-medium text-muted-foreground mb-2">
-            Pipeline
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {QUICK_TEMPLATES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setSelectedTemplate(t.id)}
-                className={cn(
-                  "flex flex-col items-start rounded-lg border p-3 text-left transition-colors",
-                  selectedTemplate === t.id
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-card hover:border-primary/50",
-                )}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <t.icon className="h-4 w-4" />
-                  <span className="text-xs font-medium">{t.label}</span>
-                </div>
-                <span className="text-[10px] text-muted-foreground">
-                  {t.stages}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+            {/* Pipeline template selection */}
+            <div>
+              <Label className="mb-2 block">Pipeline</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {QUICK_TEMPLATES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setSelectedTemplate(t.id)}
+                    className={cn(
+                      "flex flex-col items-start rounded-lg border p-3 text-left transition-colors focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
+                      selectedTemplate === t.id
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-card hover:border-primary/50",
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <t.icon className="h-4 w-4" />
+                      <span className="text-xs font-medium">{t.label}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      {t.stages}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {/* Create button */}
-        <button
-          onClick={handleCreate}
-          disabled={!prompt.trim() || isCreating}
-          className={cn(
-            "w-full rounded-lg py-2.5 text-sm font-medium transition-colors",
-            prompt.trim() && !isCreating
-              ? "bg-primary text-primary-foreground hover:bg-primary/90"
-              : "bg-muted text-muted-foreground cursor-not-allowed",
-          )}
-        >
-          {isCreating ? "Creating..." : "Start Task"}
-        </button>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          ⌘+Enter to start
-        </p>
+            {/* Create button */}
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={handleCreate}
+              disabled={!prompt.trim() || isCreating}
+            >
+              {isCreating ? "Creating..." : "Start Task"}
+            </Button>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              ⌘+Enter to start
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
