@@ -4,28 +4,22 @@ import { db } from "@/db";
 import { settings, openclawConnection, githubAuth } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { OpenClawClient } from "@/lib/openclaw-client";
+import { encrypt, decrypt, isEncrypted } from "@/lib/crypto";
 
 // ─────────────────────────────────────────────────
 // Settings
 // ─────────────────────────────────────────────────
 
 export async function getSettings() {
+  const now = new Date().toISOString();
+  await db
+    .insert(settings)
+    .values({ id: "default", createdAt: now, updatedAt: now })
+    .onConflictDoNothing();
   const rows = await db
     .select()
     .from(settings)
     .where(eq(settings.id, "default"));
-  if (rows.length === 0) {
-    // Insert default row
-    const now = new Date().toISOString();
-    await db
-      .insert(settings)
-      .values({ id: "default", createdAt: now, updatedAt: now });
-    const inserted = await db
-      .select()
-      .from(settings)
-      .where(eq(settings.id, "default"));
-    return inserted[0] ?? null;
-  }
   return rows[0] ?? null;
 }
 
@@ -71,14 +65,11 @@ function parseGatewayUrl(): { host: string; port: number; useTls: boolean } {
 }
 
 export async function getConnection() {
-  const rows = await db
-    .select()
-    .from(openclawConnection)
-    .where(eq(openclawConnection.id, "default"));
-  if (rows.length === 0) {
-    const defaults = parseGatewayUrl();
-    const now = new Date().toISOString();
-    await db.insert(openclawConnection).values({
+  const defaults = parseGatewayUrl();
+  const now = new Date().toISOString();
+  await db
+    .insert(openclawConnection)
+    .values({
       id: "default",
       host: defaults.host,
       port: defaults.port,
@@ -86,13 +77,12 @@ export async function getConnection() {
       authToken: process.env.OPENCLAW_AUTH_TOKEN ?? null,
       createdAt: now,
       updatedAt: now,
-    });
-    const inserted = await db
-      .select()
-      .from(openclawConnection)
-      .where(eq(openclawConnection.id, "default"));
-    return inserted[0] ?? null;
-  }
+    })
+    .onConflictDoNothing();
+  const rows = await db
+    .select()
+    .from(openclawConnection)
+    .where(eq(openclawConnection.id, "default"));
   return rows[0] ?? null;
 }
 
@@ -125,6 +115,7 @@ export async function testConnection(): Promise<{
   success: boolean;
   status?: string;
   version?: string;
+  dbStatus?: string;
   error?: string;
 }> {
   try {
@@ -139,6 +130,17 @@ export async function testConnection(): Promise<{
     const client = new OpenClawClient();
     const hello = await client.connect(url, conn.authToken ?? "");
     const health = await client.health();
+
+    // Also verify DB connectivity
+    let dbHealthy = true;
+    try {
+      const { db: dbInstance } = await import("@/db");
+      const { sql: sqlTag } = await import("drizzle-orm");
+      await dbInstance.run(sqlTag`SELECT 1`);
+    } catch {
+      dbHealthy = false;
+    }
+
     client.disconnect();
 
     // Update last health check
@@ -156,6 +158,7 @@ export async function testConnection(): Promise<{
       success: true,
       status: health.ok ? "ok" : "error",
       version: health.version ?? `protocol-v${hello.protocol}`,
+      dbStatus: dbHealthy ? "ok" : "error",
     };
   } catch (err) {
     console.error("[testConnection] failed:", err);
@@ -188,7 +191,11 @@ export async function getGithubAuth() {
   if (rows.length === 0) {
     return null;
   }
-  return rows[0] ?? null;
+  const row = rows[0] ?? null;
+  if (row?.personalAccessToken && isEncrypted(row.personalAccessToken)) {
+    return { ...row, personalAccessToken: decrypt(row.personalAccessToken) };
+  }
+  return row;
 }
 
 export async function updateGithubAuth(data: {
@@ -196,17 +203,21 @@ export async function updateGithubAuth(data: {
   username?: string | null;
 }) {
   const now = new Date().toISOString();
+  const encryptedData = { ...data };
+  if (data.personalAccessToken) {
+    encryptedData.personalAccessToken = encrypt(data.personalAccessToken);
+  }
   await db
     .insert(githubAuth)
     .values({
       id: "default",
-      ...data,
+      ...encryptedData,
       createdAt: now,
       updatedAt: now,
     })
     .onConflictDoUpdate({
       target: githubAuth.id,
-      set: { ...data, updatedAt: now },
+      set: { ...encryptedData, updatedAt: now },
     });
   return getGithubAuth();
 }

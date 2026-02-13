@@ -123,7 +123,7 @@ export const credentials = sqliteTable("credentials", {
     enum: ["anthropic", "openai", "google", "amp", "github"],
   }).notNull(),
   name: text("name").notNull(),
-  value: text("value").notNull(), // encrypted at rest
+  value: text("value").notNull(), // AES-256-GCM encrypted
   createdAt: text("created_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -201,7 +201,7 @@ export const githubCheckRun = sqliteTable("github_check_run", {
 // ─────────────────────────────────────────────────
 export const githubAuth = sqliteTable("github_auth", {
   id: text("id").primaryKey().default("default"),
-  personalAccessToken: text("personal_access_token"), // encrypted
+  personalAccessToken: text("personal_access_token"), // AES-256-GCM encrypted
   username: text("username"),
   createdAt: text("created_at")
     .notNull()

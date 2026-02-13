@@ -130,6 +130,17 @@ export function useRealtimeGlobal() {
           queryKey: ["agents"],
         });
       }
+      if (msg.type === "thread-list-update") {
+        queryClient.invalidateQueries({
+          queryKey: ["dashboard", "stats"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["threads", "enriched-list"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["threads", "list"],
+        });
+      }
     },
   });
 }

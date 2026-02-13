@@ -21,6 +21,12 @@ export type DashboardStats = {
     outputTokens: number;
     totalCost: number;
   };
+  gatewayHealth?: {
+    status: string;
+    cpu?: number;
+    memory?: number;
+    activeSessions?: number;
+  };
 };
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -33,7 +39,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     completedTodayRows,
     errorRows,
     recentErrors,
-    allThreads,
+    tokenAgg,
   ] = await Promise.all([
     // Active count: working or stopping
     db
@@ -78,28 +84,38 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .where(isNotNull(threadChat.errorMessage))
       .orderBy(desc(threadChat.updatedAt))
       .limit(10),
-    // All threads for token usage aggregation
+    // Aggregate token usage via SQL (avoids fetching all rows over HTTP)
     db
-      .select({ tokenUsage: thread.tokenUsage })
+      .select({
+        inputTokens: sql<number>`COALESCE(SUM(json_extract(${thread.tokenUsage}, '$.inputTokens')), 0)`,
+        outputTokens: sql<number>`COALESCE(SUM(json_extract(${thread.tokenUsage}, '$.outputTokens')), 0)`,
+        totalCost: sql<number>`COALESCE(SUM(json_extract(${thread.tokenUsage}, '$.totalCost')), 0)`,
+      })
       .from(thread)
       .where(isNotNull(thread.tokenUsage)),
   ]);
 
-  // Aggregate token usage from JSON fields
-  let inputTokens = 0;
-  let outputTokens = 0;
-  let totalCost = 0;
+  const agg = tokenAgg[0];
+  const inputTokens = Number(agg?.inputTokens ?? 0);
+  const outputTokens = Number(agg?.outputTokens ?? 0);
+  const totalCost = Number(agg?.totalCost ?? 0);
 
-  for (const row of allThreads) {
-    if (!row.tokenUsage) continue;
-    try {
-      const usage = JSON.parse(row.tokenUsage);
-      inputTokens += usage.inputTokens ?? 0;
-      outputTokens += usage.outputTokens ?? 0;
-      totalCost += usage.totalCost ?? 0;
-    } catch {
-      // Skip malformed JSON
+  // Best-effort gateway health
+  let gatewayHealth: DashboardStats["gatewayHealth"];
+  try {
+    const { getOpenClawClient } = await import("@/lib/openclaw-client");
+    const client = getOpenClawClient();
+    if (client.getState() === "connected") {
+      const health = await client.health();
+      gatewayHealth = {
+        status: health.ok ? "healthy" : "unhealthy",
+        cpu: (health as any).cpu,
+        memory: (health as any).memory,
+        activeSessions: (health as any).activeSessions,
+      };
     }
+  } catch {
+    // Gateway unavailable — skip
   }
 
   return {
@@ -109,5 +125,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     errorCount: errorRows[0]?.cnt ?? 0,
     recentErrors,
     tokenUsageSummary: { inputTokens, outputTokens, totalCost },
+    gatewayHealth,
   };
 }

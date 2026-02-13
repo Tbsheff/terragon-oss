@@ -6,6 +6,7 @@ import { githubAuth, githubPR, githubCheckRun, thread } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { getSettings } from "@/server-actions/settings";
+import { decrypt, isEncrypted } from "@/lib/crypto";
 
 // ─────────────────────────────────────────────────
 // Types
@@ -56,9 +57,13 @@ export async function getGitHubAuth(): Promise<
     };
   }
 
+  const token = isEncrypted(row.personalAccessToken)
+    ? decrypt(row.personalAccessToken)
+    : row.personalAccessToken;
+
   return {
     ok: true,
-    data: { token: row.personalAccessToken, username: row.username },
+    data: { token, username: row.username },
   };
 }
 
@@ -292,10 +297,8 @@ export async function pollCheckStatus(prId: string): Promise<
     const now = new Date().toISOString();
     const checkResults: CheckRunData[] = [];
 
-    // Clear old check runs for this PR
-    await db.delete(githubCheckRun).where(eq(githubCheckRun.githubPRId, prId));
-
-    for (const run of checkData.check_runs) {
+    // Build check run values for batch insert
+    const checkRunValues = checkData.check_runs.map((run) => {
       const checkId = nanoid();
       const status = run.status as "queued" | "in_progress" | "completed";
       const conclusion = run.conclusion as
@@ -308,7 +311,15 @@ export async function pollCheckStatus(prId: string): Promise<
         | "action_required"
         | null;
 
-      await db.insert(githubCheckRun).values({
+      checkResults.push({
+        id: checkId,
+        name: run.name,
+        status,
+        conclusion,
+        detailsUrl: run.details_url ?? null,
+      });
+
+      return {
         id: checkId,
         githubPRId: prId,
         checkRunId: String(run.id),
@@ -318,16 +329,8 @@ export async function pollCheckStatus(prId: string): Promise<
         detailsUrl: run.details_url ?? null,
         createdAt: now,
         updatedAt: now,
-      });
-
-      checkResults.push({
-        id: checkId,
-        name: run.name,
-        status,
-        conclusion,
-        detailsUrl: run.details_url ?? null,
-      });
-    }
+      };
+    });
 
     // Determine aggregate checks status
     let checksStatus: "none" | "pending" | "success" | "failure" | "unknown" =
@@ -348,11 +351,21 @@ export async function pollCheckStatus(prId: string): Promise<
       else checksStatus = "unknown";
     }
 
-    // Update PR record
-    await db
-      .update(githubPR)
-      .set({ checksStatus, updatedAt: now })
-      .where(eq(githubPR.id, prId));
+    // Atomic: delete old checks → insert new → update PR status
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(githubCheckRun)
+        .where(eq(githubCheckRun.githubPRId, prId));
+
+      if (checkRunValues.length > 0) {
+        await tx.insert(githubCheckRun).values(checkRunValues);
+      }
+
+      await tx
+        .update(githubPR)
+        .set({ checksStatus, updatedAt: now })
+        .where(eq(githubPR.id, prId));
+    });
 
     return {
       ok: true,

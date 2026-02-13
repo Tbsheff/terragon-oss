@@ -31,6 +31,14 @@ export async function sendChatMessage(threadId: string, message: string) {
 
   const sessionKey = activeChat.sessionKey || `session-${threadId}`;
 
+  // Register session with bridge so gateway events route to this thread
+  try {
+    const { getBridge } = await import("@/server/bridge-registry");
+    getBridge()?.registerSession(sessionKey, threadId);
+  } catch {
+    // Bridge may not be available in test/dev-only mode
+  }
+
   // Update thread status to working
   await db
     .update(thread)

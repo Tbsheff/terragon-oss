@@ -125,15 +125,15 @@ export async function seedDefaultTemplates() {
     },
   ];
 
-  for (const t of defaults) {
-    await db.insert(pipelineTemplate).values({
+  await db.insert(pipelineTemplate).values(
+    defaults.map((t) => ({
       id: t.id,
       name: t.name,
       description: t.description,
       stages: JSON.stringify(t.stages),
       isDefault: t.isDefault,
-    });
-  }
+    })),
+  );
 
   return { ok: true as const, seeded: true };
 }

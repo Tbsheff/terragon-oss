@@ -85,29 +85,30 @@ export async function createThread(opts: {
   pipelineTemplateId?: string;
 }): Promise<{ id: string }> {
   const id = nanoid();
+  const chatId = nanoid();
   const now = new Date().toISOString();
 
-  await db.insert(thread).values({
-    id,
-    name: opts.name,
-    status: "draft",
-    agent: "claudeCode",
-    model: opts.model ?? null,
-    githubRepoFullName: opts.githubRepoFullName ?? null,
-    createdAt: now,
-    updatedAt: now,
-  });
+  await db.transaction(async (tx) => {
+    await tx.insert(thread).values({
+      id,
+      name: opts.name,
+      status: "draft",
+      agent: "claudeCode",
+      model: opts.model ?? null,
+      githubRepoFullName: opts.githubRepoFullName ?? null,
+      createdAt: now,
+      updatedAt: now,
+    });
 
-  // Create the initial thread chat
-  const chatId = nanoid();
-  await db.insert(threadChat).values({
-    id: chatId,
-    threadId: id,
-    agent: "claudeCode",
-    model: opts.model ?? null,
-    status: "draft",
-    createdAt: now,
-    updatedAt: now,
+    await tx.insert(threadChat).values({
+      id: chatId,
+      threadId: id,
+      agent: "claudeCode",
+      model: opts.model ?? null,
+      status: "draft",
+      createdAt: now,
+      updatedAt: now,
+    });
   });
 
   return { id };

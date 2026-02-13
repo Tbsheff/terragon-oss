@@ -102,6 +102,14 @@ async function executeStage(
   const sessionKey = `pipeline-${threadId}-${stage}-${nanoid(6)}`;
   const agentId = `agent-${stage}`;
 
+  // Register session with bridge so gateway events route to this thread
+  try {
+    const { getBridge } = await import("@/server/bridge-registry");
+    getBridge()?.registerSession(sessionKey, threadId);
+  } catch {
+    // Bridge may not be available in test/dev-only mode
+  }
+
   // Create a thread_chat record for this pipeline stage
   const chatId = nanoid();
   await db.insert(threadChat).values({

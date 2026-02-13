@@ -5,9 +5,27 @@ import { credentials, openclawConnection } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { OpenClawClient } from "@/lib/openclaw-client";
+import { encrypt, decrypt, isEncrypted } from "@/lib/crypto";
 
+/** List credentials for UI display — omits the secret value */
 export async function listCredentials() {
-  return db.select().from(credentials);
+  const rows = await db.select().from(credentials);
+  return rows.map((r) => ({
+    id: r.id,
+    provider: r.provider,
+    name: r.name,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+  }));
+}
+
+/** List credentials with decrypted values — internal use only */
+async function listCredentialsDecrypted() {
+  const rows = await db.select().from(credentials);
+  return rows.map((r) => ({
+    ...r,
+    value: isEncrypted(r.value) ? decrypt(r.value) : r.value,
+  }));
 }
 
 export async function createCredential(data: {
@@ -21,7 +39,7 @@ export async function createCredential(data: {
     id,
     provider: data.provider,
     name: data.name,
-    value: data.value,
+    value: encrypt(data.value),
     createdAt: now,
     updatedAt: now,
   });
@@ -38,7 +56,7 @@ export async function syncCredentialsToGateway(): Promise<{
   error?: string;
 }> {
   try {
-    const allCreds = await db.select().from(credentials);
+    const allCreds = await listCredentialsDecrypted();
     const conn = await db
       .select()
       .from(openclawConnection)
@@ -58,7 +76,6 @@ export async function syncCredentialsToGateway(): Promise<{
     // Build credentials map keyed by provider
     const credMap: Record<string, string> = {};
     for (const cred of allCreds) {
-      // Use provider-specific env var naming
       const envKey = getEnvKeyForProvider(cred.provider, cred.name);
       credMap[envKey] = cred.value;
     }

@@ -40,6 +40,9 @@ export type OpenClawBroadcastMessage = {
 export class OpenClawBridge {
   private broadcast: LocalBroadcastServer;
   private sessionToThread = new Map<string, string>();
+  private syncService?: {
+    onChatEvent: (payload: ChatEventPayload, threadId: string) => Promise<void>;
+  };
 
   constructor(options: BridgeOptions) {
     this.broadcast = options.broadcast;
@@ -55,11 +58,36 @@ export class OpenClawBridge {
     this.sessionToThread.delete(sessionKey);
   }
 
+  /** Set the sync service for DB-first event handling */
+  setSyncService(service: {
+    onChatEvent: (payload: ChatEventPayload, threadId: string) => Promise<void>;
+  }): void {
+    this.syncService = service;
+  }
+
   /** Handle a chat event from the OpenClaw client */
   onChatEvent(payload: ChatEventPayload): void {
     const threadId = this.sessionToThread.get(payload.sessionKey);
     if (!threadId) return;
 
+    // Route through sync service (DB-first) if available
+    if (this.syncService) {
+      this.syncService.onChatEvent(payload, threadId).catch((err) => {
+        console.error("[bridge] sync service error:", err);
+        // Fallback: broadcast directly even if DB write failed
+        this.broadcastChatEvent(payload, threadId);
+      });
+      return;
+    }
+
+    this.broadcastChatEvent(payload, threadId);
+  }
+
+  /** Direct broadcast fallback (no DB write) */
+  private broadcastChatEvent(
+    payload: ChatEventPayload,
+    threadId: string,
+  ): void {
     const message: OpenClawBroadcastMessage = {
       type: "thread-update",
       threadId,
@@ -75,8 +103,6 @@ export class OpenClawBridge {
                 : "working",
       },
     };
-
-    // Broadcast to the thread's room
     this.broadcast.broadcast(threadId, message);
   }
 
