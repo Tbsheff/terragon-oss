@@ -30,7 +30,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { OpenClawAgent } from "@/lib/openclaw-types";
 import { listAgents, createAgent, deleteAgent } from "@/server-actions/agents";
 import { AgentRosterSetup } from "@/components/agents/agent-roster-setup";
@@ -339,67 +347,47 @@ function CreateAgentForm({ onCreated }: { onCreated: () => void }) {
       className="space-y-4"
     >
       <div className="space-y-2">
-        <label className="text-sm font-medium">Name *</label>
-        <input
-          type="text"
+        <Label>Name *</Label>
+        <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. coder"
           required
-          className={cn(
-            "w-full rounded-md border bg-muted/30 px-3 py-2 text-sm",
-            "placeholder:text-muted-foreground/50",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-          )}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Emoji</label>
-          <input
-            type="text"
+          <Label>Emoji</Label>
+          <Input
             value={emoji}
             onChange={(e) => setEmoji(e.target.value)}
             placeholder="🤖"
             maxLength={4}
-            className={cn(
-              "w-full rounded-md border bg-muted/30 px-3 py-2 text-sm",
-              "placeholder:text-muted-foreground/50",
-              "focus:outline-none focus:ring-2 focus:ring-ring",
-            )}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Model</label>
-          <select
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className={cn(
-              "w-full rounded-md border bg-muted/30 px-3 py-2 text-sm",
-              "focus:outline-none focus:ring-2 focus:ring-ring",
-            )}
-          >
-            <option value="opus">opus</option>
-            <option value="sonnet">sonnet</option>
-            <option value="haiku">haiku</option>
-          </select>
+          <Label>Model</Label>
+          <Select value={model} onValueChange={setModel}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="opus">opus</SelectItem>
+              <SelectItem value="sonnet">sonnet</SelectItem>
+              <SelectItem value="haiku">haiku</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Description</label>
-        <input
-          type="text"
+        <Label>Description</Label>
+        <Input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="What does this agent do?"
-          className={cn(
-            "w-full rounded-md border bg-muted/30 px-3 py-2 text-sm",
-            "placeholder:text-muted-foreground/50",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-          )}
         />
       </div>
 

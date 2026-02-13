@@ -8,7 +8,15 @@ import { ArrowLeft, Loader2, Pencil, Save, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { listAgents, updateAgent } from "@/server-actions/agents";
 import { AgentFileEditor } from "@/components/agents/agent-file-editor";
 
@@ -159,57 +167,40 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
               className="space-y-4"
             >
               <div className="space-y-2">
-                <label className="text-sm font-medium">Name</label>
-                <input
-                  type="text"
+                <Label>Name</Label>
+                <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className={cn(
-                    "w-full rounded-md border bg-muted/30 px-3 py-2 text-sm",
-                    "focus:outline-none focus:ring-2 focus:ring-ring",
-                  )}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Emoji</label>
-                  <input
-                    type="text"
+                  <Label>Emoji</Label>
+                  <Input
                     value={editEmoji}
                     onChange={(e) => setEditEmoji(e.target.value)}
                     maxLength={4}
-                    className={cn(
-                      "w-full rounded-md border bg-muted/30 px-3 py-2 text-sm",
-                      "focus:outline-none focus:ring-2 focus:ring-ring",
-                    )}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Model</label>
-                  <select
-                    value={editModel}
-                    onChange={(e) => setEditModel(e.target.value)}
-                    className={cn(
-                      "w-full rounded-md border bg-muted/30 px-3 py-2 text-sm",
-                      "focus:outline-none focus:ring-2 focus:ring-ring",
-                    )}
-                  >
-                    <option value="opus">opus</option>
-                    <option value="sonnet">sonnet</option>
-                    <option value="haiku">haiku</option>
-                  </select>
+                  <Label>Model</Label>
+                  <Select value={editModel} onValueChange={setEditModel}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="opus">opus</SelectItem>
+                      <SelectItem value="sonnet">sonnet</SelectItem>
+                      <SelectItem value="haiku">haiku</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <input
-                  type="text"
+                <Label>Description</Label>
+                <Input
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  className={cn(
-                    "w-full rounded-md border bg-muted/30 px-3 py-2 text-sm",
-                    "focus:outline-none focus:ring-2 focus:ring-ring",
-                  )}
                 />
               </div>
               <div className="flex justify-end gap-2">
