@@ -39,6 +39,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 import type { OpenClawAgent } from "@/lib/openclaw-types";
 import { listAgents, createAgent, deleteAgent } from "@/server-actions/agents";
 import { AgentRosterSetup } from "@/components/agents/agent-roster-setup";
@@ -81,7 +88,9 @@ export function AgentManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Agent Roster</h1>
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+            Agent Roster
+          </h1>
           <p className="text-sm text-muted-foreground">
             Manage your specialized coding agents
           </p>
@@ -136,9 +145,11 @@ export function AgentManager() {
         </div>
       </div>
 
+      <Separator />
+
       {/* Loading */}
       {agentsQuery.isLoading && (
-        <div className="flex items-center justify-center py-12">
+        <div className="animate-fade-in flex items-center justify-center py-12">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">
             Loading agents...
@@ -173,9 +184,9 @@ export function AgentManager() {
 
       {/* Empty state */}
       {agentsQuery.data && agentsQuery.data.length === 0 && (
-        <Card>
+        <Card className="animate-fade-in">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Bot className="h-12 w-12 text-muted-foreground/40" />
+            <Bot className="h-14 w-14 text-muted-foreground/30 drop-shadow-sm" />
             <p className="mt-4 text-sm font-medium text-muted-foreground">
               No agents yet
             </p>
@@ -203,10 +214,11 @@ export function AgentManager() {
       {/* Agent grid */}
       {agentsQuery.data && agentsQuery.data.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {agentsQuery.data.map((agent) => (
+          {agentsQuery.data.map((agent, index) => (
             <AgentCard
               key={agent.id}
               agent={agent}
+              index={index}
               onDelete={() => setDeleteTarget(agent)}
             />
           ))}
@@ -260,14 +272,20 @@ export function AgentManager() {
 
 function AgentCard({
   agent,
+  index,
   onDelete,
 }: {
   agent: OpenClawAgent;
+  index: number;
   onDelete: () => void;
 }) {
   return (
-    <Link href={`/agents/${agent.id}`} className="group block">
-      <Card className="transition-colors hover:border-primary/40 hover:bg-card/80">
+    <Link
+      href={`/agents/${agent.id}`}
+      className="animate-fade-in group block opacity-0 [animation-fill-mode:forwards]"
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
+      <Card className="transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
@@ -275,24 +293,29 @@ function AgentCard({
               <div>
                 <CardTitle className="text-base">{agent.name}</CardTitle>
                 {agent.model && (
-                  <span className="inline-block mt-1 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  <Badge variant="secondary" className="mt-1 text-[10px]">
                     {agent.model}
-                  </span>
+                  </Badge>
                 )}
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete();
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete agent</TooltipContent>
+            </Tooltip>
           </div>
         </CardHeader>
         {agent.description && (

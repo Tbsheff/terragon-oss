@@ -17,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { listAgents, updateAgent } from "@/server-actions/agents";
 import { AgentFileEditor } from "@/components/agents/agent-file-editor";
 
@@ -75,7 +77,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
 
   if (agentQuery.isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="animate-fade-in flex items-center justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         <span className="ml-2 text-sm text-muted-foreground">
           Loading agent...
@@ -89,7 +91,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       <div className="space-y-4">
         <Link
           href="/agents"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 -ml-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to agents
@@ -118,24 +120,26 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       {/* Back link */}
       <Link
         href="/agents"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-1 rounded-md px-2 py-1 -ml-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to agents
       </Link>
 
       {/* Agent info card */}
-      <Card>
+      <Card className="animate-fade-in">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">{agent.emoji ?? "🤖"}</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-2xl">
+                {agent.emoji ?? "🤖"}
+              </span>
               <div>
                 <CardTitle className="text-xl">{agent.name}</CardTitle>
                 {agent.model && (
-                  <span className="inline-block mt-1 rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  <Badge variant="secondary" className="mt-1">
                     {agent.model}
-                  </span>
+                  </Badge>
                 )}
               </div>
             </div>
@@ -154,7 +158,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
 
       {/* Edit dialog (inline) */}
       {editing && (
-        <Card className="border-primary/30">
+        <Card className="animate-fade-in border-primary/30">
           <CardHeader>
             <CardTitle className="text-base">Edit Agent</CardTitle>
           </CardHeader>
@@ -232,7 +236,10 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
 
       {/* Workspace files */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold">Workspace Files</h2>
+        <Separator className="mb-4" />
+        <h2 className="font-[var(--font-cabin)] mb-3 text-lg font-semibold">
+          Workspace Files
+        </h2>
         <AgentFileEditor agentId={agentId} />
       </div>
     </div>
