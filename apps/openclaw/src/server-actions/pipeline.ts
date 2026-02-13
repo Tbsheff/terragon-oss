@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { thread, threadChat, pipelineTemplate } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { PIPELINE_STAGES, type PipelineStage } from "@/lib/constants";
 import {
@@ -30,14 +30,32 @@ type ActionResult<T = void> =
 async function persistPipelineState(
   threadId: string,
   state: PipelineState,
-): Promise<void> {
+  expectedCurrentStage?: string,
+): Promise<boolean> {
+  const now = new Date().toISOString();
+  const newState = JSON.stringify(state);
+
+  if (expectedCurrentStage) {
+    // Optimistic lock: only update if pipelineState still contains the expected stage
+    const result = await db
+      .update(thread)
+      .set({ pipelineState: newState, updatedAt: now })
+      .where(
+        and(
+          eq(thread.id, threadId),
+          sql`json_extract(${thread.pipelineState}, '$.currentStage') = ${expectedCurrentStage}`,
+        ),
+      );
+    // If no rows updated, another writer changed the state first
+    return (result.changes ?? (result as any).rowsAffected ?? 1) > 0;
+  }
+
+  // No optimistic lock — unconditional update (for initial state, etc.)
   await db
     .update(thread)
-    .set({
-      pipelineState: JSON.stringify(state),
-      updatedAt: new Date().toISOString(),
-    })
+    .set({ pipelineState: newState, updatedAt: now })
     .where(eq(thread.id, threadId));
+  return true;
 }
 
 async function getThreadRow(threadId: string) {
