@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ThreadProvider, type OpenClawThread } from "./thread-context";
 import { OpenClawChatHeader } from "./openclaw-chat-header";
@@ -129,6 +130,9 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
         });
       } catch (err) {
         console.error("Failed to send message:", err);
+        toast.error(
+          err instanceof Error ? err.message : "Failed to send message",
+        );
         setIsWorking(false);
         setPendingUserMsg(null);
       }
@@ -142,6 +146,7 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
       await abortChat(threadId);
     } catch (err) {
       console.error("Failed to abort:", err);
+      toast.error("Failed to stop the agent");
     }
     setIsWorking(false);
   }, [threadId]);

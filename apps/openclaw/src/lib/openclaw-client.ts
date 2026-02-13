@@ -71,6 +71,7 @@ export class OpenClawClient {
 
   // Gate non-connect requests until handshake completes
   private readyResolve: (() => void) | null = null;
+  private readyReject: ((reason: Error) => void) | null = null;
   private readyPromise: Promise<void> | null = null;
 
   // ── Lifecycle ──────────────────────────────────
@@ -163,6 +164,15 @@ export class OpenClawClient {
       this.ws.addEventListener("close", () => {
         this.setState("disconnected");
         this.emit("disconnected", { reason: "connection closed" });
+
+        // Terminal failure: if max retries exhausted, reject everything
+        if (this.ws && this.ws.retryCount >= 10) {
+          const err = new Error(
+            "Gateway unreachable after maximum reconnection attempts",
+          );
+          this.rejectReady(err);
+          this.rejectAllPending(err.message);
+        }
       });
 
       this.ws.addEventListener("error", () => {
@@ -326,14 +336,22 @@ export class OpenClawClient {
   }
 
   private resetReady(): void {
-    this.readyPromise = new Promise<void>((resolve) => {
+    this.readyPromise = new Promise<void>((resolve, reject) => {
       this.readyResolve = resolve;
+      this.readyReject = reject;
     });
   }
 
   private markReady(): void {
     this.readyResolve?.();
     this.readyResolve = null;
+    this.readyReject = null;
+  }
+
+  private rejectReady(reason: Error): void {
+    this.readyReject?.(reason);
+    this.readyResolve = null;
+    this.readyReject = null;
   }
 
   private emit(event: string, payload: Record<string, unknown>): void {
@@ -351,9 +369,17 @@ export class OpenClawClient {
   private async sendRequest<
     T extends Record<string, unknown> = Record<string, unknown>,
   >(method: string, params?: Record<string, unknown>): Promise<T> {
-    // Gate non-connect requests until handshake completes
+    // Gate non-connect requests until handshake completes (with timeout)
     if (method !== "connect" && this.readyPromise) {
-      await this.readyPromise;
+      await Promise.race([
+        this.readyPromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Gateway connection timed out")),
+            REQUEST_TIMEOUT_MS,
+          ),
+        ),
+      ]);
     }
 
     return new Promise<T>((resolve, reject) => {
@@ -432,8 +458,8 @@ export function getOpenClawClient(
     const token = options?.token ?? process.env.OPENCLAW_AUTH_TOKEN ?? "";
 
     if (url) {
-      instance.connect(url, token).catch(() => {
-        // caller should use the returned promise from connect() for error handling
+      instance.connect(url, token).catch((err) => {
+        console.error("[OpenClawClient] initial connection failed:", err);
       });
     }
   }

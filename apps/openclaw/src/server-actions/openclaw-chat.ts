@@ -39,17 +39,26 @@ export async function sendChatMessage(threadId: string, message: string) {
     // Bridge may not be available in test/dev-only mode
   }
 
-  // Update thread status to working
+  // Update thread status to working (capture previous for rollback)
+  const previousStatus = threadRow.status;
   await db
     .update(thread)
     .set({ status: "working", updatedAt: new Date().toISOString() })
     .where(eq(thread.id, threadId));
 
-  // Send to OpenClaw gateway
+  // Send to OpenClaw gateway — rollback status on failure
   const client = getOpenClawClient();
-  await client.chatSend(sessionKey, message, {
-    model: threadRow.model ?? undefined,
-  });
+  try {
+    await client.chatSend(sessionKey, message, {
+      model: threadRow.model ?? undefined,
+    });
+  } catch (err) {
+    await db
+      .update(thread)
+      .set({ status: previousStatus, updatedAt: new Date().toISOString() })
+      .where(eq(thread.id, threadId));
+    throw err;
+  }
 
   return { ok: true };
 }
