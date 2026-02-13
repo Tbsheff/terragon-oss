@@ -13,11 +13,18 @@ import { parsePipelineState } from "@/hooks/use-pipeline";
 import { useElapsedTime } from "@/hooks/use-elapsed-time";
 import { useRealtimeGlobal } from "@/hooks/use-realtime";
 import Link from "next/link";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { GitBranch, GitPullRequest, Clock, AlertCircle } from "lucide-react";
+import {
+  Kanban,
+  GitBranch,
+  GitPullRequest,
+  Clock,
+  AlertCircle,
+  Inbox,
+} from "lucide-react";
 
 type LocalPipelineState = {
   currentStage?: PipelineStage;
@@ -36,23 +43,23 @@ function parsePipelineStage(
 }
 
 const STAGE_COLORS: Record<PipelineStage, string> = {
-  brainstorm: "border-primary/50",
-  plan: "border-blue-500/50",
-  implement: "border-cyan-500/50",
-  review: "border-amber-500/50",
-  test: "border-emerald-500/50",
-  ci: "border-indigo-500/50",
+  brainstorm: "border-l-primary/70",
+  plan: "border-l-blue-500/70",
+  implement: "border-l-cyan-500/70",
+  review: "border-l-amber-500/70",
+  test: "border-l-emerald-500/70",
+  ci: "border-l-indigo-500/70",
 };
 
 const STAGE_BG_COLORS: Record<string, string> = {
-  none: "",
-  brainstorm: "bg-primary/5",
-  plan: "bg-blue-500/5",
-  implement: "bg-cyan-500/5",
-  review: "bg-amber-500/5",
-  test: "bg-emerald-500/5",
-  ci: "bg-indigo-500/5",
-  done: "bg-green-500/5",
+  none: "bg-muted/20",
+  brainstorm: "bg-primary/[0.03]",
+  plan: "bg-blue-500/[0.03]",
+  implement: "bg-cyan-500/[0.03]",
+  review: "bg-amber-500/[0.03]",
+  test: "bg-emerald-500/[0.03]",
+  ci: "bg-indigo-500/[0.03]",
+  done: "bg-green-500/[0.03]",
 };
 
 const STAGE_DOT_COLORS: Record<string, string> = {
@@ -66,8 +73,19 @@ const STAGE_DOT_COLORS: Record<string, string> = {
   done: "bg-green-500",
 };
 
+const STAGE_HEADER_BORDER: Record<string, string> = {
+  none: "border-l-muted-foreground/30",
+  brainstorm: "border-l-primary",
+  plan: "border-l-blue-500",
+  implement: "border-l-cyan-500",
+  review: "border-l-amber-500",
+  test: "border-l-emerald-500",
+  ci: "border-l-indigo-500",
+  done: "border-l-green-500",
+};
+
 const STAGE_BADGE_COLORS: Record<string, string> = {
-  none: "",
+  none: "bg-muted text-muted-foreground",
   brainstorm: "bg-primary/10 text-primary border-primary/20",
   plan: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
   implement:
@@ -118,46 +136,48 @@ function BoardCard({
     <Link href={`/task/${thread.id}`}>
       <Card
         className={cn(
-          "cursor-pointer transition-all duration-200 gap-0 py-0 shadow-none text-xs",
+          "cursor-pointer transition-all duration-200 gap-0 py-0 shadow-none border-l-2",
           "hover:-translate-y-0.5 hover:shadow-md hover:bg-card/80",
           "active:translate-y-0 active:shadow-sm",
           "animate-fade-in",
           stage !== "none" && stage !== "done"
-            ? cn(STAGE_COLORS[stage], "hover:border-opacity-100")
-            : "",
-          isError && "border-destructive/50",
+            ? STAGE_COLORS[stage]
+            : "border-l-transparent",
+          isError && "border-l-destructive/70",
         )}
         style={{ animationDelay: `${index * 60}ms` }}
       >
-        <CardContent className="p-2.5">
+        <CardContent className="p-3">
           {/* Title row with error dot */}
           <div className="flex items-start gap-1.5">
             {isError && (
               <span
-                className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-destructive"
+                className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-destructive animate-pulse"
                 title="Error"
               />
             )}
-            <p className="font-medium text-foreground line-clamp-2 flex-1">
+            <p className="text-[13px] font-medium leading-snug text-foreground line-clamp-2 flex-1">
               {thread.name}
             </p>
           </div>
 
           {/* Repo name */}
           {thread.githubRepoFullName ? (
-            <p className="mt-1 text-muted-foreground/70 truncate flex items-center gap-1">
+            <p className="mt-1.5 text-[11px] text-muted-foreground/60 truncate flex items-center gap-1">
               <GitBranch className="h-3 w-3 flex-shrink-0" />
               {thread.githubRepoFullName}
             </p>
           ) : (
-            <p className="mt-1 text-muted-foreground/70 truncate">No repo</p>
+            <p className="mt-1.5 text-[11px] text-muted-foreground/40 truncate italic">
+              No repo
+            </p>
           )}
 
           {/* Metadata row: elapsed time, model, PR badge */}
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
             {/* Elapsed time */}
             {elapsed && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+              <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
                 <Clock className="h-2.5 w-2.5" />
                 {elapsed}
               </span>
@@ -165,7 +185,7 @@ function BoardCard({
 
             {/* Model badge */}
             {thread.model && (
-              <span className="text-[10px] text-muted-foreground/60">
+              <span className="text-[10px] text-muted-foreground/50 font-mono">
                 {thread.model}
               </span>
             )}
@@ -175,7 +195,7 @@ function BoardCard({
               <Badge
                 variant="outline"
                 className={cn(
-                  "text-[10px] px-1.5 py-0 gap-0.5",
+                  "text-[10px] px-1.5 py-0 gap-0.5 h-4",
                   PR_STATUS_COLORS[thread.latestPR.prStatus] ?? "",
                 )}
               >
@@ -186,10 +206,13 @@ function BoardCard({
 
             {/* Error indicator with label */}
             {thread.hasError && !isError && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] text-destructive">
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 gap-0.5 h-4 border-destructive/30 text-destructive bg-destructive/5"
+              >
                 <AlertCircle className="h-2.5 w-2.5" />
                 Error
-              </span>
+              </Badge>
             )}
           </div>
         </CardContent>
@@ -219,82 +242,104 @@ export default function BoardPage() {
     { stage: "done", label: "Done" },
   ];
 
+  const totalActive = activeThreads.length;
+
   return (
     <div className="flex h-full flex-col">
       <div className="px-6 py-3">
-        <h1 className="text-lg font-semibold font-[var(--font-cabin)]">
-          Board
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Track tasks across pipeline stages
-        </p>
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center rounded-lg bg-primary/10 p-1.5">
+            <Kanban className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold font-[var(--font-cabin)] tracking-tight">
+              Board
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {totalActive} active task{totalActive !== 1 ? "s" : ""} across
+              pipeline stages
+            </p>
+          </div>
+        </div>
       </div>
       <Separator />
-      <ScrollArea className="flex-1">
-        <div className="flex h-full p-4 gap-3">
-          {columns.map((col) => {
-            const columnThreads = activeThreads.filter((t) => {
-              const stage = parsePipelineStage(t.pipelineState);
-              if (col.stage === "none") return !stage && t.status === "draft";
-              if (col.stage === "done") return t.status === "complete";
-              return stage === col.stage;
-            });
+      <div className="relative flex-1 min-h-0">
+        {/* Right fade hint for horizontal scroll */}
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-8 bg-gradient-to-l from-background to-transparent" />
+        <ScrollArea className="h-full">
+          <div className="flex h-full p-4 gap-3">
+            {columns.map((col) => {
+              const columnThreads = activeThreads.filter((t) => {
+                const stage = parsePipelineStage(t.pipelineState);
+                if (col.stage === "none") return !stage && t.status === "draft";
+                if (col.stage === "done") return t.status === "complete";
+                return stage === col.stage;
+              });
 
-            return (
-              <Card
-                key={col.stage}
-                className={cn(
-                  "flex w-60 flex-shrink-0 flex-col bg-muted/30 gap-0 py-0 shadow-none",
-                  STAGE_BG_COLORS[col.stage],
-                )}
-              >
-                <CardHeader className="px-3 py-2 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={cn(
-                          "h-1.5 w-1.5 rounded-full",
-                          STAGE_DOT_COLORS[col.stage],
-                        )}
-                      />
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {col.label}
-                      </span>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-[10px] px-1.5 py-0",
-                        STAGE_BADGE_COLORS[col.stage],
-                      )}
-                    >
-                      {columnThreads.length}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                  {columnThreads.map((thread, index) => (
-                    <BoardCard
-                      key={thread.id}
-                      thread={thread}
-                      stage={col.stage}
-                      index={index}
-                    />
-                  ))}
-                  {columnThreads.length === 0 && (
-                    <div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-border/50">
-                      <p className="text-xs text-muted-foreground/50">
-                        No tasks
-                      </p>
-                    </div>
+              return (
+                <div
+                  key={col.stage}
+                  className={cn(
+                    "flex min-w-[272px] flex-shrink-0 flex-col rounded-xl border border-border/50",
+                    STAGE_BG_COLORS[col.stage],
                   )}
+                >
+                  <div
+                    className={cn(
+                      "px-3 py-2.5 border-b border-border/50 border-l-2 rounded-tl-xl",
+                      STAGE_HEADER_BORDER[col.stage],
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "h-2.5 w-2.5 rounded-full",
+                            STAGE_DOT_COLORS[col.stage],
+                          )}
+                        />
+                        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+                          {col.label}
+                        </span>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] px-1.5 py-0 tabular-nums",
+                          STAGE_BADGE_COLORS[col.stage],
+                        )}
+                      >
+                        {columnThreads.length}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                    {columnThreads.map((thread, index) => (
+                      <BoardCard
+                        key={thread.id}
+                        thread={thread}
+                        stage={col.stage}
+                        index={index}
+                      />
+                    ))}
+                    {columnThreads.length === 0 && (
+                      <div className="flex h-24 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/40">
+                        <Inbox className="h-4 w-4 text-muted-foreground/30" />
+                        <p className="text-[11px] text-muted-foreground/40">
+                          No tasks
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+              );
+            })}
+            {/* Spacer so last column isn't clipped by fade */}
+            <div className="w-4 flex-shrink-0" />
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
     </div>
   );
 }
