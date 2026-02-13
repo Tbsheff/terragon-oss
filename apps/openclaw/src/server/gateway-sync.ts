@@ -88,6 +88,7 @@ export class GatewaySyncService {
       data: {
         messagesUpdated: true,
         threadStatusUpdated: newStatus,
+        chatEvent: payload,
       },
     });
 

@@ -26,6 +26,7 @@ export type OpenClawBroadcastMessage = {
     isThreadCreated?: boolean;
     isThreadDeleted?: boolean;
     isThreadArchived?: boolean;
+    chatEvent?: ChatEventPayload;
   };
 };
 
@@ -93,6 +94,7 @@ export class OpenClawBridge {
       threadId,
       data: {
         messagesUpdated: true,
+        chatEvent: payload,
         threadStatusUpdated:
           payload.state === "final"
             ? "complete"

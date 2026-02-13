@@ -8,7 +8,10 @@ import { OpenClawChatHeader } from "./openclaw-chat-header";
 import { OpenClawPromptBox } from "./openclaw-promptbox";
 import { ChatMessages, WorkingMessage } from "./chat-messages";
 import { toUIMessages } from "./toUIMessages";
-import { useRealtimeThread } from "@/hooks/use-realtime";
+import {
+  useRealtimeThread,
+  useRealtimeChatMessages,
+} from "@/hooks/use-realtime";
 import { openClawHistoryToDBMessages } from "@/lib/message-adapter";
 import type { DBMessage, ThreadStatus } from "@/lib/types";
 import {
@@ -44,11 +47,14 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
   // Subscribe to realtime updates for this thread
   useRealtimeThread(threadId);
 
-  // Fetch messages from gateway — poll while agent is working
-  const { data: historyData } = useQuery({
-    ...threadMessagesQueryOptions(threadId),
-    refetchInterval: isWorking ? 2_000 : false,
-  });
+  // Fetch initial history from gateway (no polling)
+  const { data: historyData } = useQuery(threadMessagesQueryOptions(threadId));
+
+  // Event-driven streaming messages from WebSocket
+  // Same null-vs-undefined cast as gatewayMessages — structurally equivalent at runtime
+  const streamingMessages = useRealtimeChatMessages(
+    threadId,
+  ) as unknown as DBMessage[];
 
   // Convert gateway history → DBMessage[]
   // Type assertion: message-adapter's DBMessage uses null where types.ts uses undefined —
@@ -60,18 +66,27 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
     ) as unknown as DBMessage[];
   }, [historyData]);
 
-  // Clear pending user message once gateway reflects it
-  const hasGatewayMessages = gatewayMessages.length > 0;
+  // Clear pending user message once streaming or gateway messages arrive
+  const hasRealMessages =
+    gatewayMessages.length > 0 || streamingMessages.length > 0;
   useEffect(() => {
-    if (hasGatewayMessages) setPendingUserMsg(null);
-  }, [hasGatewayMessages]);
+    if (hasRealMessages) setPendingUserMsg(null);
+  }, [hasRealMessages]);
 
-  // Gateway messages are source of truth; show pending optimistic msg until they arrive
-  const dbMessages = hasGatewayMessages
-    ? gatewayMessages
-    : pendingUserMsg
-      ? [pendingUserMsg]
-      : [];
+  // Merge: history is the base, streaming messages are appended for the current turn
+  const dbMessages = useMemo(() => {
+    if (
+      pendingUserMsg &&
+      !gatewayMessages.length &&
+      !streamingMessages.length
+    ) {
+      return [pendingUserMsg];
+    }
+    if (streamingMessages.length > 0) {
+      return [...gatewayMessages, ...streamingMessages];
+    }
+    return gatewayMessages.length > 0 ? gatewayMessages : [];
+  }, [gatewayMessages, streamingMessages, pendingUserMsg]);
 
   // Map thread detail to simplified OpenClawThread type for context
   const openClawThread: OpenClawThread | null = threadDetail

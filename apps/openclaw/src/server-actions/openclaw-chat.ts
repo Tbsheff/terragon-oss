@@ -34,9 +34,20 @@ export async function sendChatMessage(threadId: string, message: string) {
   // Register session with bridge so gateway events route to this thread
   try {
     const { getBridge } = await import("@/server/bridge-registry");
-    getBridge()?.registerSession(sessionKey, threadId);
-  } catch {
-    // Bridge may not be available in test/dev-only mode
+    const bridge = getBridge();
+    if (bridge) {
+      bridge.registerSession(sessionKey, threadId);
+    } else {
+      console.warn(
+        "[openclaw-chat] Bridge not initialized — realtime events will not be delivered for session:",
+        sessionKey,
+      );
+    }
+  } catch (err) {
+    console.warn(
+      "[openclaw-chat] Failed to register session with bridge:",
+      err,
+    );
   }
 
   // Update thread status to working (capture previous for rollback)

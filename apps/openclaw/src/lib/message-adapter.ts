@@ -425,12 +425,14 @@ export class StreamingMessageAccumulator {
    * This enables incremental rendering of tool results during streaming.
    */
   private extractCompletedBlocks(): DBMessage[] {
-    // During streaming deltas, we return incremental text/thinking updates
-    // so the UI can show streaming text
-    const result: DBMessage[] = [];
-    // For now, we don't emit anything during deltas — we wait for final
-    // This keeps the accumulator simple and avoids duplicate rendering
-    return result;
+    if (this.currentContent.length === 0) return [];
+
+    // Return current accumulated content as an in-progress agent message
+    // so the UI shows streaming text during deltas
+    return chatMessageToDBMessages({
+      role: "assistant",
+      content: [...this.currentContent],
+    });
   }
 
   /** Reset accumulator state */

@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  StreamingMessageAccumulator,
+  type DBMessage,
+} from "@/lib/message-adapter";
+import type { ChatEventPayload } from "@/lib/openclaw-types";
 
 type RealtimeMessage = {
   type: string;
@@ -31,6 +36,7 @@ export function useRealtime({
   const wsRef = useRef<WebSocket | null>(null);
   const onMessageRef = useRef(onMessage);
   onMessageRef.current = onMessage;
+  const [reconnectCount, setReconnectCount] = useState(0);
 
   useEffect(() => {
     if (!enabled || !room) return;
@@ -52,10 +58,10 @@ export function useRealtime({
     };
 
     ws.onclose = () => {
-      // Auto-reconnect after 2s
+      // Auto-reconnect after 2s by bumping reconnectCount to re-trigger effect
       if (wsRef.current === ws) {
         setTimeout(() => {
-          // Re-run effect by checking if still mounted
+          setReconnectCount((c) => c + 1);
         }, 2000);
       }
     };
@@ -64,7 +70,7 @@ export function useRealtime({
       wsRef.current = null;
       ws.close();
     };
-  }, [room, enabled]);
+  }, [room, enabled, reconnectCount]);
 
   const send = useCallback((data: unknown) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -108,6 +114,36 @@ export function useRealtimeThread(threadId: string | null) {
       }
     },
   });
+}
+
+/**
+ * Hook that accumulates chat messages from realtime broadcast events.
+ * Uses StreamingMessageAccumulator to process ChatEventPayload into DBMessage[].
+ * Returns event-driven messages (no polling).
+ */
+export function useRealtimeChatMessages(threadId: string | null) {
+  const [messages, setMessages] = useState<DBMessage[]>([]);
+  const accumulatorRef = useRef(new StreamingMessageAccumulator());
+
+  // Reset accumulator when thread changes
+  useEffect(() => {
+    accumulatorRef.current.reset();
+    setMessages([]);
+  }, [threadId]);
+
+  useRealtime({
+    room: threadId ?? "",
+    enabled: !!threadId,
+    onMessage: (msg) => {
+      if (msg.type === "thread-update" && msg.data?.chatEvent) {
+        const chatEvent = msg.data.chatEvent as ChatEventPayload;
+        const newMessages = accumulatorRef.current.processEvent(chatEvent);
+        setMessages(newMessages);
+      }
+    },
+  });
+
+  return messages;
 }
 
 /**
