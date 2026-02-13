@@ -9,9 +9,14 @@
  * In development: handled via next.config.ts instrumentation
  */
 
+// @ts-expect-error — @next/env ships with Next.js but has no type declarations
+import { loadEnvConfig } from "@next/env";
 import { createServer } from "http";
 import next from "next";
 import { parse } from "url";
+
+// Load .env.local before anything else accesses process.env
+loadEnvConfig(process.cwd());
 import { LocalBroadcastServer } from "./broadcast";
 import { OpenClawBridge } from "./openclaw-bridge";
 import { getOpenClawClient } from "@/lib/openclaw-client";
