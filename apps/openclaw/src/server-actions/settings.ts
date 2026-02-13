@@ -55,17 +55,35 @@ export async function updateSettings(data: {
 // Connection
 // ─────────────────────────────────────────────────
 
+function parseGatewayUrl(): { host: string; port: number; useTls: boolean } {
+  const raw = process.env.OPENCLAW_GATEWAY_URL;
+  if (!raw) return { host: "localhost", port: 18789, useTls: false };
+  try {
+    const url = new URL(raw);
+    return {
+      host: url.hostname,
+      port: url.port ? parseInt(url.port, 10) : 18789,
+      useTls: url.protocol === "wss:",
+    };
+  } catch {
+    return { host: "localhost", port: 18789, useTls: false };
+  }
+}
+
 export async function getConnection() {
   const rows = await db
     .select()
     .from(openclawConnection)
     .where(eq(openclawConnection.id, "default"));
   if (rows.length === 0) {
+    const defaults = parseGatewayUrl();
     const now = new Date().toISOString();
     await db.insert(openclawConnection).values({
       id: "default",
-      host: "mac-mini.tailnet",
-      port: 18789,
+      host: defaults.host,
+      port: defaults.port,
+      useTls: defaults.useTls,
+      authToken: process.env.OPENCLAW_AUTH_TOKEN ?? null,
       createdAt: now,
       updatedAt: now,
     });
@@ -90,8 +108,8 @@ export async function updateConnection(data: {
     .insert(openclawConnection)
     .values({
       id: "default",
-      host: data.host ?? "mac-mini.tailnet",
-      port: data.port ?? 18789,
+      host: data.host ?? parseGatewayUrl().host,
+      port: data.port ?? parseGatewayUrl().port,
       ...data,
       createdAt: now,
       updatedAt: now,

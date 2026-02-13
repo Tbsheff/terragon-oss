@@ -14,12 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import {
-  SPECIALIZED_ROSTER,
-  type SetupProgress,
-  createAgent,
-  setAgentFile,
-} from "@/server-actions/agents";
+import { SPECIALIZED_ROSTER, type SetupProgress } from "@/lib/agent-roster";
+import { createAgent, setAgentFile } from "@/server-actions/agents";
 import { generateSoulMd } from "@/lib/agent-soul-generator";
 
 // ─────────────────────────────────────────────────
