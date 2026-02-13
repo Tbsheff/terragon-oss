@@ -403,8 +403,12 @@ export function getOpenClawClient(
 ): OpenClawClient {
   if (!instance) {
     instance = new OpenClawClient();
-    if (options?.url) {
-      instance.connect(options.url, options.token ?? "").catch(() => {
+
+    const url = options?.url ?? process.env.OPENCLAW_GATEWAY_URL;
+    const token = options?.token ?? process.env.OPENCLAW_AUTH_TOKEN ?? "";
+
+    if (url) {
+      instance.connect(url, token).catch(() => {
         // caller should use the returned promise from connect() for error handling
       });
     }

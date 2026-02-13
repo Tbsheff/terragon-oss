@@ -13,6 +13,8 @@ import { createServer } from "http";
 import next from "next";
 import { parse } from "url";
 import { LocalBroadcastServer } from "./broadcast";
+import { OpenClawBridge } from "./openclaw-bridge";
+import { getOpenClawClient } from "@/lib/openclaw-client";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -33,6 +35,36 @@ async function main() {
     globalForWss.__broadcastServer ?? new LocalBroadcastServer();
   if (dev) {
     globalForWss.__broadcastServer = broadcast;
+  }
+
+  // Wire OpenClaw gateway → local broadcast bridge
+  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL;
+  if (gatewayUrl) {
+    const bridge = new OpenClawBridge({
+      broadcast,
+      gatewayUrl,
+      authToken: process.env.OPENCLAW_AUTH_TOKEN,
+    });
+
+    const client = getOpenClawClient();
+
+    client.on("chat", (payload) => bridge.onChatEvent(payload));
+    client.on("agent", (event) =>
+      bridge.onAgentEvent({
+        type: "event",
+        event: "agent",
+        payload: event,
+        seq: 0,
+      }),
+    );
+    client.on("connected", () => bridge.onConnectionChange("connected"));
+    client.on("disconnected", () => bridge.onConnectionChange("disconnected"));
+
+    console.log(`> OpenClaw bridge connecting to ${gatewayUrl}`);
+  } else {
+    console.log(
+      "> No OPENCLAW_GATEWAY_URL set — bridge disabled (UI-only mode)",
+    );
   }
 
   const server = createServer((req, res) => {
