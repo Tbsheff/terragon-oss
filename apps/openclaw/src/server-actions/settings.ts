@@ -1,0 +1,216 @@
+"use server";
+
+import { db } from "@/db";
+import { settings, openclawConnection, githubAuth } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { OpenClawClient } from "@/lib/openclaw-client";
+
+// ─────────────────────────────────────────────────
+// Settings
+// ─────────────────────────────────────────────────
+
+export async function getSettings() {
+  const rows = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.id, "default"));
+  if (rows.length === 0) {
+    // Insert default row
+    const now = new Date().toISOString();
+    await db
+      .insert(settings)
+      .values({ id: "default", createdAt: now, updatedAt: now });
+    const inserted = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.id, "default"));
+    return inserted[0] ?? null;
+  }
+  return rows[0] ?? null;
+}
+
+export async function updateSettings(data: {
+  defaultModel?: string;
+  defaultAgent?: string;
+  theme?: "light" | "dark" | "system";
+  branchPrefix?: string;
+  autoCreatePR?: boolean;
+  prType?: "draft" | "ready";
+  autoCloseDraftPRs?: boolean;
+  maxConcurrentTasks?: number;
+  notificationsEnabled?: boolean;
+}) {
+  const now = new Date().toISOString();
+  await db
+    .insert(settings)
+    .values({ id: "default", ...data, createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: settings.id,
+      set: { ...data, updatedAt: now },
+    });
+  return getSettings();
+}
+
+// ─────────────────────────────────────────────────
+// Connection
+// ─────────────────────────────────────────────────
+
+export async function getConnection() {
+  const rows = await db
+    .select()
+    .from(openclawConnection)
+    .where(eq(openclawConnection.id, "default"));
+  if (rows.length === 0) {
+    const now = new Date().toISOString();
+    await db.insert(openclawConnection).values({
+      id: "default",
+      host: "mac-mini.tailnet",
+      port: 18789,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const inserted = await db
+      .select()
+      .from(openclawConnection)
+      .where(eq(openclawConnection.id, "default"));
+    return inserted[0] ?? null;
+  }
+  return rows[0] ?? null;
+}
+
+export async function updateConnection(data: {
+  host?: string;
+  port?: number;
+  authToken?: string | null;
+  useTls?: boolean;
+  maxConcurrentTasks?: number;
+}) {
+  const now = new Date().toISOString();
+  await db
+    .insert(openclawConnection)
+    .values({
+      id: "default",
+      host: data.host ?? "mac-mini.tailnet",
+      port: data.port ?? 18789,
+      ...data,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: openclawConnection.id,
+      set: { ...data, updatedAt: now },
+    });
+  return getConnection();
+}
+
+export async function testConnection(): Promise<{
+  success: boolean;
+  status?: string;
+  version?: string;
+  error?: string;
+}> {
+  try {
+    const conn = await getConnection();
+    if (!conn) {
+      return { success: false, error: "No connection configured" };
+    }
+
+    const protocol = conn.useTls ? "wss" : "ws";
+    const url = `${protocol}://${conn.host}:${conn.port}`;
+
+    const client = new OpenClawClient();
+    const hello = await client.connect(url, conn.authToken ?? "");
+    const health = await client.health();
+    client.disconnect();
+
+    // Update last health check
+    const now = new Date().toISOString();
+    await db
+      .update(openclawConnection)
+      .set({
+        lastHealthCheck: now,
+        lastHealthStatus: health.status === "ok" ? "healthy" : "unhealthy",
+        updatedAt: now,
+      })
+      .where(eq(openclawConnection.id, "default"));
+
+    return {
+      success: true,
+      status: health.status,
+      version: hello.version ?? health.version,
+    };
+  } catch (err) {
+    const now = new Date().toISOString();
+    await db
+      .update(openclawConnection)
+      .set({
+        lastHealthCheck: now,
+        lastHealthStatus: "unhealthy",
+        updatedAt: now,
+      })
+      .where(eq(openclawConnection.id, "default"));
+
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Connection failed",
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────
+// GitHub Auth
+// ─────────────────────────────────────────────────
+
+export async function getGithubAuth() {
+  const rows = await db
+    .select()
+    .from(githubAuth)
+    .where(eq(githubAuth.id, "default"));
+  if (rows.length === 0) {
+    return null;
+  }
+  return rows[0] ?? null;
+}
+
+export async function updateGithubAuth(data: {
+  personalAccessToken?: string | null;
+  username?: string | null;
+}) {
+  const now = new Date().toISOString();
+  await db
+    .insert(githubAuth)
+    .values({
+      id: "default",
+      ...data,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: githubAuth.id,
+      set: { ...data, updatedAt: now },
+    });
+  return getGithubAuth();
+}
+
+export async function validateGithubPAT(
+  token: string,
+): Promise<{ valid: boolean; username?: string; error?: string }> {
+  try {
+    const res = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+      },
+    });
+    if (!res.ok) {
+      return { valid: false, error: `GitHub API returned ${res.status}` };
+    }
+    const data = (await res.json()) as { login?: string };
+    return { valid: true, username: data.login };
+  } catch (err) {
+    return {
+      valid: false,
+      error: err instanceof Error ? err.message : "Validation failed",
+    };
+  }
+}
