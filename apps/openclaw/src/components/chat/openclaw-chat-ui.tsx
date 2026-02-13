@@ -8,8 +8,12 @@ import { OpenClawPromptBox } from "./openclaw-promptbox";
 import { ChatMessages, WorkingMessage } from "./chat-messages";
 import { toUIMessages } from "./toUIMessages";
 import { useRealtimeThread } from "@/hooks/use-realtime";
+import { openClawHistoryToDBMessages } from "@/lib/message-adapter";
 import type { DBMessage, ThreadStatus } from "@/lib/types";
-import { threadDetailQueryOptions } from "@/queries/thread-queries";
+import {
+  threadDetailQueryOptions,
+  threadMessagesQueryOptions,
+} from "@/queries/thread-queries";
 import {
   Conversation,
   ConversationContent,
@@ -30,7 +34,7 @@ type OpenClawChatUIProps = {
  */
 export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
   const queryClient = useQueryClient();
-  const [dbMessages, setDbMessages] = useState<DBMessage[]>([]);
+  const [pendingUserMsg, setPendingUserMsg] = useState<DBMessage | null>(null);
   const [isWorking, setIsWorking] = useState(false);
 
   // Fetch thread detail
@@ -38,6 +42,35 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
 
   // Subscribe to realtime updates for this thread
   useRealtimeThread(threadId);
+
+  // Fetch messages from gateway — poll while agent is working
+  const { data: historyData } = useQuery({
+    ...threadMessagesQueryOptions(threadId),
+    refetchInterval: isWorking ? 2_000 : false,
+  });
+
+  // Convert gateway history → DBMessage[]
+  // Type assertion: message-adapter's DBMessage uses null where types.ts uses undefined —
+  // structurally equivalent at runtime, toUIMessages handles both.
+  const gatewayMessages = useMemo((): DBMessage[] => {
+    if (!historyData?.ok || !historyData.history.length) return [];
+    return openClawHistoryToDBMessages(
+      historyData.history,
+    ) as unknown as DBMessage[];
+  }, [historyData]);
+
+  // Clear pending user message once gateway reflects it
+  const hasGatewayMessages = gatewayMessages.length > 0;
+  useEffect(() => {
+    if (hasGatewayMessages) setPendingUserMsg(null);
+  }, [hasGatewayMessages]);
+
+  // Gateway messages are source of truth; show pending optimistic msg until they arrive
+  const dbMessages = hasGatewayMessages
+    ? gatewayMessages
+    : pendingUserMsg
+      ? [pendingUserMsg]
+      : [];
 
   // Map thread detail to simplified OpenClawThread type for context
   const openClawThread: OpenClawThread | null = threadDetail
@@ -76,14 +109,13 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
 
   const handleSend = useCallback(
     async (message: string) => {
-      // Add user message to local state immediately (optimistic)
-      const userMsg: DBMessage = {
+      // Show optimistic user message until gateway reflects it
+      setPendingUserMsg({
         type: "user",
         model: null,
         parts: [{ type: "text", text: message }],
         timestamp: new Date().toISOString(),
-      };
-      setDbMessages((prev) => [...prev, userMsg]);
+      });
       setIsWorking(true);
 
       try {
@@ -91,12 +123,17 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
           "@/server-actions/openclaw-chat"
         );
         await sendChatMessage(threadId, message);
+        // Trigger immediate refetch after send succeeds
+        queryClient.invalidateQueries({
+          queryKey: ["threads", "messages", threadId],
+        });
       } catch (err) {
         console.error("Failed to send message:", err);
         setIsWorking(false);
+        setPendingUserMsg(null);
       }
     },
-    [threadId],
+    [threadId, queryClient],
   );
 
   const handleStop = useCallback(async () => {

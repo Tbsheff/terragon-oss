@@ -11,6 +11,7 @@ import {
   getThreadErrors,
   type ThreadError,
 } from "@/server-actions/thread-errors";
+import { loadChatHistory } from "@/server-actions/openclaw-chat";
 
 /** Query key factories (following Terragon pattern) */
 export const threadQueryKeys = {
@@ -38,6 +39,16 @@ export function threadDetailQueryOptions(threadId: string) {
     queryFn: () => getThread(threadId),
     enabled: !!threadId,
     staleTime: 5_000,
+  });
+}
+
+/** Query options for thread messages (fetched from OpenClaw gateway) */
+export function threadMessagesQueryOptions(threadId: string) {
+  return queryOptions({
+    queryKey: threadQueryKeys.messages(threadId),
+    queryFn: () => loadChatHistory(threadId),
+    enabled: !!threadId,
+    staleTime: 2_000,
   });
 }
 
