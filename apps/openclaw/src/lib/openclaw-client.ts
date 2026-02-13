@@ -9,7 +9,6 @@ import type {
   ConnectParams,
   HelloPayload,
   ChatEventPayload,
-  ChatMessage,
   ChatHistoryEntry,
   OpenClawAgent,
   OpenClawAgentFile,
@@ -194,10 +193,15 @@ export class OpenClawClient {
 
   chatSend(
     sessionKey: string,
-    message: ChatMessage,
+    message: string,
     options?: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.sendRequest("chat.send", { sessionKey, message, ...options });
+    return this.sendRequest("chat.send", {
+      sessionKey,
+      message,
+      idempotencyKey: nanoid(),
+      ...options,
+    });
   }
 
   chatAbort(sessionKey: string): Promise<Record<string, unknown>> {

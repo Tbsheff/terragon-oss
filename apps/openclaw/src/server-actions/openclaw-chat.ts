@@ -47,11 +47,9 @@ export async function sendChatMessage(threadId: string, message: string) {
 
   // Send to OpenClaw gateway
   const client = getOpenClawClient();
-  await client.chatSend(
-    sessionKey,
-    { role: "user", content: [{ type: "text", text: message }] },
-    { model: threadRow.model ?? undefined },
-  );
+  await client.chatSend(sessionKey, message, {
+    model: threadRow.model ?? undefined,
+  });
 
   return { ok: true };
 }

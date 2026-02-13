@@ -137,10 +137,7 @@ async function executeStage(
       ci: "Run the CI pipeline (lint, type-check, build, test). Report results.",
     };
 
-    await client.chatSend(sessionKey, {
-      role: "user",
-      content: [{ type: "text", text: stagePrompts[stage] }],
-    });
+    await client.chatSend(sessionKey, stagePrompts[stage]);
 
     // Update chat status
     await db
