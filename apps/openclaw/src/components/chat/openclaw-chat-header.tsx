@@ -6,6 +6,13 @@ import { useElapsedTime } from "@/hooks/use-elapsed-time";
 import { PIPELINE_STAGE_LABELS, type PipelineStage } from "@/lib/constants";
 import { getActivityLabel } from "@/lib/activity-label";
 import { ConnectionStatusBadge } from "@/components/connection-status";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Archive, Clock } from "lucide-react";
 
 export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
@@ -32,22 +39,22 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   const activityLabel = getActivityLabel(currentStage, thread.status);
 
   return (
-    <header className="flex items-center justify-between border-b border-border px-4 py-2">
+    <header className="flex items-center justify-between border-b border-border/70 bg-card/50 backdrop-blur-sm px-4 py-2">
       <div className="flex flex-col gap-0.5 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
-          <h1 className="truncate text-sm font-semibold">
+          <h1 className="truncate text-sm font-semibold font-[var(--font-cabin)]">
             {thread.name ?? "Untitled Task"}
           </h1>
           {currentStage && currentStage !== "done" && (
             <PipelineStagePill stage={currentStage} />
           )}
           {currentStage === "done" && (
-            <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-500">
+            <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
               Complete
-            </span>
+            </Badge>
           )}
           {stageElapsed && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1 bg-muted/50 rounded-full px-2 py-0.5 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
               {stageElapsed}
             </span>
@@ -59,7 +66,7 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
           )}
         </div>
         {isWorking && activityLabel && (
-          <span className="text-xs text-muted-foreground truncate">
+          <span className="text-xs text-muted-foreground truncate animate-fade-in">
             {activityLabel}
           </span>
         )}
@@ -68,13 +75,19 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
       <div className="flex items-center gap-2">
         <ConnectionStatusBadge />
         {onArchive && (
-          <button
-            onClick={onArchive}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="Archive task"
-          >
-            <Archive className="h-4 w-4" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onArchive}
+                className="h-8 w-8 text-muted-foreground"
+              >
+                <Archive className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Archive task</TooltipContent>
+          </Tooltip>
         )}
       </div>
     </header>
@@ -84,7 +97,7 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
 function PipelineStagePill({ stage }: { stage: PipelineStage }) {
   return (
     <span className="flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
-      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+      <span className="h-1.5 w-1.5 rounded-full bg-primary opacity-75 animate-pulse" />
       {PIPELINE_STAGE_LABELS[stage]}
     </span>
   );
