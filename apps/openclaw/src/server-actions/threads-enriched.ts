@@ -1,8 +1,6 @@
 "use server";
 
-import { db } from "@/db";
-import { thread, githubPR } from "@/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { listThreads } from "@/server-actions/threads";
 
 export type EnrichedThreadListItem = {
   id: string;
@@ -24,69 +22,71 @@ export type EnrichedThreadListItem = {
 };
 
 export async function listThreadsEnriched(): Promise<EnrichedThreadListItem[]> {
-  // Query threads with latest PR info via LEFT JOIN
-  // We use a subquery approach: get threads, then enrich with PR + error data
-  const rows = await db
-    .select({
-      id: thread.id,
-      name: thread.name,
-      status: thread.status,
-      agent: thread.agent,
-      model: thread.model,
-      githubRepoFullName: thread.githubRepoFullName,
-      pipelineState: thread.pipelineState,
-      archived: thread.archived,
-      createdAt: thread.createdAt,
-      updatedAt: thread.updatedAt,
-      prNumber: githubPR.prNumber,
-      prStatus: githubPR.prStatus,
-      prUrl: githubPR.prUrl,
-      prCreatedAt: githubPR.createdAt,
-      errorCount:
-        sql<number>`(SELECT COUNT(*) FROM thread_chat WHERE thread_chat.thread_id = ${thread.id} AND thread_chat.error_message IS NOT NULL)`.as(
-          "error_count",
-        ),
-    })
-    .from(thread)
-    .leftJoin(githubPR, eq(githubPR.threadId, thread.id))
-    .orderBy(desc(thread.createdAt));
+  const threads = await listThreads();
 
-  // A thread may have multiple PRs from the LEFT JOIN — group by thread and pick latest PR
-  const threadMap = new Map<string, EnrichedThreadListItem>();
+  // Enrich with GitHub PR data where applicable
+  const enriched: EnrichedThreadListItem[] = [];
 
-  for (const row of rows) {
-    const existing = threadMap.get(row.id);
+  for (const t of threads) {
+    let latestPR: EnrichedThreadListItem["latestPR"] = null;
 
-    const prInfo =
-      row.prNumber != null
-        ? {
-            prNumber: row.prNumber,
-            prStatus: row.prStatus!,
-            prUrl: row.prUrl,
+    // If thread has a GitHub repo, try to find PRs via Octokit
+    if (t.githubRepoFullName) {
+      try {
+        const { getGitHubAuth } = await import("@/server-actions/github");
+        const authResult = await getGitHubAuth();
+        if (authResult.ok) {
+          const { Octokit } = await import("octokit");
+          const octokit = new Octokit({ auth: authResult.data.token });
+          const [owner, repo] = t.githubRepoFullName.split("/");
+
+          if (owner && repo) {
+            // Search for PRs that match the session key pattern in head branch
+            const { data: prs } = await octokit.rest.pulls.list({
+              owner,
+              repo,
+              state: "all",
+              per_page: 1,
+              sort: "created",
+              direction: "desc",
+            });
+
+            const pr = prs[0];
+            if (pr) {
+              latestPR = {
+                prNumber: pr.number,
+                prStatus: pr.draft
+                  ? "draft"
+                  : pr.merged_at
+                    ? "merged"
+                    : pr.state === "closed"
+                      ? "closed"
+                      : "open",
+                prUrl: pr.html_url,
+              };
+            }
           }
-        : null;
-
-    if (!existing) {
-      threadMap.set(row.id, {
-        id: row.id,
-        name: row.name,
-        status: row.status,
-        agent: row.agent,
-        model: row.model,
-        githubRepoFullName: row.githubRepoFullName,
-        pipelineState: row.pipelineState,
-        archived: row.archived,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        latestPR: prInfo,
-        hasError: (row.errorCount ?? 0) > 0,
-      });
-    } else if (prInfo && !existing.latestPR) {
-      // If we haven't set a PR yet, use this one
-      existing.latestPR = prInfo;
+        }
+      } catch {
+        // GitHub unavailable — skip PR enrichment
+      }
     }
-    // If multiple PRs, the first one from the query (ordered by thread.createdAt desc) wins
+
+    enriched.push({
+      id: t.id,
+      name: t.name,
+      status: t.status,
+      agent: t.agent,
+      model: t.model,
+      githubRepoFullName: t.githubRepoFullName,
+      pipelineState: t.pipelineState,
+      archived: t.archived,
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      latestPR,
+      hasError: t.status === "working-error",
+    });
   }
 
-  return Array.from(threadMap.values());
+  return enriched;
 }

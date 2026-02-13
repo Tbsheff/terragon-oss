@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { thread, threadChat, pipelineTemplate, kvStore } from "@/db/schema";
+import { pipelineTemplate, kvStore } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { PIPELINE_STAGES, type PipelineStage } from "@/lib/constants";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/pipeline-engine";
 import type { PipelineState } from "@/hooks/use-pipeline";
 import { getOpenClawClient } from "@/lib/openclaw-client";
+import { updateThread } from "@/server-actions/threads";
 
 // ─────────────────────────────────────────────────
 // Types
@@ -80,15 +81,6 @@ async function readPipelineState(
 // Helpers
 // ─────────────────────────────────────────────────
 
-async function getThreadRow(threadId: string) {
-  const rows = await db
-    .select()
-    .from(thread)
-    .where(eq(thread.id, threadId))
-    .limit(1);
-  return rows[0] ?? null;
-}
-
 async function getTemplateStages(templateId: string): Promise<PipelineStage[]> {
   const rows = await db
     .select()
@@ -132,19 +124,6 @@ async function executeStage(
     // Bridge may not be available in test/dev-only mode
   }
 
-  // Create a thread_chat record for this pipeline stage
-  const chatId = nanoid();
-  await db.insert(threadChat).values({
-    id: chatId,
-    threadId,
-    agent: agentId,
-    status: "working",
-    sessionKey,
-    pipelineStage: stage,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-
   try {
     // Send the stage prompt to the agent
     const stagePrompts: Record<PipelineStage, string> = {
@@ -160,15 +139,6 @@ async function executeStage(
     };
 
     await client.chatSend(sessionKey, stagePrompts[stage]);
-
-    // Update chat status
-    await db
-      .update(threadChat)
-      .set({
-        status: "complete",
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(threadChat.id, chatId));
 
     // For review stage, parse the agent output for APPROVE/NEEDS_WORK
     if (stage === "review") {
@@ -198,15 +168,6 @@ async function executeStage(
       sessionKey,
     };
   } catch (err) {
-    await db
-      .update(threadChat)
-      .set({
-        status: "working-error",
-        errorMessage: (err as Error).message,
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(threadChat.id, chatId));
-
     return {
       status: "failed",
       agentId,
@@ -233,9 +194,6 @@ export async function startPipeline(
   }
 
   try {
-    const threadRow = await getThreadRow(threadId);
-    if (!threadRow) return { ok: false, error: "Thread not found" };
-
     // Don't start if already running
     if (getActivePipelineActor(threadId)) {
       return {
@@ -253,30 +211,17 @@ export async function startPipeline(
       onStageExecute: executeStage,
     };
 
-    // Update thread status
-    await db
-      .update(thread)
-      .set({ status: "working", updatedAt: new Date().toISOString() })
-      .where(eq(thread.id, threadId));
-
     let latestState: PipelineState | null = null;
 
     createAndStartPipeline(pipelineConfig, async (state) => {
       latestState = state;
       await persistPipelineState(threadId, state);
 
-      // Update thread status when pipeline completes
+      // Update thread metadata when pipeline completes
       if (state.currentStage === "done") {
-        const allPassed = state.stageHistory.every(
-          (h) => h.status === "passed" || h.status === "skipped",
-        );
-        await db
-          .update(thread)
-          .set({
-            status: allPassed ? "complete" : "working-error",
-            updatedAt: new Date().toISOString(),
-          })
-          .where(eq(thread.id, threadId));
+        await updateThread(threadId, {
+          pipelineState: JSON.stringify(state),
+        });
       }
     });
 
@@ -360,11 +305,6 @@ export async function retryStage(threadId: string): Promise<ActionResult> {
         await persistPipelineState(threadId, merged);
       });
 
-      await db
-        .update(thread)
-        .set({ status: "working", updatedAt: new Date().toISOString() })
-        .where(eq(thread.id, threadId));
-
       return { ok: true, data: undefined };
     }
 
@@ -384,15 +324,6 @@ export async function cancelPipeline(threadId: string): Promise<ActionResult> {
       actor.send({ type: "ABORT" });
       removeActivePipelineActor(threadId);
     }
-
-    // Update thread status
-    await db
-      .update(thread)
-      .set({
-        status: "working-error",
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(thread.id, threadId));
 
     // Update pipeline state in kvStore
     const state = await readPipelineState(threadId);

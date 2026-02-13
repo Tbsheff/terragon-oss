@@ -2,11 +2,11 @@
 
 import { Octokit } from "octokit";
 import { db } from "@/db";
-import { githubAuth, githubPR, githubCheckRun, thread } from "@/db/schema";
+import { githubAuth } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { getSettings } from "@/server-actions/settings";
 import { decrypt, isEncrypted } from "@/lib/crypto";
+import { getThread } from "@/server-actions/threads";
 
 // ─────────────────────────────────────────────────
 // Types
@@ -91,14 +91,8 @@ export async function createPullRequest(
     const { token } = authResult.data;
     const octokit = getOctokit(token);
 
-    // Get thread details
-    const threadRows = await db
-      .select()
-      .from(thread)
-      .where(eq(thread.id, threadId))
-      .limit(1);
-
-    const t = threadRows[0];
+    // Get thread details from gateway session metadata
+    const t = await getThread(threadId);
     if (!t) return { ok: false, error: "Thread not found" };
     if (!t.githubRepoFullName)
       return { ok: false, error: "Thread has no GitHub repo configured" };
@@ -125,28 +119,10 @@ export async function createPullRequest(
       draft: isDraft,
     });
 
-    // Store PR in database
-    const prId = nanoid();
-    const now = new Date().toISOString();
-    await db.insert(githubPR).values({
-      id: prId,
-      threadId,
-      repoFullName: t.githubRepoFullName,
-      prNumber: pr.number,
-      prStatus: pr.draft ? "draft" : "open",
-      prTitle: pr.title,
-      prUrl: pr.html_url,
-      headBranch: pr.head.ref,
-      baseBranch: pr.base.ref,
-      checksStatus: "none",
-      createdAt: now,
-      updatedAt: now,
-    });
-
     return {
       ok: true,
       data: {
-        id: prId,
+        id: `pr-${pr.number}`,
         prNumber: pr.number,
         prStatus: pr.draft ? "draft" : "open",
         prTitle: pr.title,
@@ -167,7 +143,7 @@ export async function createPullRequest(
 }
 
 // ─────────────────────────────────────────────────
-// Get PR Status
+// Get PR Status (fetch live from GitHub)
 // ─────────────────────────────────────────────────
 
 export async function getPRStatus(
@@ -180,24 +156,22 @@ export async function getPRStatus(
     const { token } = authResult.data;
     const octokit = getOctokit(token);
 
-    // Get PR from DB
-    const rows = await db
-      .select()
-      .from(githubPR)
-      .where(eq(githubPR.id, prId))
-      .limit(1);
+    // prId format: "owner/repo#number" or legacy DB id
+    // Try to parse as "owner/repo#number"
+    const match = prId.match(/^(.+?)#(\d+)$/);
+    if (!match) {
+      return { ok: false, error: `Cannot parse PR identifier: ${prId}` };
+    }
 
-    const prRow = rows[0];
-    if (!prRow) return { ok: false, error: "PR not found in database" };
-
-    const [owner, repo] = prRow.repoFullName.split("/");
+    const [, repoFullName, prNumberStr] = match;
+    const prNumber = parseInt(prNumberStr!, 10);
+    const [owner, repo] = repoFullName!.split("/");
     if (!owner || !repo) return { ok: false, error: "Invalid repo full name" };
 
-    // Fetch current state from GitHub
     const { data: pr } = await octokit.rest.pulls.get({
       owner,
       repo,
-      pull_number: prRow.prNumber,
+      pull_number: prNumber,
     });
 
     let prStatus: "draft" | "open" | "closed" | "merged" = "open";
@@ -205,39 +179,21 @@ export async function getPRStatus(
     else if (pr.state === "closed") prStatus = "closed";
     else if (pr.draft) prStatus = "draft";
 
-    const mergeableState = pr.mergeable_state as
-      | "clean"
-      | "dirty"
-      | "blocked"
-      | "unknown"
-      | "unstable"
-      | undefined;
-
-    // Update DB
-    const now = new Date().toISOString();
-    await db
-      .update(githubPR)
-      .set({
-        prStatus,
-        prTitle: pr.title,
-        mergeableState: mergeableState ?? "unknown",
-        updatedAt: now,
-      })
-      .where(eq(githubPR.id, prId));
+    const mergeableState = (pr.mergeable_state as string) ?? "unknown";
 
     return {
       ok: true,
       data: {
         id: prId,
-        prNumber: prRow.prNumber,
+        prNumber,
         prStatus,
         prTitle: pr.title,
-        prUrl: prRow.prUrl,
-        checksStatus: prRow.checksStatus,
-        mergeableState: mergeableState ?? "unknown",
-        headBranch: prRow.headBranch,
-        baseBranch: prRow.baseBranch,
-        repoFullName: prRow.repoFullName,
+        prUrl: pr.html_url,
+        checksStatus: null,
+        mergeableState,
+        headBranch: pr.head.ref,
+        baseBranch: pr.base.ref,
+        repoFullName: repoFullName!,
       },
     };
   } catch (err) {
@@ -249,7 +205,7 @@ export async function getPRStatus(
 }
 
 // ─────────────────────────────────────────────────
-// Poll Check Status
+// Poll Check Status (fetch live from GitHub)
 // ─────────────────────────────────────────────────
 
 export async function pollCheckStatus(prId: string): Promise<
@@ -265,74 +221,38 @@ export async function pollCheckStatus(prId: string): Promise<
     const { token } = authResult.data;
     const octokit = getOctokit(token);
 
-    // Get PR from DB
-    const rows = await db
-      .select()
-      .from(githubPR)
-      .where(eq(githubPR.id, prId))
-      .limit(1);
+    const match = prId.match(/^(.+?)#(\d+)$/);
+    if (!match) {
+      return { ok: false, error: `Cannot parse PR identifier: ${prId}` };
+    }
 
-    const prRow = rows[0];
-    if (!prRow) return { ok: false, error: "PR not found in database" };
-
-    const [owner, repo] = prRow.repoFullName.split("/");
+    const [, repoFullName, prNumberStr] = match;
+    const prNumber = parseInt(prNumberStr!, 10);
+    const [owner, repo] = repoFullName!.split("/");
     if (!owner || !repo) return { ok: false, error: "Invalid repo full name" };
 
-    // Get the PR head SHA
     const { data: pr } = await octokit.rest.pulls.get({
       owner,
       repo,
-      pull_number: prRow.prNumber,
+      pull_number: prNumber,
     });
 
     const headSha = pr.head.sha;
 
-    // Fetch check runs for the commit
     const { data: checkData } = await octokit.rest.checks.listForRef({
       owner,
       repo,
       ref: headSha,
     });
 
-    const now = new Date().toISOString();
-    const checkResults: CheckRunData[] = [];
+    const checkResults: CheckRunData[] = checkData.check_runs.map((run) => ({
+      id: String(run.id),
+      name: run.name,
+      status: run.status,
+      conclusion: run.conclusion ?? null,
+      detailsUrl: run.details_url ?? null,
+    }));
 
-    // Build check run values for batch insert
-    const checkRunValues = checkData.check_runs.map((run) => {
-      const checkId = nanoid();
-      const status = run.status as "queued" | "in_progress" | "completed";
-      const conclusion = run.conclusion as
-        | "success"
-        | "failure"
-        | "neutral"
-        | "cancelled"
-        | "skipped"
-        | "timed_out"
-        | "action_required"
-        | null;
-
-      checkResults.push({
-        id: checkId,
-        name: run.name,
-        status,
-        conclusion,
-        detailsUrl: run.details_url ?? null,
-      });
-
-      return {
-        id: checkId,
-        githubPRId: prId,
-        checkRunId: String(run.id),
-        name: run.name,
-        status,
-        conclusion,
-        detailsUrl: run.details_url ?? null,
-        createdAt: now,
-        updatedAt: now,
-      };
-    });
-
-    // Determine aggregate checks status
     let checksStatus: "none" | "pending" | "success" | "failure" | "unknown" =
       "none";
 
@@ -351,22 +271,6 @@ export async function pollCheckStatus(prId: string): Promise<
       else checksStatus = "unknown";
     }
 
-    // Atomic: delete old checks → insert new → update PR status
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(githubCheckRun)
-        .where(eq(githubCheckRun.githubPRId, prId));
-
-      if (checkRunValues.length > 0) {
-        await tx.insert(githubCheckRun).values(checkRunValues);
-      }
-
-      await tx
-        .update(githubPR)
-        .set({ checksStatus, updatedAt: now })
-        .where(eq(githubPR.id, prId));
-    });
-
     return {
       ok: true,
       data: { checksStatus, checks: checkResults },
@@ -380,31 +284,60 @@ export async function pollCheckStatus(prId: string): Promise<
 }
 
 // ─────────────────────────────────────────────────
-// Get PRs for a thread
+// Get PRs for a thread (fetch from GitHub API)
 // ─────────────────────────────────────────────────
 
 export async function getThreadPRs(
   threadId: string,
 ): Promise<ActionResult<PRStatusData[]>> {
   try {
-    const rows = await db
-      .select()
-      .from(githubPR)
-      .where(eq(githubPR.threadId, threadId));
+    const t = await getThread(threadId);
+    if (!t) return { ok: false, error: "Thread not found" };
+    if (!t.githubRepoFullName) return { ok: true, data: [] };
+
+    const authResult = await getGitHubAuth();
+    if (!authResult.ok) return authResult;
+
+    const { token } = authResult.data;
+    const octokit = getOctokit(token);
+    const [owner, repo] = t.githubRepoFullName.split("/");
+    if (!owner || !repo) return { ok: false, error: "Invalid repo full name" };
+
+    // List PRs for the head branch if available
+    const params: Parameters<typeof octokit.rest.pulls.list>[0] = {
+      owner,
+      repo,
+      state: "all",
+      per_page: 10,
+      sort: "created",
+      direction: "desc",
+    };
+
+    if (t.githubBranch) {
+      params.head = `${owner}:${t.githubBranch}`;
+    }
+
+    const { data: prs } = await octokit.rest.pulls.list(params);
 
     return {
       ok: true,
-      data: rows.map((r) => ({
-        id: r.id,
-        prNumber: r.prNumber,
-        prStatus: r.prStatus,
-        prTitle: r.prTitle,
-        prUrl: r.prUrl,
-        checksStatus: r.checksStatus,
-        mergeableState: r.mergeableState,
-        headBranch: r.headBranch,
-        baseBranch: r.baseBranch,
-        repoFullName: r.repoFullName,
+      data: prs.map((pr) => ({
+        id: `${t.githubRepoFullName}#${pr.number}`,
+        prNumber: pr.number,
+        prStatus: pr.draft
+          ? "draft"
+          : pr.merged_at
+            ? "merged"
+            : pr.state === "closed"
+              ? "closed"
+              : "open",
+        prTitle: pr.title,
+        prUrl: pr.html_url,
+        checksStatus: null,
+        mergeableState: null,
+        headBranch: pr.head.ref,
+        baseBranch: pr.base.ref,
+        repoFullName: t.githubRepoFullName!,
       })),
     };
   } catch (err) {

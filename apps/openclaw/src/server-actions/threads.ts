@@ -1,9 +1,14 @@
 "use server";
 
+import { getOpenClawClient } from "@/lib/openclaw-client";
 import { db } from "@/db";
-import { thread, threadChat } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
-import { nanoid } from "nanoid";
+import { kvStore } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import type { OpenClawSession } from "@/lib/openclaw-types";
+
+// ─────────────────────────────────────────────────
+// Types (preserved for React Query compatibility)
+// ─────────────────────────────────────────────────
 
 export type ThreadListItem = {
   id: string;
@@ -25,56 +30,129 @@ export type ThreadDetail = ThreadListItem & {
   environmentId: string | null;
 };
 
+// ─────────────────────────────────────────────────
+// KV helpers for session metadata
+// ─────────────────────────────────────────────────
+
+function sessionMetaKey(sessionKey: string): string {
+  return `session-meta:${sessionKey}`;
+}
+
+type SessionMeta = {
+  name?: string;
+  githubRepoFullName?: string;
+  githubBranch?: string;
+  baseBranch?: string;
+  pipelineState?: string;
+  tokenUsage?: string;
+  environmentId?: string;
+  archived?: boolean;
+};
+
+async function getSessionMeta(sessionKey: string): Promise<SessionMeta | null> {
+  const key = sessionMetaKey(sessionKey);
+  const rows = await db
+    .select()
+    .from(kvStore)
+    .where(eq(kvStore.key, key))
+    .limit(1);
+  if (!rows[0]) return null;
+  try {
+    return JSON.parse(rows[0].value) as SessionMeta;
+  } catch {
+    return null;
+  }
+}
+
+async function setSessionMeta(
+  sessionKey: string,
+  meta: SessionMeta,
+): Promise<void> {
+  const key = sessionMetaKey(sessionKey);
+  const now = new Date().toISOString();
+  const value = JSON.stringify(meta);
+  await db
+    .insert(kvStore)
+    .values({ key, value, createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: kvStore.key,
+      set: { value, updatedAt: now },
+    });
+}
+
+async function deleteSessionMeta(sessionKey: string): Promise<void> {
+  await db.delete(kvStore).where(eq(kvStore.key, sessionMetaKey(sessionKey)));
+}
+
+// ─────────────────────────────────────────────────
+// Map gateway session to ThreadListItem
+// ─────────────────────────────────────────────────
+
+function sessionToThreadListItem(
+  session: OpenClawSession,
+  meta: SessionMeta | null,
+): ThreadListItem {
+  return {
+    id: session.key,
+    name: meta?.name ?? session.agentId ?? null,
+    status: session.lastMessageAt ? "working-done" : "draft",
+    agent: session.agentId ?? "claudeCode",
+    model: session.model ?? null,
+    githubRepoFullName: meta?.githubRepoFullName ?? null,
+    pipelineState: meta?.pipelineState ?? null,
+    tokenUsage: meta?.tokenUsage ?? null,
+    archived: meta?.archived ?? false,
+    createdAt: session.createdAt ?? new Date().toISOString(),
+    updatedAt:
+      session.lastMessageAt ?? session.createdAt ?? new Date().toISOString(),
+  };
+}
+
+// ─────────────────────────────────────────────────
+// Server Actions
+// ─────────────────────────────────────────────────
+
 export async function listThreads(opts?: {
   archived?: boolean;
 }): Promise<ThreadListItem[]> {
-  const conditions = [];
-  if (opts?.archived !== undefined) {
-    conditions.push(eq(thread.archived, opts.archived));
+  const client = getOpenClawClient();
+  const sessions = await client.sessionsList();
+
+  const items: ThreadListItem[] = [];
+  for (const session of sessions) {
+    const meta = await getSessionMeta(session.key);
+    const item = sessionToThreadListItem(session, meta);
+
+    // Filter by archived status if requested
+    if (opts?.archived !== undefined && item.archived !== opts.archived) {
+      continue;
+    }
+
+    items.push(item);
   }
 
-  const rows = await db
-    .select()
-    .from(thread)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(thread.createdAt));
+  // Sort by updatedAt descending (most recent first)
+  items.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  );
 
-  return rows.map((r) => ({
-    id: r.id,
-    name: r.name,
-    status: r.status,
-    agent: r.agent,
-    model: r.model,
-    githubRepoFullName: r.githubRepoFullName,
-    pipelineState: r.pipelineState,
-    tokenUsage: r.tokenUsage,
-    archived: r.archived,
-    createdAt: r.createdAt,
-    updatedAt: r.updatedAt,
-  }));
+  return items;
 }
 
 export async function getThread(id: string): Promise<ThreadDetail | null> {
-  const rows = await db.select().from(thread).where(eq(thread.id, id)).limit(1);
+  const client = getOpenClawClient();
+  const sessions = await client.sessionsList();
+  const session = sessions.find((s) => s.key === id);
+  if (!session) return null;
 
-  const r = rows[0];
-  if (!r) return null;
+  const meta = await getSessionMeta(id);
+  const base = sessionToThreadListItem(session, meta);
 
   return {
-    id: r.id,
-    name: r.name,
-    status: r.status,
-    agent: r.agent,
-    model: r.model,
-    githubRepoFullName: r.githubRepoFullName,
-    githubBranch: r.githubBranch,
-    baseBranch: r.baseBranch,
-    pipelineState: r.pipelineState,
-    tokenUsage: r.tokenUsage,
-    environmentId: r.environmentId,
-    archived: r.archived,
-    createdAt: r.createdAt,
-    updatedAt: r.updatedAt,
+    ...base,
+    githubBranch: meta?.githubBranch ?? null,
+    baseBranch: meta?.baseBranch ?? null,
+    environmentId: meta?.environmentId ?? null,
   };
 }
 
@@ -84,34 +162,26 @@ export async function createThread(opts: {
   model?: string;
   pipelineTemplateId?: string;
 }): Promise<{ id: string }> {
-  const id = nanoid();
-  const chatId = nanoid();
-  const now = new Date().toISOString();
+  // Use a deterministic session key
+  const { nanoid } = await import("nanoid");
+  const sessionKey = `session-${nanoid()}`;
 
-  await db.transaction(async (tx) => {
-    await tx.insert(thread).values({
-      id,
-      name: opts.name,
-      status: "draft",
-      agent: "claudeCode",
-      model: opts.model ?? null,
-      githubRepoFullName: opts.githubRepoFullName ?? null,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    await tx.insert(threadChat).values({
-      id: chatId,
-      threadId: id,
-      agent: "claudeCode",
-      model: opts.model ?? null,
-      status: "draft",
-      createdAt: now,
-      updatedAt: now,
-    });
+  // Store metadata in kvStore
+  await setSessionMeta(sessionKey, {
+    name: opts.name,
+    githubRepoFullName: opts.githubRepoFullName,
+    archived: false,
   });
 
-  return { id };
+  // Register session with bridge
+  try {
+    const { getBridge } = await import("@/server/bridge-registry");
+    getBridge()?.registerSession(sessionKey, sessionKey);
+  } catch {
+    // Bridge may not be available
+  }
+
+  return { id: sessionKey };
 }
 
 export async function updateThread(
@@ -125,16 +195,44 @@ export async function updateThread(
     baseBranch: string;
     pipelineState: string;
     tokenUsage: string;
+    environmentId: string;
     archived: boolean;
   }>,
 ): Promise<void> {
-  await db
-    .update(thread)
-    .set({
-      ...data,
-      updatedAt: new Date().toISOString(),
-    } as typeof thread.$inferInsert)
-    .where(eq(thread.id, id));
+  const existing = (await getSessionMeta(id)) ?? {};
+
+  // Merge only metadata fields we track locally
+  const merged: SessionMeta = {
+    ...existing,
+    ...(data.name !== undefined ? { name: data.name } : {}),
+    ...(data.githubRepoFullName !== undefined
+      ? { githubRepoFullName: data.githubRepoFullName }
+      : {}),
+    ...(data.githubBranch !== undefined
+      ? { githubBranch: data.githubBranch }
+      : {}),
+    ...(data.baseBranch !== undefined ? { baseBranch: data.baseBranch } : {}),
+    ...(data.pipelineState !== undefined
+      ? { pipelineState: data.pipelineState }
+      : {}),
+    ...(data.tokenUsage !== undefined ? { tokenUsage: data.tokenUsage } : {}),
+    ...(data.environmentId !== undefined
+      ? { environmentId: data.environmentId }
+      : {}),
+    ...(data.archived !== undefined ? { archived: data.archived } : {}),
+  };
+
+  await setSessionMeta(id, merged);
+
+  // If model is being updated, also patch the gateway session
+  if (data.model !== undefined) {
+    try {
+      const client = getOpenClawClient();
+      await client.sessionsPatch(id, { model: data.model });
+    } catch {
+      // Gateway may not support patching model — store locally only
+    }
+  }
 }
 
 export async function archiveThread(id: string): Promise<void> {
@@ -146,21 +244,20 @@ export async function unarchiveThread(id: string): Promise<void> {
 }
 
 export async function deleteThread(id: string): Promise<void> {
-  // Thread chats are cascade deleted
-  await db.delete(thread).where(eq(thread.id, id));
+  await deleteSessionMeta(id);
+  // Also clean up pipeline state if any
+  await db.delete(kvStore).where(eq(kvStore.key, `pipeline:${id}`));
 }
 
 export async function getThreadChats(threadId: string) {
-  return db
-    .select()
-    .from(threadChat)
-    .where(eq(threadChat.threadId, threadId))
-    .orderBy(threadChat.createdAt);
+  // No longer stored in DB — return empty array.
+  // Chat history is fetched directly from gateway via loadChatHistory().
+  return [];
 }
 
 export async function updateThreadChat(
-  chatId: string,
-  data: Partial<{
+  _chatId: string,
+  _data: Partial<{
     status: string;
     messages: string;
     sessionKey: string;
@@ -168,11 +265,5 @@ export async function updateThreadChat(
     errorMessage: string;
   }>,
 ): Promise<void> {
-  await db
-    .update(threadChat)
-    .set({
-      ...data,
-      updatedAt: new Date().toISOString(),
-    } as typeof threadChat.$inferInsert)
-    .where(eq(threadChat.id, chatId));
+  // No-op: chat state is managed by the gateway.
 }

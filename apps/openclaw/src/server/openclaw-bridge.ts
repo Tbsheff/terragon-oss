@@ -4,6 +4,8 @@
  * Connects to the OpenClaw gateway as a WebSocket client,
  * receives chat/agent events, and forwards them to the local broadcast server.
  * This enables real-time UI updates without polling.
+ *
+ * Gateway is the source of truth — no DB writes happen here.
  */
 
 import type { LocalBroadcastServer } from "./broadcast";
@@ -32,18 +34,13 @@ export type OpenClawBroadcastMessage = {
 
 /**
  * Bridge between OpenClaw gateway events and the local broadcast server.
- * Listens for chat and agent events and rebroadcasts them to UI clients.
- *
- * NOTE: This is designed to work with the OpenClawClient from openclaw-client.ts.
- * In the actual integration, the client's event listeners call bridge.onChatEvent()
- * and bridge.onAgentEvent() directly, rather than maintaining a separate WS connection.
+ * Receives chat and agent events and rebroadcasts them to UI clients.
+ * Routes events by session key directly (no DB mapping needed).
  */
 export class OpenClawBridge {
   private broadcast: LocalBroadcastServer;
+  // Session key → thread ID mapping for routing events to the right WS room
   private sessionToThread = new Map<string, string>();
-  private syncService?: {
-    onChatEvent: (payload: ChatEventPayload, threadId: string) => Promise<void>;
-  };
 
   constructor(options: BridgeOptions) {
     this.broadcast = options.broadcast;
@@ -59,36 +56,11 @@ export class OpenClawBridge {
     this.sessionToThread.delete(sessionKey);
   }
 
-  /** Set the sync service for DB-first event handling */
-  setSyncService(service: {
-    onChatEvent: (payload: ChatEventPayload, threadId: string) => Promise<void>;
-  }): void {
-    this.syncService = service;
-  }
-
-  /** Handle a chat event from the OpenClaw client */
+  /** Handle a chat event from the OpenClaw client — broadcast directly */
   onChatEvent(payload: ChatEventPayload): void {
     const threadId = this.sessionToThread.get(payload.sessionKey);
     if (!threadId) return;
 
-    // Route through sync service (DB-first) if available
-    if (this.syncService) {
-      this.syncService.onChatEvent(payload, threadId).catch((err) => {
-        console.error("[bridge] sync service error:", err);
-        // Fallback: broadcast directly even if DB write failed
-        this.broadcastChatEvent(payload, threadId);
-      });
-      return;
-    }
-
-    this.broadcastChatEvent(payload, threadId);
-  }
-
-  /** Direct broadcast fallback (no DB write) */
-  private broadcastChatEvent(
-    payload: ChatEventPayload,
-    threadId: string,
-  ): void {
     const message: OpenClawBroadcastMessage = {
       type: "thread-update",
       threadId,
@@ -106,6 +78,11 @@ export class OpenClawBridge {
       },
     };
     this.broadcast.broadcast(threadId, message);
+
+    // Broadcast thread-list-update globally so dashboard refreshes
+    this.broadcast.broadcastAll({
+      type: "thread-list-update",
+    });
   }
 
   /** Handle an agent lifecycle event */

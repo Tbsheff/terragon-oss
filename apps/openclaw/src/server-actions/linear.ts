@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { kvStore, thread } from "@/db/schema";
+import { kvStore } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import {
   pollLinearIssues,
@@ -12,6 +12,7 @@ import {
   type LinearStatusUpdate,
 } from "@/lib/linear-integration";
 import { startPipeline } from "@/server-actions/pipeline";
+import { getThread, updateThread } from "@/server-actions/threads";
 
 // ─────────────────────────────────────────────────
 // Types
@@ -120,8 +121,7 @@ export async function startPipelineFromIssue(
       `OpenClaw pipeline started. Thread: \`${threadResult.data.threadId}\``,
     );
 
-    // Store the Linear issue ID in the thread's pipeline state for later sync
-    const { updateThread } = await import("@/server-actions/threads");
+    // Store the Linear issue ID in the thread's metadata
     await updateThread(threadResult.data.threadId, {
       pipelineState: JSON.stringify({ linearIssueId: issueId }),
     });
@@ -157,14 +157,8 @@ export async function syncLinearStatus(
   }
 
   try {
-    // Get thread to determine its current status
-    const rows = await db
-      .select()
-      .from(thread)
-      .where(eq(thread.id, threadId))
-      .limit(1);
-
-    const t = rows[0];
+    // Get thread from gateway session metadata
+    const t = await getThread(threadId);
     if (!t) return { ok: false, error: "Thread not found" };
 
     // Parse pipeline state to extract Linear issue ID

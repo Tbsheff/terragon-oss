@@ -60,11 +60,6 @@ async function main() {
     const { setBridge } = await import("./bridge-registry");
     setBridge(bridge);
 
-    // Create gateway sync service (writes to DB before broadcasting)
-    const { GatewaySyncService } = await import("./gateway-sync");
-    const syncService = new GatewaySyncService(broadcast);
-    bridge.setSyncService(syncService);
-
     const client = getOpenClawClient();
 
     client.on("chat", (payload) => bridge.onChatEvent(payload));
@@ -80,47 +75,6 @@ async function main() {
     client.on("disconnected", () => bridge.onConnectionChange("disconnected"));
 
     console.log(`> OpenClaw bridge connecting to ${gatewayUrl}`);
-
-    // Pre-populate bridge sessions from DB (threads still in working state)
-    try {
-      const { db } = await import("@/db");
-      const { thread, threadChat } = await import("@/db/schema");
-      const { sql, eq, desc } = await import("drizzle-orm");
-      const { getBridge } = await import("./bridge-registry");
-
-      const workingThreads = await db
-        .select({ id: thread.id })
-        .from(thread)
-        .where(sql`${thread.status} IN ('working', 'stopping')`);
-
-      const activeBridge = getBridge();
-      if (activeBridge && workingThreads.length > 0) {
-        for (const t of workingThreads) {
-          // Get the latest threadChat with a sessionKey
-          const chats = await db
-            .select({ sessionKey: threadChat.sessionKey })
-            .from(threadChat)
-            .where(eq(threadChat.threadId, t.id))
-            .orderBy(desc(threadChat.createdAt))
-            .limit(1);
-
-          const sessionKey = chats[0]?.sessionKey;
-          if (sessionKey) {
-            activeBridge.registerSession(sessionKey, t.id);
-          }
-        }
-        console.log(
-          `> Pre-populated ${workingThreads.length} working thread session(s)`,
-        );
-      }
-    } catch (err) {
-      console.error("> Failed to pre-populate sessions:", err);
-    }
-
-    // Start stale recovery service
-    const { StaleRecoveryService } = await import("./stale-recovery");
-    const staleRecovery = new StaleRecoveryService();
-    staleRecovery.start();
   } else {
     console.log(
       "> No OPENCLAW_GATEWAY_URL set — bridge disabled (UI-only mode)",
