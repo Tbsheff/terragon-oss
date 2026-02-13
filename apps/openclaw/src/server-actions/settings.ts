@@ -147,14 +147,14 @@ export async function testConnection(): Promise<{
       .update(openclawConnection)
       .set({
         lastHealthCheck: now,
-        lastHealthStatus: health.status === "ok" ? "healthy" : "unhealthy",
+        lastHealthStatus: health.ok ? "healthy" : "unhealthy",
         updatedAt: now,
       })
       .where(eq(openclawConnection.id, "default"));
 
     return {
       success: true,
-      status: health.status,
+      status: health.ok ? "ok" : "error",
       version: health.version ?? `protocol-v${hello.protocol}`,
     };
   } catch (err) {

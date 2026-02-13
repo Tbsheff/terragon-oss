@@ -18,7 +18,7 @@ async function getClientConnection() {
   }
 
   const protocol = connRow.useTls ? "wss" : "ws";
-  const url = `${protocol}://${connRow.host}:${connRow.port}`;
+  const url = `${protocol}://${connRow.host}:${connRow.port}/ws`;
 
   const client = new OpenClawClient();
   await client.connect(url, connRow.authToken ?? "");
@@ -62,10 +62,11 @@ export async function updateGatewayConfig(
 export async function getHealthStatus(): Promise<{
   success: boolean;
   health?: {
-    status: string;
+    ok: boolean;
     version?: string;
     uptime?: number;
     activeSessions?: number;
+    durationMs?: number;
     cpu?: number;
     memory?: number;
   };

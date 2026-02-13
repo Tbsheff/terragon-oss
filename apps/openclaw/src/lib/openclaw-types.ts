@@ -178,12 +178,15 @@ export type GatewayConfig = Record<string, unknown>;
 // ─────────────────────────────────────────────────
 
 export type HealthStatus = {
-  status: "ok" | "degraded" | "error";
+  ok: boolean;
+  ts?: number;
+  durationMs?: number;
   version?: string;
   uptime?: number;
   activeSessions?: number;
   cpu?: number;
   memory?: number;
+  channels?: Record<string, unknown>;
 };
 
 // ─────────────────────────────────────────────────
