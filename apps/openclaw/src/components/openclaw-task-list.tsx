@@ -8,6 +8,8 @@ import { parsePipelineState } from "@/hooks/use-pipeline";
 import { useElapsedTime } from "@/hooks/use-elapsed-time";
 import { PIPELINE_STAGE_LABELS, type PipelineStage } from "@/lib/constants";
 import { getActivityLabel } from "@/lib/activity-label";
+import { parseTokenUsage } from "@/lib/token-usage";
+import { formatCost } from "@/lib/utils";
 import {
   Circle,
   CheckCircle2,
@@ -16,6 +18,7 @@ import {
   Archive,
   Clock,
   Leaf,
+  AlertTriangle,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -96,11 +99,13 @@ export function OpenClawTaskList() {
             const pipeline = parsePipelineState(t.pipelineState);
             const isTaskWorking =
               t.status === "working" || t.status === "stopping";
+            const isError = t.status === "working-error";
             const firstEntry = pipeline?.stageHistory[0];
             const activityLabel = getActivityLabel(
               pipeline?.currentStage ?? null,
               t.status,
             );
+            const tokenUsage = parseTokenUsage(t.tokenUsage);
 
             return (
               <SidebarMenuItem
@@ -120,6 +125,9 @@ export function OpenClawTaskList() {
                         <span className="truncate text-xs font-medium">
                           {t.name ?? "Untitled Task"}
                         </span>
+                        {isError && (
+                          <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                        )}
                         {isTaskWorking && (
                           <ElapsedBadge
                             startedAt={firstEntry?.startedAt ?? null}
@@ -135,6 +143,12 @@ export function OpenClawTaskList() {
                         {pipeline?.currentStage && (
                           <StageBadge stage={pipeline.currentStage} />
                         )}
+                        {tokenUsage?.totalCost != null &&
+                          tokenUsage.totalCost > 0 && (
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              {formatCost(tokenUsage.totalCost)}
+                            </span>
+                          )}
                         {t.githubRepoFullName && (
                           <span className="text-[10px] text-muted-foreground truncate">
                             {t.githubRepoFullName.split("/")[1]}

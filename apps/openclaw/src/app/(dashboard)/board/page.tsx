@@ -1,21 +1,25 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { threadListQueryOptions } from "@/queries/thread-queries";
+import { enrichedThreadListQueryOptions } from "@/queries/board-queries";
+import type { EnrichedThreadListItem } from "@/server-actions/threads-enriched";
 import { cn } from "@/lib/utils";
 import {
   PIPELINE_STAGES,
   PIPELINE_STAGE_LABELS,
   type PipelineStage,
 } from "@/lib/constants";
+import { parsePipelineState } from "@/hooks/use-pipeline";
+import { useElapsedTime } from "@/hooks/use-elapsed-time";
+import { useRealtimeGlobal } from "@/hooks/use-realtime";
 import Link from "next/link";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { GitBranch } from "lucide-react";
+import { GitBranch, GitPullRequest, Clock, AlertCircle } from "lucide-react";
 
-type PipelineState = {
+type LocalPipelineState = {
   currentStage?: PipelineStage;
 };
 
@@ -24,7 +28,7 @@ function parsePipelineStage(
 ): PipelineStage | null {
   if (!pipelineState) return null;
   try {
-    const parsed = JSON.parse(pipelineState) as PipelineState;
+    const parsed = JSON.parse(pipelineState) as LocalPipelineState;
     return parsed.currentStage ?? null;
   } catch {
     return null;
@@ -75,8 +79,132 @@ const STAGE_BADGE_COLORS: Record<string, string> = {
   done: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
 };
 
+const PR_STATUS_COLORS: Record<string, string> = {
+  draft: "bg-muted text-muted-foreground border-muted-foreground/20",
+  open: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
+  merged:
+    "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+  closed: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+};
+
+/**
+ * Get the startedAt timestamp of the currently running pipeline stage.
+ */
+function getRunningStageStartedAt(pipelineState: string | null): string | null {
+  const state = parsePipelineState(pipelineState);
+  if (!state) return null;
+  const running = state.stageHistory.find((h) => h.status === "running");
+  return running?.startedAt ?? null;
+}
+
+// ─────────────────────────────────────────────────
+// BoardCard — individual card component (needs hooks)
+// ─────────────────────────────────────────────────
+
+function BoardCard({
+  thread,
+  stage,
+  index,
+}: {
+  thread: EnrichedThreadListItem;
+  stage: PipelineStage | "done" | "none";
+  index: number;
+}) {
+  const runningStartedAt = getRunningStageStartedAt(thread.pipelineState);
+  const elapsed = useElapsedTime(runningStartedAt);
+  const isError = thread.status === "working-error";
+
+  return (
+    <Link href={`/task/${thread.id}`}>
+      <Card
+        className={cn(
+          "cursor-pointer transition-all duration-200 gap-0 py-0 shadow-none text-xs",
+          "hover:-translate-y-0.5 hover:shadow-md hover:bg-card/80",
+          "active:translate-y-0 active:shadow-sm",
+          "opacity-0 animate-fade-in [animation-fill-mode:forwards]",
+          stage !== "none" && stage !== "done"
+            ? cn(STAGE_COLORS[stage], "hover:border-opacity-100")
+            : "",
+          isError && "border-destructive/50",
+        )}
+        style={{ animationDelay: `${index * 60}ms` }}
+      >
+        <CardContent className="p-2.5">
+          {/* Title row with error dot */}
+          <div className="flex items-start gap-1.5">
+            {isError && (
+              <span
+                className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-destructive"
+                title="Error"
+              />
+            )}
+            <p className="font-medium text-foreground line-clamp-2 flex-1">
+              {thread.name}
+            </p>
+          </div>
+
+          {/* Repo name */}
+          {thread.githubRepoFullName ? (
+            <p className="mt-1 text-muted-foreground/70 truncate flex items-center gap-1">
+              <GitBranch className="h-3 w-3 flex-shrink-0" />
+              {thread.githubRepoFullName}
+            </p>
+          ) : (
+            <p className="mt-1 text-muted-foreground/70 truncate">No repo</p>
+          )}
+
+          {/* Metadata row: elapsed time, model, PR badge */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {/* Elapsed time */}
+            {elapsed && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                <Clock className="h-2.5 w-2.5" />
+                {elapsed}
+              </span>
+            )}
+
+            {/* Model badge */}
+            {thread.model && (
+              <span className="text-[10px] text-muted-foreground/60">
+                {thread.model}
+              </span>
+            )}
+
+            {/* PR badge */}
+            {thread.latestPR && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[10px] px-1.5 py-0 gap-0.5",
+                  PR_STATUS_COLORS[thread.latestPR.prStatus] ?? "",
+                )}
+              >
+                <GitPullRequest className="h-2.5 w-2.5" />#
+                {thread.latestPR.prNumber}
+              </Badge>
+            )}
+
+            {/* Error indicator with label */}
+            {thread.hasError && !isError && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] text-destructive">
+                <AlertCircle className="h-2.5 w-2.5" />
+                Error
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Board Page
+// ─────────────────────────────────────────────────
+
 export default function BoardPage() {
-  const { data: threads } = useQuery(threadListQueryOptions());
+  useRealtimeGlobal();
+  const { data: threads } = useQuery(enrichedThreadListQueryOptions());
   const activeThreads = threads?.filter((t) => !t.archived) ?? [];
 
   const columns: Array<{
@@ -146,39 +274,12 @@ export default function BoardPage() {
                 </CardHeader>
                 <div className="flex-1 overflow-y-auto p-2 space-y-2">
                   {columnThreads.map((thread, index) => (
-                    <Link key={thread.id} href={`/task/${thread.id}`}>
-                      <Card
-                        className={cn(
-                          "cursor-pointer transition-all duration-200 gap-0 py-0 shadow-none text-xs",
-                          "hover:-translate-y-0.5 hover:shadow-md hover:bg-card/80",
-                          "active:translate-y-0 active:shadow-sm",
-                          "opacity-0 animate-fade-in [animation-fill-mode:forwards]",
-                          col.stage !== "none" && col.stage !== "done"
-                            ? cn(
-                                STAGE_COLORS[col.stage],
-                                "hover:border-opacity-100",
-                              )
-                            : "",
-                        )}
-                        style={{ animationDelay: `${index * 60}ms` }}
-                      >
-                        <CardContent className="p-2.5">
-                          <p className="font-medium text-foreground line-clamp-2">
-                            {thread.name}
-                          </p>
-                          {thread.githubRepoFullName ? (
-                            <p className="mt-1 text-muted-foreground/70 truncate flex items-center gap-1">
-                              <GitBranch className="h-3 w-3 flex-shrink-0" />
-                              {thread.githubRepoFullName}
-                            </p>
-                          ) : (
-                            <p className="mt-1 text-muted-foreground/70 truncate">
-                              No repo
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </Link>
+                    <BoardCard
+                      key={thread.id}
+                      thread={thread}
+                      stage={col.stage}
+                      index={index}
+                    />
                   ))}
                   {columnThreads.length === 0 && (
                     <div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-border/50">

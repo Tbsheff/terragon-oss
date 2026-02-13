@@ -5,6 +5,7 @@ export type OpenClawThread = {
   name: string | null;
   status: string;
   pipelineState: string | null;
+  tokenUsage: string | null;
   githubRepoFullName: string | null;
   createdAt: string;
 };

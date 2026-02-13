@@ -157,6 +157,7 @@ export function PipelineStatus({
                   stage={stage}
                   status={status}
                   retryCount={retryCount}
+                  feedback={latestEntry?.feedback}
                   compact={compact}
                 />
               </div>

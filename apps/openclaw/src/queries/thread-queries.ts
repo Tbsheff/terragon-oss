@@ -7,6 +7,10 @@ import {
   type ThreadListItem,
   type ThreadDetail,
 } from "@/server-actions/threads";
+import {
+  getThreadErrors,
+  type ThreadError,
+} from "@/server-actions/thread-errors";
 
 /** Query key factories (following Terragon pattern) */
 export const threadQueryKeys = {
@@ -15,6 +19,7 @@ export const threadQueryKeys = {
     ["threads", "list", filters] as const,
   detail: (id: string) => ["threads", "detail", id] as const,
   messages: (id: string) => ["threads", "messages", id] as const,
+  errors: (id: string) => ["threads", "errors", id] as const,
 };
 
 /** Query options for thread list */
@@ -33,5 +38,15 @@ export function threadDetailQueryOptions(threadId: string) {
     queryFn: () => getThread(threadId),
     enabled: !!threadId,
     staleTime: 5_000,
+  });
+}
+
+/** Query options for thread errors */
+export function threadErrorsQueryOptions(threadId: string) {
+  return queryOptions<ThreadError[]>({
+    queryKey: threadQueryKeys.errors(threadId),
+    queryFn: () => getThreadErrors(threadId),
+    enabled: !!threadId,
+    staleTime: 10_000,
   });
 }

@@ -13,6 +13,7 @@ export type ThreadListItem = {
   model: string | null;
   githubRepoFullName: string | null;
   pipelineState: string | null;
+  tokenUsage: string | null;
   archived: boolean;
   createdAt: string;
   updatedAt: string;
@@ -21,7 +22,6 @@ export type ThreadListItem = {
 export type ThreadDetail = ThreadListItem & {
   githubBranch: string | null;
   baseBranch: string | null;
-  tokenUsage: string | null;
   environmentId: string | null;
 };
 
@@ -47,6 +47,7 @@ export async function listThreads(opts?: {
     model: r.model,
     githubRepoFullName: r.githubRepoFullName,
     pipelineState: r.pipelineState,
+    tokenUsage: r.tokenUsage,
     archived: r.archived,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,

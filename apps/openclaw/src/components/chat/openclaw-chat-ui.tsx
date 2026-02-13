@@ -46,6 +46,7 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
         name: threadDetail.name,
         status: threadDetail.status,
         pipelineState: threadDetail.pipelineState,
+        tokenUsage: threadDetail.tokenUsage,
         githubRepoFullName: threadDetail.githubRepoFullName,
         createdAt: threadDetail.createdAt,
       }

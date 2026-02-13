@@ -2,7 +2,11 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { createThread } from "@/server-actions/threads";
+import { threadListQueryOptions } from "@/queries/thread-queries";
+import { dashboardStatsQueryOptions } from "@/queries/dashboard-queries";
+import { useRealtimeGlobal } from "@/hooks/use-realtime";
 import { cn } from "@/lib/utils";
 import {
   Rocket,
@@ -25,6 +29,10 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { QuickStatsRow } from "@/components/dashboard/quick-stats-row";
+import { ActiveAgentsPanel } from "@/components/dashboard/active-agents-panel";
+import { ErrorFeed } from "@/components/dashboard/error-feed";
+import { RecentActivityFeed } from "@/components/dashboard/recent-activity-feed";
 
 const QUICK_TEMPLATES = [
   {
@@ -62,6 +70,15 @@ export function OpenClawDashboard() {
   const [repoFullName, setRepoFullName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
+  // Subscribe to global real-time updates for auto-refresh
+  useRealtimeGlobal();
+
+  // Dashboard data
+  const { data: stats } = useQuery(dashboardStatsQueryOptions());
+  const { data: threads } = useQuery(
+    threadListQueryOptions({ archived: false }),
+  );
+
   const handleCreate = useCallback(async () => {
     if (!prompt.trim()) return;
     setIsCreating(true);
@@ -80,73 +97,91 @@ export function OpenClawDashboard() {
   }, [prompt, repoFullName, selectedTemplate, router]);
 
   return (
-    <div className="flex h-full flex-col items-center justify-center px-8">
-      <div className="w-full max-w-2xl animate-fade-in">
-        <Card className="shadow-sm border-t-2 border-t-primary/20 [&:has(textarea:focus-visible)]:ring-1 [&:has(textarea:focus-visible)]:ring-primary/10 transition-shadow duration-200">
-          <CardHeader>
-            <CardTitle className="font-[var(--font-cabin)] text-xl tracking-tight">
-              New Task
-            </CardTitle>
-            <CardDescription>
-              Tell your agents what to build — they'll handle the rest
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {/* Prompt input */}
-            <div>
+    <div className="flex h-full flex-col overflow-y-auto px-6 py-6">
+      {/* Quick Stats Row — full width */}
+      <div className="mb-6">
+        <QuickStatsRow stats={stats} />
+      </div>
+
+      {/* Two-column layout */}
+      <div className="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left column (2/3): Active Agents + Recent Activity */}
+        <div className="space-y-6 lg:col-span-2">
+          <ActiveAgentsPanel threads={threads} />
+          <RecentActivityFeed threads={threads} />
+        </div>
+
+        {/* Right column (1/3): New Task + Error Feed */}
+        <div className="space-y-6">
+          {/* New Task Card (existing form, compressed) */}
+          <Card
+            className="animate-fade-in shadow-sm border-t-2 border-t-primary/20 bg-card/50 backdrop-blur-sm [&:has(textarea:focus-visible)]:ring-1 [&:has(textarea:focus-visible)]:ring-primary/10 transition-shadow duration-200"
+            style={{ animationDelay: "100ms", animationFillMode: "both" }}
+          >
+            <CardHeader className="pb-3">
+              <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
+                New Task
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Tell your agents what to build
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Prompt input */}
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="e.g., Add a new tRPC endpoint for user preferences with Zod validation and Vitest tests"
-                rows={4}
-                className="w-full rounded-lg border border-input bg-muted/30 shadow-inner px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none resize-none transition-colors duration-150"
+                placeholder="e.g., Add a new tRPC endpoint for user preferences..."
+                rows={3}
+                className="w-full rounded-lg border border-input bg-muted/30 shadow-inner px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none resize-none transition-colors duration-150"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                     handleCreate();
                   }
                 }}
               />
-            </div>
 
-            {/* Repo input */}
-            <div className="space-y-1">
-              <Label htmlFor="repo">Repository (optional)</Label>
-              <Input
-                id="repo"
-                type="text"
-                value={repoFullName}
-                onChange={(e) => setRepoFullName(e.target.value)}
-                placeholder="owner/repo"
-              />
-            </div>
+              {/* Repo input */}
+              <div className="space-y-1">
+                <Label htmlFor="repo" className="text-xs">
+                  Repository (optional)
+                </Label>
+                <Input
+                  id="repo"
+                  type="text"
+                  value={repoFullName}
+                  onChange={(e) => setRepoFullName(e.target.value)}
+                  placeholder="owner/repo"
+                  className="h-8 text-sm"
+                />
+              </div>
 
-            <Separator className="my-4" />
+              <Separator />
 
-            {/* Pipeline template selection */}
-            <div>
-              <Label className="mb-2 block">Pipeline</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {QUICK_TEMPLATES.map((t, i) => {
-                  const isSelected = selectedTemplate === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => setSelectedTemplate(t.id)}
-                      className={cn(
-                        "animate-fade-in flex flex-col items-start rounded-lg border p-3 text-left transition-all duration-200 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
-                        isSelected
-                          ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30"
-                          : "border-border bg-card hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5",
-                      )}
-                      style={{
-                        animationDelay: `${i * 50}ms`,
-                        animationFillMode: "both",
-                      }}
-                    >
-                      <div className="flex w-full items-center gap-2 mb-1">
+              {/* Pipeline template selection */}
+              <div>
+                <Label className="mb-1.5 block text-xs">Pipeline</Label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {QUICK_TEMPLATES.map((t, i) => {
+                    const isSelected = selectedTemplate === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelectedTemplate(t.id)}
+                        className={cn(
+                          "animate-fade-in flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left transition-all duration-200 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
+                          isSelected
+                            ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30"
+                            : "border-border bg-card hover:border-primary/50 hover:shadow-sm",
+                        )}
+                        style={{
+                          animationDelay: `${150 + i * 40}ms`,
+                          animationFillMode: "both",
+                        }}
+                      >
                         <t.icon
                           className={cn(
-                            "h-4 w-4 transition-colors duration-200",
+                            "h-3.5 w-3.5 shrink-0 transition-colors duration-200",
                             isSelected
                               ? "text-primary"
                               : "text-muted-foreground",
@@ -154,48 +189,48 @@ export function OpenClawDashboard() {
                         />
                         <span className="text-xs font-medium">{t.label}</span>
                         {isSelected && (
-                          <Check className="ml-auto h-3.5 w-3.5 text-primary" />
+                          <Check className="ml-auto h-3 w-3 text-primary" />
                         )}
-                      </div>
-                      <span className="text-[10px] text-muted-foreground">
-                        {t.stages}
-                      </span>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            {/* Create button */}
-            <Button
-              size="lg"
-              className="w-full gap-2"
-              onClick={handleCreate}
-              disabled={!prompt.trim() || isCreating}
-            >
-              {isCreating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Rocket className="h-4 w-4" />
-                  Start Task
-                </>
-              )}
-            </Button>
-            <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">
-                ⌘
-              </kbd>
-              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">
-                Enter
-              </kbd>
-              <span className="ml-0.5">to start</span>
-            </p>
-          </CardContent>
-        </Card>
+              {/* Create button */}
+              <Button
+                size="default"
+                className="w-full gap-2"
+                onClick={handleCreate}
+                disabled={!prompt.trim() || isCreating}
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="h-4 w-4" />
+                    Start Task
+                  </>
+                )}
+              </Button>
+              <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">
+                  ⌘
+                </kbd>
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">
+                  Enter
+                </kbd>
+                <span className="ml-0.5">to start</span>
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Error Feed */}
+          <ErrorFeed errors={stats?.recentErrors} />
+        </div>
       </div>
     </div>
   );
