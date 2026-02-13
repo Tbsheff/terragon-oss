@@ -1,11 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useThread } from "./thread-context";
-import { parsePipelineState, getStageInfo } from "@/hooks/use-pipeline";
+import { parsePipelineState } from "@/hooks/use-pipeline";
 import { PIPELINE_STAGE_LABELS, type PipelineStage } from "@/lib/constants";
 import { ConnectionStatusBadge } from "@/components/connection-status";
-import { Archive, MoreHorizontal } from "lucide-react";
+import { Archive } from "lucide-react";
 
 export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   const { thread } = useThread();
@@ -14,9 +13,6 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
 
   const pipeline = parsePipelineState(thread.pipelineState);
   const currentStage = pipeline?.currentStage;
-  const currentHistory = pipeline?.stageHistory.find(
-    (h) => h.stage === currentStage && h.status === "running",
-  );
 
   return (
     <header className="flex items-center justify-between border-b border-border px-4 py-2">

@@ -11,6 +11,7 @@
     "format-check": "turbo format-check",
     "prepare": "husky",
     "install-cli:dev": "cd apps/cli && ./scripts/install-cli-dev.sh",
+    "openclaw": "pnpm -C apps/openclaw dev",
     "worktree:new": "bun scripts/new-worktree.ts",
     "worktree:cleanup": "bun scripts/cleanup-worktree.ts",
     "worktree:list": "bun scripts/cleanup-worktree.ts --list"
