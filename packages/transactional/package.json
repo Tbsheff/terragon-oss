@@ -10,8 +10,8 @@
   "dependencies": {
     "@react-email/components": "0.1.1",
     "@terragon/tsconfig": "workspace:*",
-    "react": "19.1.2",
-    "react-dom": "19.1.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "react-email": "4.0.8"
   },
   "devDependencies": {
