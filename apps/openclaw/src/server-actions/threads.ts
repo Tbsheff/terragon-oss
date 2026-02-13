@@ -121,6 +121,11 @@ export async function listThreads(opts?: {
   const items: ThreadListItem[] = [];
   for (const session of sessions) {
     const meta = await getSessionMeta(session.key);
+
+    // Only show sessions created through our UI (have local metadata).
+    // Gateway may have many stale sessions from other clients.
+    if (!meta) continue;
+
     const item = sessionToThreadListItem(session, meta);
 
     // Filter by archived status if requested

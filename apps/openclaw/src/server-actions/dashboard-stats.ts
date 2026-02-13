@@ -1,6 +1,7 @@
 "use server";
 
 import { getOpenClawClient } from "@/lib/openclaw-client";
+import { listThreads } from "@/server-actions/threads";
 
 export type DashboardStats = {
   activeCount: number;
@@ -35,17 +36,17 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   try {
     if (client.getState() === "connected") {
-      // Get session counts from gateway
-      const sessions = await client.sessionsList();
-      activeCount = sessions.length;
+      // Count only threads created through our UI (have local metadata)
+      const threads = await listThreads({ archived: false });
+      activeCount = threads.length;
 
-      // Get health info
+      // Get health info from gateway
       const health = await client.health();
       gatewayHealth = {
         status: health.ok ? "healthy" : "unhealthy",
         cpu: health.cpu,
         memory: health.memory,
-        activeSessions: health.activeSessions ?? sessions.length,
+        activeSessions: health.activeSessions,
       };
     }
   } catch {
