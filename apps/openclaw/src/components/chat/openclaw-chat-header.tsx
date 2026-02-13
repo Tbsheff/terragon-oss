@@ -55,18 +55,22 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   });
   const latestError = threadErrors?.[0];
 
-  // PR status badge — only fetch when thread has a GitHub repo
+  // PR status badge -- only fetch when thread has a GitHub repo
   const { data: prs } = useQuery({
     ...threadPRsQueryOptions(thread.id),
     enabled: !!thread.githubRepoFullName,
   });
   const latestPR = prs?.at(-1) ?? null;
 
+  const hasSecondaryInfo =
+    stageElapsed || totalElapsed || (tokenUsage && totalTokens > 0) || latestPR;
+
   return (
-    <>
-      <header className="flex items-center justify-between border-b border-border/70 bg-card/50 backdrop-blur-sm px-4 py-2">
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <div className="flex items-center gap-3 min-w-0">
+    <div className="shrink-0">
+      <header className="border-b border-border/70 bg-card/50 backdrop-blur-sm px-4 py-2.5">
+        {/* Primary row: title + stage | actions */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
             <h1 className="truncate text-sm font-semibold font-[var(--font-cabin)]">
               {thread.name ?? "Untitled Task"}
             </h1>
@@ -74,31 +78,70 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
               <PipelineStagePill stage={currentStage} />
             )}
             {currentStage === "done" && (
-              <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+              <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[11px] px-2 py-0">
                 Complete
               </Badge>
             )}
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <ConnectionStatusBadge />
+            {onArchive && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onArchive}
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                  >
+                    <Archive className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Archive task</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </div>
+
+        {/* Secondary row: timing, tokens, PR status, activity */}
+        {(hasSecondaryInfo || (isWorking && activityLabel)) && (
+          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+            {isWorking && activityLabel && (
+              <span className="text-[11px] text-muted-foreground truncate animate-fade-in">
+                {activityLabel}
+              </span>
+            )}
             {stageElapsed && (
-              <span className="flex items-center gap-1 bg-muted/50 rounded-full px-2 py-0.5 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Clock className="h-3 w-3 shrink-0" />
                 {stageElapsed}
               </span>
             )}
             {totalElapsed && (
-              <span className="text-xs text-muted-foreground/60">
-                ({totalElapsed} total)
+              <span className="text-[11px] text-muted-foreground/60">
+                {totalElapsed} total
               </span>
             )}
             {tokenUsage && totalTokens > 0 && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground/60">
-                <Coins className="h-3 w-3" />
-                <span>{formatTokenCount(totalTokens)} tokens</span>
-                {tokenUsage.totalCost != null && tokenUsage.totalCost > 0 && (
-                  <span className="font-mono">
-                    · {formatCost(tokenUsage.totalCost)}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60 cursor-default">
+                    <Coins className="h-3 w-3 shrink-0" />
+                    <span>{formatTokenCount(totalTokens)}</span>
+                    {tokenUsage.totalCost != null &&
+                      tokenUsage.totalCost > 0 && (
+                        <span className="font-mono">
+                          &middot; {formatCost(tokenUsage.totalCost)}
+                        </span>
+                      )}
                   </span>
-                )}
-              </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {formatTokenCount(tokenUsage.inputTokens)} in /{" "}
+                  {formatTokenCount(tokenUsage.outputTokens)} out
+                </TooltipContent>
+              </Tooltip>
             )}
             {latestPR && (
               <PRStatusBadge
@@ -109,45 +152,23 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
               />
             )}
           </div>
-          {isWorking && activityLabel && (
-            <span className="text-xs text-muted-foreground truncate animate-fade-in">
-              {activityLabel}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <ConnectionStatusBadge />
-          {onArchive && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onArchive}
-                  className="h-8 w-8 text-muted-foreground"
-                >
-                  <Archive className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Archive task</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
+        )}
       </header>
+
+      {/* Error banner -- fixed height so it doesn't shift layout */}
       {isError && latestError && (
-        <div className="flex items-center gap-2 border-b border-destructive/30 bg-destructive/10 px-4 py-1.5 text-xs text-destructive animate-fade-in">
+        <div className="flex items-center gap-2 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs font-medium text-destructive dark:text-red-400 animate-fade-in">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">{latestError.errorMessage}</span>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
 function PipelineStagePill({ stage }: { stage: PipelineStage }) {
   return (
-    <span className="flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+    <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
       <span className="h-1.5 w-1.5 rounded-full bg-primary opacity-75 animate-pulse" />
       {PIPELINE_STAGE_LABELS[stage]}
     </span>

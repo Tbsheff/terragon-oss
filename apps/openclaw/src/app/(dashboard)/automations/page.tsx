@@ -45,9 +45,11 @@ const TRIGGER_LABELS = {
 } as const;
 
 const TRIGGER_BADGE_COLORS: Record<string, string> = {
-  cron: "border-blue-500/30 text-blue-600 dark:text-blue-400",
-  linear: "border-purple-500/30 text-purple-600 dark:text-purple-400",
-  "github-pr": "border-orange-500/30 text-orange-600 dark:text-orange-400",
+  cron: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  linear:
+    "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+  "github-pr":
+    "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
 };
 
 export default function AutomationsPage() {
@@ -108,24 +110,35 @@ export default function AutomationsPage() {
               <Card
                 key={auto.id}
                 className={cn(
-                  "py-0 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200",
-                  !auto.enabled && "opacity-60",
+                  "py-0 transition-all duration-200",
+                  auto.enabled
+                    ? "hover:shadow-md hover:-translate-y-0.5"
+                    : "opacity-50 border-dashed bg-muted/20",
                 )}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <TriggerIcon className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-start gap-2.5">
+                      <div
+                        className={cn(
+                          "mt-0.5 flex h-7 w-7 items-center justify-center rounded-md",
+                          auto.enabled
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        <TriggerIcon className="h-3.5 w-3.5" />
+                      </div>
                       <div>
                         <h3 className="text-sm font-medium">{auto.name}</h3>
                         {auto.description && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="mt-0.5 text-xs text-muted-foreground">
                             {auto.description}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -133,8 +146,9 @@ export default function AutomationsPage() {
                             size="icon"
                             className={cn(
                               "h-7 w-7",
-                              auto.enabled &&
-                                "text-emerald-500 hover:bg-emerald-500/10",
+                              auto.enabled
+                                ? "text-primary hover:bg-primary/10"
+                                : "text-muted-foreground hover:bg-muted",
                             )}
                             onClick={() =>
                               toggleMut.mutate({
@@ -159,7 +173,7 @@ export default function AutomationsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
                             onClick={() => deleteMut.mutate(auto.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -170,7 +184,7 @@ export default function AutomationsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-1.5">
                     <Badge
                       variant="outline"
                       className={cn(
@@ -219,7 +233,7 @@ export default function AutomationsPage() {
                     )}
                   </div>
 
-                  <p className="mt-2 text-xs text-muted-foreground/70 truncate font-mono rounded-md bg-muted/30 px-2 py-1 border border-border/30">
+                  <p className="mt-3 text-xs text-muted-foreground truncate font-mono rounded-md bg-muted/50 px-2 py-1.5 border border-border/50">
                     {auto.prompt}
                   </p>
                 </CardContent>
@@ -228,19 +242,21 @@ export default function AutomationsPage() {
           })}
 
           {(automationList ?? []).length === 0 && !showCreate && (
-            <Card className="animate-fade-in">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Zap className="h-8 w-8 text-muted-foreground/30" />
-                <p className="mt-2 text-sm text-muted-foreground">
+            <Card className="animate-fade-in border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Zap className="h-6 w-6 text-primary/60" />
+                </div>
+                <p className="mt-3 text-sm font-medium text-foreground">
                   No automations yet
                 </p>
-                <p className="text-xs text-muted-foreground/60">
+                <p className="mt-1 text-xs text-muted-foreground max-w-[280px] text-center">
                   Create one to run tasks on a schedule or in response to events
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-4"
+                  className="mt-5"
                   onClick={() => setShowCreate(true)}
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -308,8 +324,8 @@ function CreateAutomationForm({ onClose }: { onClose: () => void }) {
           />
         </div>
 
-        <div>
-          <Label className="text-xs mb-1.5">Trigger</Label>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Trigger</Label>
           <div className="flex gap-2">
             {(["cron", "linear", "github-pr"] as const).map((t) => {
               const Icon = TRIGGER_ICONS[t];
@@ -319,6 +335,7 @@ function CreateAutomationForm({ onClose }: { onClose: () => void }) {
                   variant={triggerType === t ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTriggerType(t)}
+                  className={cn(triggerType === t && "shadow-sm")}
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {TRIGGER_LABELS[t]}
@@ -329,7 +346,7 @@ function CreateAutomationForm({ onClose }: { onClose: () => void }) {
         </div>
 
         {triggerType === "cron" && (
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 animate-fade-in">
             <Label htmlFor="cron-expression" className="text-xs">
               Cron Expression
             </Label>
@@ -344,7 +361,7 @@ function CreateAutomationForm({ onClose }: { onClose: () => void }) {
           </div>
         )}
         {triggerType === "linear" && (
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 animate-fade-in">
             <Label htmlFor="linear-label" className="text-xs">
               Label Filter
             </Label>
@@ -358,7 +375,7 @@ function CreateAutomationForm({ onClose }: { onClose: () => void }) {
           </div>
         )}
         {triggerType === "github-pr" && (
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 animate-fade-in">
             <Label htmlFor="github-repo" className="text-xs">
               Repository
             </Label>
@@ -372,13 +389,19 @@ function CreateAutomationForm({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Prompt for the pipeline"
-          rows={2}
-          className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm resize-none shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="automation-prompt" className="text-xs">
+            Prompt
+          </Label>
+          <textarea
+            id="automation-prompt"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Prompt for the pipeline"
+            rows={3}
+            className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm resize-none shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
+          />
+        </div>
 
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" size="sm" onClick={onClose}>

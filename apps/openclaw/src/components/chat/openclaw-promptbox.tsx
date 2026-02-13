@@ -36,7 +36,7 @@ export function OpenClawPromptBox({
   const status = isWorking ? "streaming" : "ready";
 
   return (
-    <div className="border-t border-border/50 bg-card/80 backdrop-blur-sm p-4">
+    <div className="shrink-0 border-t border-border/50 bg-card/80 backdrop-blur-sm p-4">
       <PromptInput
         onSubmit={handleSubmit}
         className="rounded-lg border border-border/50 bg-card shadow-sm transition-shadow duration-200 focus-within:shadow-md focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10"

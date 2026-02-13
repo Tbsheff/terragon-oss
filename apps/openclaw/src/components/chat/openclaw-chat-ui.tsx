@@ -117,16 +117,28 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
 
   return (
     <ThreadProvider thread={openClawThread} isReadOnly={false}>
-      <div className="flex h-full flex-col">
+      <div className="flex h-full flex-col overflow-hidden">
         <OpenClawChatHeader onArchive={handleArchive} />
 
-        {/* Chat messages area */}
-        <Conversation className="flex-1">
-          <ConversationContent className="gap-4 px-4 py-4">
+        {/* Chat messages area -- flex-1 + min-h-0 ensures proper scroll containment */}
+        <Conversation className="min-h-0 flex-1">
+          <ConversationContent className="gap-4 px-4 py-6">
             {uiMessages.length === 0 && !isWorking ? (
               <ConversationEmptyState
+                icon={
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="h-8 w-8 text-primary/40"
+                  >
+                    <path d="M12 3c-1.2 0-2.4.6-3 1.7A3.6 3.6 0 0 0 4.5 9c-1.2 1-2 2.6-2 4.3 0 3 2.5 5.5 5.5 5.5h.5c.5 1.3 1.8 2.2 3.5 2.2s3-1 3.5-2.2h.5c3 0 5.5-2.5 5.5-5.5 0-1.7-.8-3.3-2-4.3A3.6 3.6 0 0 0 15 4.7C14.4 3.6 13.2 3 12 3z" />
+                  </svg>
+                }
                 title="Start a conversation"
-                description="Describe a task to begin..."
+                description="Describe a coding task and the agent will get to work."
+                className="opacity-80"
               />
             ) : (
               <>
