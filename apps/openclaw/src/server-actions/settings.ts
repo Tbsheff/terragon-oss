@@ -111,6 +111,23 @@ export async function updateConnection(data: {
   return getConnection();
 }
 
+/**
+ * Load upstream gateway URL + token for the WS proxy.
+ * Server-only — called directly from the custom server, not via RPC.
+ */
+export async function loadUpstreamSettings(): Promise<{
+  url: string;
+  token: string;
+}> {
+  const conn = await getConnection();
+  if (!conn) return { url: "", token: "" };
+  const protocol = conn.useTls ? "wss" : "ws";
+  return {
+    url: `${protocol}://${conn.host}:${conn.port}/ws`,
+    token: conn.authToken ?? "",
+  };
+}
+
 export async function testConnection(): Promise<{
   success: boolean;
   status?: string;

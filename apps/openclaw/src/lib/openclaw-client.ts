@@ -60,6 +60,16 @@ type EventMap = {
 type EventCallback<T = Record<string, unknown>> = (payload: T) => void;
 
 // ─────────────────────────────────────────────────
+// Browser proxy URL
+// ─────────────────────────────────────────────────
+
+/** Build same-origin WS URL for browser → proxy connection */
+function getBrowserProxyUrl(): string {
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}/api/gateway/ws`;
+}
+
+// ─────────────────────────────────────────────────
 // OpenClawClient
 // ─────────────────────────────────────────────────
 
@@ -80,9 +90,15 @@ export class OpenClawClient {
     this.setState("connecting");
     this.resetReady();
 
+    // When running in the browser, connect through the same-origin proxy
+    // which injects the auth token server-side.
+    const isBrowser = typeof window !== "undefined";
+    const wsUrl = isBrowser ? getBrowserProxyUrl() : url;
+    const proxyMode = isBrowser;
+
     return new Promise<HelloPayload>((resolve, reject) => {
-      this.ws = new ReconnectingWebSocket(url, [], {
-        WebSocket: WebSocket as any,
+      this.ws = new ReconnectingWebSocket(wsUrl, [], {
+        WebSocket: (isBrowser ? undefined : WebSocket) as any,
         maxReconnectionDelay: 10_000,
         minReconnectionDelay: 1_000,
         reconnectionDelayGrowFactor: 1.5,
@@ -97,14 +113,17 @@ export class OpenClawClient {
         client: {
           id: CLIENT_ID,
           version: CLIENT_VERSION,
-          platform: process.platform ?? "node",
+          platform: isBrowser ? "browser" : (process.platform ?? "node"),
           mode: CLIENT_MODE,
         },
         role: CONNECT_ROLE,
         scopes: CONNECT_SCOPES,
         caps: [],
-        auth: token ? { token } : undefined,
-        userAgent: `openclaw-dashboard/${CLIENT_VERSION} node/${process.version ?? "unknown"}`,
+        // Proxy injects the token server-side; skip it from the browser
+        auth: proxyMode ? undefined : token ? { token } : undefined,
+        userAgent: isBrowser
+          ? `openclaw-dashboard/${CLIENT_VERSION} browser`
+          : `openclaw-dashboard/${CLIENT_VERSION} node/${process.version ?? "unknown"}`,
         locale: "en",
       });
 

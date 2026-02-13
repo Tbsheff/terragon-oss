@@ -18,6 +18,7 @@ import { parse } from "url";
 // Load .env.local before anything else accesses process.env
 loadEnvConfig(process.cwd());
 import { LocalBroadcastServer } from "./broadcast";
+import { GatewayProxy } from "./gateway-proxy";
 import { OpenClawBridge } from "./openclaw-bridge";
 import { getOpenClawClient } from "@/lib/openclaw-client";
 
@@ -41,6 +42,10 @@ async function main() {
   if (dev) {
     globalForWss.__broadcastServer = broadcast;
   }
+
+  // Same-origin WS proxy for browser → gateway
+  const { loadUpstreamSettings } = await import("@/server-actions/settings");
+  const gatewayProxy = new GatewayProxy(loadUpstreamSettings);
 
   // Wire OpenClaw gateway → local broadcast bridge
   const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL;
@@ -142,6 +147,12 @@ async function main() {
       return;
     }
 
+    // Route /api/gateway/ws to the gateway proxy
+    if (pathname === "/api/gateway/ws") {
+      gatewayProxy.handleUpgrade(req, socket, head);
+      return;
+    }
+
     // Reject unknown WebSocket paths
     socket.destroy();
   });
@@ -149,6 +160,7 @@ async function main() {
   server.listen(port, () => {
     console.log(`> OpenClaw Dashboard ready on http://${hostname}:${port}`);
     console.log(`> WebSocket broadcast on ws://${hostname}:${port}/ws`);
+    console.log(`> Gateway proxy on ws://${hostname}:${port}/api/gateway/ws`);
   });
 }
 
