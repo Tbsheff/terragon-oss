@@ -58,10 +58,10 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
 
   return (
     <Card
-      className="animate-fade-in bg-card/50 backdrop-blur-sm"
+      className="animate-fade-in border-border/60 shadow-xs"
       style={{ animationDelay: "300ms" }}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 font-[var(--font-cabin)] text-base tracking-tight">
           <Clock className="h-4 w-4 text-muted-foreground" />
           Recent Activity
@@ -69,11 +69,15 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
       </CardHeader>
       <CardContent>
         {!recent || recent.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            No recent activity
-          </p>
+          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+            <Clock className="h-10 w-10 mb-3 opacity-30" />
+            <p className="text-sm font-medium">No recent activity</p>
+            <p className="mt-0.5 text-xs opacity-50">
+              Tasks will appear here as they run
+            </p>
+          </div>
         ) : (
-          <div className="space-y-1">
+          <div className="-mx-1 divide-y divide-border/40">
             {recent.map((t, i) => {
               const config = STATUS_CONFIG[t.status] ?? DEFAULT_STATUS;
               const Icon = config.icon;
@@ -83,7 +87,7 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
                   key={t.id}
                   href={`/task/${t.id}`}
                   className={cn(
-                    "animate-fade-in flex items-center gap-3 rounded-md px-2.5 py-2 transition-all duration-150",
+                    "animate-fade-in flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors duration-150",
                     "hover:bg-muted/50",
                   )}
                   style={{
@@ -109,7 +113,7 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
                   >
                     {config.label}
                   </Badge>
-                  <span className="shrink-0 text-[10px] text-muted-foreground/60 tabular-nums">
+                  <span className="shrink-0 w-12 text-right text-[10px] text-muted-foreground/60 tabular-nums">
                     {timeAgo(t.updatedAt)}
                   </span>
                 </Link>

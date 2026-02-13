@@ -26,26 +26,26 @@ export function ActiveAgentsPanel({ threads }: ActiveAgentsPanelProps) {
 
   return (
     <Card
-      className="animate-fade-in bg-card/50 backdrop-blur-sm"
+      className="animate-fade-in border-border/60 shadow-xs"
       style={{ animationDelay: "200ms" }}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 font-[var(--font-cabin)] text-base tracking-tight">
           <Activity className="h-4 w-4 text-primary" />
           Active Agents
           {activeThreads && activeThreads.length > 0 && (
-            <Badge variant="secondary" className="ml-auto text-xs">
+            <Badge variant="secondary" className="ml-auto text-xs tabular-nums">
               {activeThreads.length}
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2.5">
         {!activeThreads || activeThreads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <Bot className="h-8 w-8 mb-2 opacity-40" />
-            <p className="text-sm">No active agents</p>
-            <p className="text-xs opacity-60">
+          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+            <Bot className="h-10 w-10 mb-3 opacity-30" />
+            <p className="text-sm font-medium">No active agents</p>
+            <p className="mt-0.5 text-xs opacity-50">
               Start a task to see agents here
             </p>
           </div>
@@ -82,17 +82,17 @@ function AgentCard({
     <Link
       href={`/task/${thread.id}`}
       className={cn(
-        "animate-fade-in block rounded-lg border bg-card/80 p-3 transition-all duration-200",
+        "animate-fade-in group block rounded-lg border border-border/70 bg-card p-3.5 transition-all duration-200",
         "hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30",
       )}
       style={{
         animationDelay: `${250 + index * 60}ms`,
       }}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="flex items-start justify-between gap-3 mb-2.5">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h4 className="truncate text-sm font-medium">
+            <h4 className="truncate text-sm font-medium leading-snug">
               {thread.name ?? "Untitled"}
             </h4>
             {thread.status === "working-error" && (
@@ -100,12 +100,12 @@ function AgentCard({
             )}
           </div>
           {activityLabel && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground leading-none">
               {activityLabel}
             </p>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-2">
           {thread.model && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
               {thread.model}
@@ -117,7 +117,7 @@ function AgentCard({
 
       {/* Mini pipeline progress */}
       {pipelineState && (
-        <PipelineStatus state={pipelineState} compact className="mt-1" />
+        <PipelineStatus state={pipelineState} compact className="mt-1.5" />
       )}
     </Link>
   );

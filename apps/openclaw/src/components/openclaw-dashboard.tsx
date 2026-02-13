@@ -98,7 +98,7 @@ export function OpenClawDashboard() {
 
   return (
     <div className="flex h-full flex-col overflow-y-auto px-6 py-6">
-      {/* Quick Stats Row — full width */}
+      {/* Quick Stats Row -- full width */}
       <div className="mb-6">
         <QuickStatsRow stats={stats} />
       </div>
@@ -113,12 +113,12 @@ export function OpenClawDashboard() {
 
         {/* Right column (1/3): New Task + Error Feed */}
         <div className="space-y-6">
-          {/* New Task Card (existing form, compressed) */}
+          {/* New Task Card */}
           <Card
-            className="animate-fade-in shadow-sm border-t-2 border-t-primary/20 bg-card/50 backdrop-blur-sm [&:has(textarea:focus-visible)]:ring-1 [&:has(textarea:focus-visible)]:ring-primary/10 transition-shadow duration-200"
+            className="animate-fade-in border-border/60 shadow-xs border-t-2 border-t-primary/20 [&:has(textarea:focus-visible)]:ring-1 [&:has(textarea:focus-visible)]:ring-primary/10 transition-shadow duration-200"
             style={{ animationDelay: "100ms" }}
           >
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
                 New Task
               </CardTitle>
@@ -126,14 +126,14 @@ export function OpenClawDashboard() {
                 Tell your agents what to build
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3.5">
               {/* Prompt input */}
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="e.g., Add a new tRPC endpoint for user preferences..."
                 rows={3}
-                className="w-full rounded-lg border border-input bg-muted/30 shadow-inner px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none resize-none transition-colors duration-150"
+                className="w-full rounded-lg border border-input bg-muted/20 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none resize-none transition-colors duration-150"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                     handleCreate();
@@ -143,7 +143,7 @@ export function OpenClawDashboard() {
 
               {/* Repo input */}
               <div className="space-y-1">
-                <Label htmlFor="repo" className="text-xs">
+                <Label htmlFor="repo" className="text-xs text-muted-foreground">
                   Repository (optional)
                 </Label>
                 <Input
@@ -156,11 +156,13 @@ export function OpenClawDashboard() {
                 />
               </div>
 
-              <Separator />
+              <Separator className="opacity-60" />
 
               {/* Pipeline template selection */}
               <div>
-                <Label className="mb-1.5 block text-xs">Pipeline</Label>
+                <Label className="mb-1.5 block text-xs text-muted-foreground">
+                  Pipeline
+                </Label>
                 <div className="grid grid-cols-2 gap-1.5">
                   {QUICK_TEMPLATES.map((t, i) => {
                     const isSelected = selectedTemplate === t.id;
@@ -169,10 +171,10 @@ export function OpenClawDashboard() {
                         key={t.id}
                         onClick={() => setSelectedTemplate(t.id)}
                         className={cn(
-                          "animate-fade-in flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left transition-all duration-200 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
+                          "animate-fade-in flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left transition-all duration-150 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
                           isSelected
-                            ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30"
-                            : "border-border bg-card hover:border-primary/50 hover:shadow-sm",
+                            ? "border-primary/50 bg-primary/10 ring-1 ring-primary/20"
+                            : "border-border/60 bg-card hover:border-primary/40 hover:bg-primary/[0.03]",
                         )}
                         style={{
                           animationDelay: `${150 + i * 40}ms`,
@@ -180,15 +182,17 @@ export function OpenClawDashboard() {
                       >
                         <t.icon
                           className={cn(
-                            "h-3.5 w-3.5 shrink-0 transition-colors duration-200",
+                            "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
                             isSelected
                               ? "text-primary"
                               : "text-muted-foreground",
                           )}
                         />
-                        <span className="text-xs font-medium">{t.label}</span>
+                        <span className="truncate text-xs font-medium">
+                          {t.label}
+                        </span>
                         {isSelected && (
-                          <Check className="ml-auto h-3 w-3 text-primary" />
+                          <Check className="ml-auto h-3 w-3 shrink-0 text-primary" />
                         )}
                       </button>
                     );
@@ -215,11 +219,11 @@ export function OpenClawDashboard() {
                   </>
                 )}
               </Button>
-              <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">
+              <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/60">
+                <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[10px] font-mono">
                   ⌘
                 </kbd>
-                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">
+                <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[10px] font-mono">
                   Enter
                 </kbd>
                 <span className="ml-0.5">to start</span>

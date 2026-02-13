@@ -11,7 +11,7 @@ export function AgentCardTimer({ startedAt }: AgentCardTimerProps) {
   if (!elapsed) return null;
 
   return (
-    <span className="text-[10px] font-mono text-primary tabular-nums">
+    <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-mono text-primary tabular-nums">
       {elapsed}
     </span>
   );
