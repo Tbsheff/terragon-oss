@@ -1,13 +1,14 @@
 "use server";
 
 import { db } from "@/db";
-import { thread, threadChat, pipelineTemplate } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { thread, threadChat, pipelineTemplate, kvStore } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { PIPELINE_STAGES, type PipelineStage } from "@/lib/constants";
 import {
   createAndStartPipeline,
   getActivePipelineActor,
+  isPipelineEnabled,
   removeActivePipelineActor,
   type PipelineConfig,
   type StageResult,
@@ -24,39 +25,60 @@ type ActionResult<T = void> =
   | { ok: false; error: string };
 
 // ─────────────────────────────────────────────────
-// Helpers
+// KV-based pipeline state persistence
 // ─────────────────────────────────────────────────
 
+/** kvStore key for a thread's pipeline state */
+function pipelineKvKey(threadId: string): string {
+  return `pipeline:${threadId}`;
+}
+
+/**
+ * Persist pipeline state to kvStore (decoupled from thread table).
+ */
 async function persistPipelineState(
   threadId: string,
   state: PipelineState,
-  expectedCurrentStage?: string,
 ): Promise<boolean> {
   const now = new Date().toISOString();
-  const newState = JSON.stringify(state);
+  const key = pipelineKvKey(threadId);
+  const value = JSON.stringify(state);
 
-  if (expectedCurrentStage) {
-    // Optimistic lock: only update if pipelineState still contains the expected stage
-    const result = await db
-      .update(thread)
-      .set({ pipelineState: newState, updatedAt: now })
-      .where(
-        and(
-          eq(thread.id, threadId),
-          sql`json_extract(${thread.pipelineState}, '$.currentStage') = ${expectedCurrentStage}`,
-        ),
-      );
-    // If no rows updated, another writer changed the state first
-    return (result.changes ?? (result as any).rowsAffected ?? 1) > 0;
-  }
-
-  // No optimistic lock — unconditional update (for initial state, etc.)
+  // Upsert into kvStore
   await db
-    .update(thread)
-    .set({ pipelineState: newState, updatedAt: now })
-    .where(eq(thread.id, threadId));
+    .insert(kvStore)
+    .values({ key, value, createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: kvStore.key,
+      set: { value, updatedAt: now },
+    });
   return true;
 }
+
+/**
+ * Read pipeline state from kvStore.
+ */
+async function readPipelineState(
+  threadId: string,
+): Promise<PipelineState | null> {
+  const key = pipelineKvKey(threadId);
+  const rows = await db
+    .select()
+    .from(kvStore)
+    .where(eq(kvStore.key, key))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
+  try {
+    return JSON.parse(row.value) as PipelineState;
+  } catch {
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────
 
 async function getThreadRow(threadId: string) {
   const rows = await db
@@ -203,6 +225,13 @@ export async function startPipeline(
   threadId: string,
   templateId: string,
 ): Promise<ActionResult<PipelineState>> {
+  if (!isPipelineEnabled(templateId)) {
+    return {
+      ok: false,
+      error: "Pipeline mode is not enabled (no template provided)",
+    };
+  }
+
   try {
     const threadRow = await getThreadRow(threadId);
     if (!threadRow) return { ok: false, error: "Thread not found" };
@@ -294,13 +323,12 @@ export async function retryStage(threadId: string): Promise<ActionResult> {
   try {
     const actor = getActivePipelineActor(threadId);
     if (!actor) {
-      // Try to resume from persisted state
-      const threadRow = await getThreadRow(threadId);
-      if (!threadRow?.pipelineState) {
+      // Try to resume from persisted state (kvStore)
+      const state = await readPipelineState(threadId);
+      if (!state) {
         return { ok: false, error: "No pipeline state found" };
       }
 
-      const state = JSON.parse(threadRow.pipelineState) as PipelineState;
       if (state.currentStage === "done") {
         return { ok: false, error: "Pipeline is already complete" };
       }
@@ -366,10 +394,9 @@ export async function cancelPipeline(threadId: string): Promise<ActionResult> {
       })
       .where(eq(thread.id, threadId));
 
-    // Update pipeline state
-    const threadRow = await getThreadRow(threadId);
-    if (threadRow?.pipelineState) {
-      const state = JSON.parse(threadRow.pipelineState) as PipelineState;
+    // Update pipeline state in kvStore
+    const state = await readPipelineState(threadId);
+    if (state) {
       // Mark any running stages as failed
       state.stageHistory = state.stageHistory.map((h) =>
         h.status === "running"
@@ -395,14 +422,7 @@ export async function getPipelineState(
   threadId: string,
 ): Promise<ActionResult<PipelineState | null>> {
   try {
-    const threadRow = await getThreadRow(threadId);
-    if (!threadRow) return { ok: false, error: "Thread not found" };
-
-    if (!threadRow.pipelineState) {
-      return { ok: true, data: null };
-    }
-
-    const state = JSON.parse(threadRow.pipelineState) as PipelineState;
+    const state = await readPipelineState(threadId);
     return { ok: true, data: state };
   } catch (err) {
     return { ok: false, error: (err as Error).message };

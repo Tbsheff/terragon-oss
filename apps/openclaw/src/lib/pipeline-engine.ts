@@ -14,6 +14,21 @@ import type {
 import { nanoid } from "nanoid";
 
 // ─────────────────────────────────────────────────
+// Pipeline mode check
+// ─────────────────────────────────────────────────
+
+/**
+ * Check whether pipeline mode is enabled for a given thread/session.
+ * When false, the system uses single-chat mode (one session, one conversation).
+ * Pipeline mode is opt-in: only enabled when a pipelineTemplateId is provided.
+ */
+export function isPipelineEnabled(
+  pipelineTemplateId: string | null | undefined,
+): boolean {
+  return !!pipelineTemplateId;
+}
+
+// ─────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────
 

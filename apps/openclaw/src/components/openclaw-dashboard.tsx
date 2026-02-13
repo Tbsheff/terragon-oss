@@ -17,10 +17,12 @@ import {
   Sparkles,
   Check,
   Loader2,
+  Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardHeader,
@@ -66,6 +68,7 @@ const QUICK_TEMPLATES = [
 export function OpenClawDashboard() {
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const [usePipeline, setUsePipeline] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("feature-fast");
   const [repoFullName, setRepoFullName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -86,7 +89,7 @@ export function OpenClawDashboard() {
       const result = await createThread({
         name: prompt.slice(0, 100),
         githubRepoFullName: repoFullName || undefined,
-        pipelineTemplateId: selectedTemplate,
+        pipelineTemplateId: usePipeline ? selectedTemplate : undefined,
       });
       router.push(`/task/${result.id}`);
     } catch (err) {
@@ -94,7 +97,7 @@ export function OpenClawDashboard() {
     } finally {
       setIsCreating(false);
     }
-  }, [prompt, repoFullName, selectedTemplate, router]);
+  }, [prompt, repoFullName, usePipeline, selectedTemplate, router]);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto px-6 py-6">
@@ -158,47 +161,73 @@ export function OpenClawDashboard() {
 
               <Separator className="opacity-60" />
 
-              {/* Pipeline template selection */}
-              <div>
-                <Label className="mb-1.5 block text-xs text-muted-foreground">
-                  Pipeline
-                </Label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {QUICK_TEMPLATES.map((t, i) => {
-                    const isSelected = selectedTemplate === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => setSelectedTemplate(t.id)}
-                        className={cn(
-                          "animate-fade-in flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left transition-all duration-150 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
-                          isSelected
-                            ? "border-primary/50 bg-primary/10 ring-1 ring-primary/20"
-                            : "border-border/60 bg-card hover:border-primary/40 hover:bg-primary/[0.03]",
-                        )}
-                        style={{
-                          animationDelay: `${150 + i * 40}ms`,
-                        }}
-                      >
-                        <t.icon
-                          className={cn(
-                            "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
-                            isSelected
-                              ? "text-primary"
-                              : "text-muted-foreground",
-                          )}
-                        />
-                        <span className="truncate text-xs font-medium">
-                          {t.label}
-                        </span>
-                        {isSelected && (
-                          <Check className="ml-auto h-3 w-3 shrink-0 text-primary" />
-                        )}
-                      </button>
-                    );
-                  })}
+              {/* Pipeline toggle — defaults to off (single-chat mode) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="pipeline-toggle"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer"
+                  >
+                    <Workflow className="h-3.5 w-3.5" />
+                    Pipeline mode
+                  </Label>
+                  <Switch
+                    id="pipeline-toggle"
+                    checked={usePipeline}
+                    onCheckedChange={setUsePipeline}
+                    className="scale-75 origin-right"
+                  />
                 </div>
+                {!usePipeline && (
+                  <p className="text-[11px] text-muted-foreground/60">
+                    Single-chat mode: one session, one conversation.
+                  </p>
+                )}
               </div>
+
+              {/* Pipeline template selection — only shown when pipeline is enabled */}
+              {usePipeline && (
+                <div className="animate-fade-in">
+                  <Label className="mb-1.5 block text-xs text-muted-foreground">
+                    Pipeline Template
+                  </Label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {QUICK_TEMPLATES.map((t, i) => {
+                      const isSelected = selectedTemplate === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => setSelectedTemplate(t.id)}
+                          className={cn(
+                            "animate-fade-in flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left transition-all duration-150 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
+                            isSelected
+                              ? "border-primary/50 bg-primary/10 ring-1 ring-primary/20"
+                              : "border-border/60 bg-card hover:border-primary/40 hover:bg-primary/[0.03]",
+                          )}
+                          style={{
+                            animationDelay: `${150 + i * 40}ms`,
+                          }}
+                        >
+                          <t.icon
+                            className={cn(
+                              "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
+                              isSelected
+                                ? "text-primary"
+                                : "text-muted-foreground",
+                            )}
+                          />
+                          <span className="truncate text-xs font-medium">
+                            {t.label}
+                          </span>
+                          {isSelected && (
+                            <Check className="ml-auto h-3 w-3 shrink-0 text-primary" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Create button */}
               <Button

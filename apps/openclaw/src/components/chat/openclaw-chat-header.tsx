@@ -1,7 +1,7 @@
 "use client";
 
 import { useThread } from "./thread-context";
-import { parsePipelineState } from "@/hooks/use-pipeline";
+import { usePipelineState } from "@/hooks/use-pipeline";
 import { useElapsedTime } from "@/hooks/use-elapsed-time";
 import { PIPELINE_STAGE_LABELS, type PipelineStage } from "@/lib/constants";
 import { getActivityLabel } from "@/lib/activity-label";
@@ -24,19 +24,22 @@ import { parseTokenUsage, formatTokenCount } from "@/lib/token-usage";
 export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   const { thread } = useThread();
 
-  const pipeline = thread ? parsePipelineState(thread.pipelineState) : null;
-  const currentStage = pipeline?.currentStage ?? null;
+  // Read pipeline state from kvStore via server action (decoupled from thread table)
+  const { data: pipeline } = usePipelineState(thread?.id ?? null);
+  // Pipeline UI is only shown when pipeline state exists (i.e. pipeline mode was opted into)
+  const hasPipeline = pipeline != null;
+  const currentStage = hasPipeline ? (pipeline.currentStage ?? null) : null;
   const isWorking =
     thread?.status === "working" || thread?.status === "stopping";
 
-  // Elapsed time for active stage
-  const activeEntry = pipeline?.stageHistory.find(
-    (h) => h.status === "running",
-  );
+  // Elapsed time for active stage (only in pipeline mode)
+  const activeEntry = hasPipeline
+    ? pipeline.stageHistory.find((h) => h.status === "running")
+    : undefined;
   const stageElapsed = useElapsedTime(activeEntry?.startedAt ?? null);
 
-  // Total elapsed from first stage
-  const firstEntry = pipeline?.stageHistory[0];
+  // Total elapsed from first stage (only in pipeline mode)
+  const firstEntry = hasPipeline ? pipeline.stageHistory[0] : undefined;
   const totalElapsed = useElapsedTime(
     isWorking ? (firstEntry?.startedAt ?? null) : null,
   );
@@ -66,7 +69,9 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   if (!thread) return null;
 
   const hasSecondaryInfo =
-    stageElapsed || totalElapsed || (tokenUsage && totalTokens > 0) || latestPR;
+    (hasPipeline && (stageElapsed || totalElapsed)) ||
+    (tokenUsage && totalTokens > 0) ||
+    latestPR;
 
   return (
     <div className="shrink-0">
@@ -77,10 +82,10 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
             <h1 className="truncate text-sm font-semibold font-[var(--font-cabin)]">
               {thread.name ?? "Untitled Task"}
             </h1>
-            {currentStage && currentStage !== "done" && (
+            {hasPipeline && currentStage && currentStage !== "done" && (
               <PipelineStagePill stage={currentStage} />
             )}
-            {currentStage === "done" && (
+            {hasPipeline && currentStage === "done" && (
               <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[11px] px-2 py-0">
                 Complete
               </Badge>
@@ -115,13 +120,13 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
                 {activityLabel}
               </span>
             )}
-            {stageElapsed && (
+            {hasPipeline && stageElapsed && (
               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <Clock className="h-3 w-3 shrink-0" />
                 {stageElapsed}
               </span>
             )}
-            {totalElapsed && (
+            {hasPipeline && totalElapsed && (
               <span className="text-[11px] text-muted-foreground/60">
                 {totalElapsed} total
               </span>
