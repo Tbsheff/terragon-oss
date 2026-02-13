@@ -17,7 +17,11 @@ import type {
   HealthStatus,
   OpenClawClientOptions,
   ConnectionState,
+  GatewayConnectError,
+  ExecApprovalRequest,
+  ExecApprovalDecision,
 } from "@/lib/openclaw-types";
+import { classifyConnectError } from "@/lib/openclaw-types";
 
 // ─────────────────────────────────────────────────
 // Constants
@@ -54,6 +58,8 @@ type EventMap = {
   agent: Record<string, unknown>;
   connected: HelloPayload;
   disconnected: { reason?: string };
+  "connect-error": GatewayConnectError;
+  "exec.approval.requested": ExecApprovalRequest;
   [key: string]: Record<string, unknown>;
 };
 
@@ -157,6 +163,11 @@ export class OpenClawClient {
                   }
                 })
                 .catch((err) => {
+                  const structured = classifyConnectError(
+                    undefined,
+                    (err as Error).message,
+                  );
+                  this.emit("connect-error", structured);
                   if (!handshakeResolved) {
                     handshakeResolved = true;
                     reject(err);
@@ -164,6 +175,15 @@ export class OpenClawClient {
                 });
               return;
             }
+
+            // Route exec approval events
+            if (frame.event === "exec.approval.requested") {
+              this.emit(
+                "exec.approval.requested",
+                frame.payload as unknown as ExecApprovalRequest,
+              );
+            }
+
             this.handleEvent(frame);
           }
         } catch {
@@ -180,15 +200,29 @@ export class OpenClawClient {
         }
       });
 
-      this.ws.addEventListener("close", () => {
+      this.ws.addEventListener("close", (event) => {
         this.setState("disconnected");
         this.emit("disconnected", { reason: "connection closed" });
 
+        // Classify close reason into structured error
+        const closeCode = (event as { code?: number }).code;
+        const closeReason = (event as { reason?: string }).reason;
+        if (closeCode && closeCode !== 1000) {
+          const structured = classifyConnectError(
+            String(closeCode),
+            closeReason || `WebSocket closed with code ${closeCode}`,
+          );
+          this.emit("connect-error", structured);
+        }
+
         // Terminal failure: if max retries exhausted, reject everything
         if (this.ws && this.ws.retryCount >= 10) {
-          const err = new Error(
+          const structured = classifyConnectError(
+            "unreachable",
             "Gateway unreachable after maximum reconnection attempts",
           );
+          this.emit("connect-error", structured);
+          const err = new Error(structured.message);
           this.rejectReady(err);
           this.rejectAllPending(err.message);
         }
@@ -323,6 +357,41 @@ export class OpenClawClient {
 
   configPatch(partial: Partial<GatewayConfig>): Promise<GatewayConfig> {
     return this.sendRequest<GatewayConfig>("config.patch", partial);
+  }
+
+  // ── Exec Approvals ──────────────────────────────
+
+  execApprovalsList(): Promise<ExecApprovalRequest[]> {
+    return this.sendRequest<{ approvals: ExecApprovalRequest[] }>(
+      "exec.approvals.list",
+    ).then((res) => res.approvals ?? (res as unknown as ExecApprovalRequest[]));
+  }
+
+  execApprovalsResolve(
+    id: string,
+    decision: ExecApprovalDecision,
+  ): Promise<Record<string, unknown>> {
+    return this.sendRequest("exec.approvals.resolve", { id, decision });
+  }
+
+  execApprovalsOverrides(): Promise<Record<string, ExecApprovalDecision>> {
+    return this.sendRequest<{
+      overrides: Record<string, ExecApprovalDecision>;
+    }>("exec.approvals.overrides").then(
+      (res) =>
+        res.overrides ??
+        (res as unknown as Record<string, ExecApprovalDecision>),
+    );
+  }
+
+  execApprovalsSetOverride(
+    pattern: string,
+    decision: ExecApprovalDecision,
+  ): Promise<Record<string, unknown>> {
+    return this.sendRequest("exec.approvals.overrides.set", {
+      pattern,
+      decision,
+    });
   }
 
   // ── Event Subscription ────────────────────────

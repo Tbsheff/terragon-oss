@@ -46,8 +46,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import type { OpenClawAgent } from "@/lib/openclaw-types";
-import { listAgents, createAgent, deleteAgent } from "@/server-actions/agents";
+import {
+  createAgent,
+  deleteAgent,
+  listAgentsWithStatus,
+  type AgentFleetStatus,
+  type AgentWithStatus,
+} from "@/server-actions/agents";
 import { AgentRosterSetup } from "@/components/agents/agent-roster-setup";
 
 // ─────────────────────────────────────────────────
@@ -61,10 +68,11 @@ export function AgentManager() {
   const agentsQuery = useQuery({
     queryKey: ["agents"],
     queryFn: async () => {
-      const result = await listAgents();
+      const result = await listAgentsWithStatus();
       if (!result.ok) throw new Error(result.error);
       return result.data;
     },
+    refetchInterval: 15_000,
   });
 
   const deleteMutation = useMutation({
@@ -275,12 +283,67 @@ export function AgentManager() {
 // Agent Card
 // ─────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────
+// Fleet Status Badge
+// ─────────────────────────────────────────────────
+
+const fleetStatusConfig: Record<
+  AgentFleetStatus,
+  { color: string; pulseColor?: string; label: string }
+> = {
+  running: {
+    color: "bg-emerald-500",
+    pulseColor: "bg-emerald-400",
+    label: "Running",
+  },
+  idle: { color: "bg-zinc-400", label: "Idle" },
+  error: { color: "bg-red-500", label: "Error" },
+  approval: {
+    color: "bg-amber-500",
+    pulseColor: "bg-amber-400",
+    label: "Awaiting Approval",
+  },
+};
+
+function FleetStatusDot({ status }: { status: AgentFleetStatus }) {
+  const config = fleetStatusConfig[status];
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="relative flex size-4 items-center justify-center shrink-0">
+          {config.pulseColor && (
+            <span
+              className={cn(
+                "absolute inline-flex h-2 w-2 animate-ping rounded-full opacity-75",
+                config.pulseColor,
+              )}
+            />
+          )}
+          <span
+            className={cn(
+              "relative inline-flex h-2 w-2 rounded-full",
+              config.color,
+            )}
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        {config.label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Agent Card
+// ─────────────────────────────────────────────────
+
 function AgentCard({
   agent,
   index,
   onDelete,
 }: {
-  agent: OpenClawAgent;
+  agent: AgentWithStatus;
   index: number;
   onDelete: () => void;
 }) {
@@ -294,18 +357,29 @@ function AgentCard({
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xl">
+              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xl">
                 {agent.emoji ?? "🤖"}
+                <span className="absolute -right-0.5 -top-0.5">
+                  <FleetStatusDot status={agent.fleetStatus} />
+                </span>
               </span>
               <div className="min-w-0">
                 <CardTitle className="truncate text-base">
                   {agent.name}
                 </CardTitle>
-                {agent.model && (
-                  <Badge variant="secondary" className="mt-1 text-[10px]">
-                    {agent.model}
-                  </Badge>
-                )}
+                <div className="mt-1 flex items-center gap-1.5">
+                  {agent.model && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {agent.model}
+                    </Badge>
+                  )}
+                  {agent.activeSessions > 0 && (
+                    <Badge variant="outline" className="text-[10px]">
+                      {agent.activeSessions} session
+                      {agent.activeSessions !== 1 ? "s" : ""}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             <Tooltip>

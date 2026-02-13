@@ -57,6 +57,8 @@ export function ConnectionStatusBadge() {
 
   const config = statusConfig[status];
 
+  const { connectError } = useConnection();
+
   const tooltipLines = isLoading
     ? "Checking connection..."
     : [
@@ -65,7 +67,8 @@ export function ConnectionStatusBadge() {
         lastCheck
           ? `Last check: ${new Date(lastCheck).toLocaleTimeString()}`
           : null,
-        health?.error ? `Error: ${health.error}` : null,
+        connectError ? `${connectError.code}: ${connectError.message}` : null,
+        connectError?.hint ? `Hint: ${connectError.hint}` : null,
       ]
         .filter(Boolean)
         .join(" \u00b7 ");

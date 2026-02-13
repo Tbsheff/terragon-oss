@@ -6,7 +6,10 @@ import {
   StreamingMessageAccumulator,
   type DBMessage,
 } from "@/lib/message-adapter";
-import type { ChatEventPayload } from "@/lib/openclaw-types";
+import type {
+  ChatEventPayload,
+  ExecApprovalRequest,
+} from "@/lib/openclaw-types";
 
 type RealtimeMessage = {
   type: string;
@@ -144,6 +147,35 @@ export function useRealtimeChatMessages(threadId: string | null) {
   });
 
   return messages;
+}
+
+/**
+ * Hook that tracks pending exec approval requests for a thread.
+ * Listens for exec-approval broadcast events and manages the pending list.
+ */
+export function useExecApprovals(threadId: string | null) {
+  const [pending, setPending] = useState<ExecApprovalRequest[]>([]);
+
+  useRealtime({
+    room: threadId ?? "",
+    enabled: !!threadId,
+    onMessage: (msg) => {
+      if (msg.type === "exec-approval" && msg.data) {
+        const approval = msg.data as unknown as ExecApprovalRequest;
+        setPending((prev) => {
+          // Deduplicate by ID
+          if (prev.some((p) => p.id === approval.id)) return prev;
+          return [...prev, approval];
+        });
+      }
+    },
+  });
+
+  const resolve = useCallback((id: string) => {
+    setPending((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
+  return { pending, resolve };
 }
 
 /**

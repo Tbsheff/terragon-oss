@@ -202,7 +202,7 @@ export type OpenClawClientOptions = {
 };
 
 // ─────────────────────────────────────────────────
-// Connection State
+// Connection State & Errors
 // ─────────────────────────────────────────────────
 
 export type ConnectionState =
@@ -211,6 +211,114 @@ export type ConnectionState =
   | "authenticating"
   | "connected"
   | "reconnecting";
+
+export type GatewayErrorCode =
+  | "AUTH_FAILED"
+  | "AUTH_TOKEN_MISSING"
+  | "PROTOCOL_MISMATCH"
+  | "GATEWAY_UNREACHABLE"
+  | "GATEWAY_TIMEOUT"
+  | "RATE_LIMITED"
+  | "INTERNAL_ERROR"
+  | "UNKNOWN";
+
+export type GatewayConnectError = {
+  code: GatewayErrorCode;
+  message: string;
+  retryable: boolean;
+  hint?: string;
+};
+
+/** Classify a raw error string/code into a structured connect error */
+export function classifyConnectError(
+  rawCode?: string,
+  rawMessage?: string,
+): GatewayConnectError {
+  const code = rawCode?.toLowerCase() ?? "";
+  const msg = rawMessage ?? "Unknown error";
+
+  if (
+    code.includes("auth") ||
+    code === "unauthorized" ||
+    code === "forbidden"
+  ) {
+    return {
+      code: "AUTH_FAILED",
+      message: msg,
+      retryable: false,
+      hint: "Check your gateway auth token in Settings > Connection.",
+    };
+  }
+
+  if (code.includes("token") || msg.toLowerCase().includes("no token")) {
+    return {
+      code: "AUTH_TOKEN_MISSING",
+      message: msg,
+      retryable: false,
+      hint: "Set an auth token in Settings > Connection.",
+    };
+  }
+
+  if (code.includes("protocol") || code.includes("version")) {
+    return {
+      code: "PROTOCOL_MISMATCH",
+      message: msg,
+      retryable: false,
+      hint: "Update your gateway to a compatible version.",
+    };
+  }
+
+  if (code.includes("rate") || code.includes("throttl")) {
+    return {
+      code: "RATE_LIMITED",
+      message: msg,
+      retryable: true,
+    };
+  }
+
+  if (code.includes("timeout") || msg.toLowerCase().includes("timed out")) {
+    return {
+      code: "GATEWAY_TIMEOUT",
+      message: msg,
+      retryable: true,
+    };
+  }
+
+  if (code.includes("econnrefused") || code.includes("unreachable")) {
+    return {
+      code: "GATEWAY_UNREACHABLE",
+      message: msg,
+      retryable: true,
+      hint: "Is the gateway running? Check host and port in Settings > Connection.",
+    };
+  }
+
+  if (code.includes("internal") || code.includes("server")) {
+    return {
+      code: "INTERNAL_ERROR",
+      message: msg,
+      retryable: true,
+    };
+  }
+
+  return { code: "UNKNOWN", message: msg, retryable: true };
+}
+
+// ─────────────────────────────────────────────────
+// Exec Approval Types
+// ─────────────────────────────────────────────────
+
+export type ExecApprovalRequest = {
+  id: string;
+  sessionKey: string;
+  agentId: string;
+  command: string;
+  args?: string[];
+  cwd?: string;
+  requestedAt: string;
+};
+
+export type ExecApprovalDecision = "allow_once" | "always_allow" | "deny";
 
 // ─────────────────────────────────────────────────
 // Chat History

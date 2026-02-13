@@ -9,7 +9,11 @@
  */
 
 import type { LocalBroadcastServer } from "./broadcast";
-import type { ChatEventPayload, OpenClawEvent } from "@/lib/openclaw-types";
+import type {
+  ChatEventPayload,
+  OpenClawEvent,
+  ExecApprovalRequest,
+} from "@/lib/openclaw-types";
 
 export type BridgeOptions = {
   broadcast: LocalBroadcastServer;
@@ -91,6 +95,24 @@ export class OpenClawBridge {
     this.broadcast.broadcastAll({
       type: "agent-update",
       data: event.payload,
+    });
+  }
+
+  /** Handle an exec approval request — broadcast to the session's thread room */
+  onExecApproval(approval: ExecApprovalRequest): void {
+    const threadId = this.sessionToThread.get(approval.sessionKey);
+    if (!threadId) {
+      // No thread mapping — broadcast globally so UI can still show it
+      this.broadcast.broadcastAll({
+        type: "exec-approval",
+        data: approval,
+      });
+      return;
+    }
+    this.broadcast.broadcast(threadId, {
+      type: "exec-approval",
+      threadId,
+      data: approval,
     });
   }
 

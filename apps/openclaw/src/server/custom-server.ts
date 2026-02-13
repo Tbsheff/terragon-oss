@@ -71,6 +71,9 @@ async function main() {
         seq: 0,
       }),
     );
+    client.on("exec.approval.requested", (approval) =>
+      bridge.onExecApproval(approval),
+    );
     client.on("connected", () => bridge.onConnectionChange("connected"));
     client.on("disconnected", () => bridge.onConnectionChange("disconnected"));
 

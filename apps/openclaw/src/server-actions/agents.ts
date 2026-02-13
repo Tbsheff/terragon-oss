@@ -132,6 +132,53 @@ export async function setAgentFile(
 }
 
 // ─────────────────────────────────────────────────
+// Fleet Status — agents paired with session activity
+// ─────────────────────────────────────────────────
+
+export type AgentFleetStatus = "running" | "idle" | "error" | "approval";
+
+export type AgentWithStatus = OpenClawAgent & {
+  fleetStatus: AgentFleetStatus;
+  activeSessions: number;
+};
+
+export async function listAgentsWithStatus(): Promise<
+  ActionResult<AgentWithStatus[]>
+> {
+  const client = getClient();
+  if (!client) return notConnected();
+
+  try {
+    const [agents, sessions] = await Promise.all([
+      client.agentsList(),
+      client.sessionsList(),
+    ]);
+
+    const result: AgentWithStatus[] = agents.map((agent) => {
+      const agentSessions = sessions.filter((s) => s.agentId === agent.id);
+      const hasRecent = agentSessions.some((s) => {
+        if (!s.lastMessageAt) return false;
+        const age = Date.now() - new Date(s.lastMessageAt).getTime();
+        return age < 5 * 60 * 1000; // active within last 5 minutes
+      });
+
+      let fleetStatus: AgentFleetStatus = "idle";
+      if (hasRecent) fleetStatus = "running";
+
+      return {
+        ...agent,
+        fleetStatus,
+        activeSessions: agentSessions.length,
+      };
+    });
+
+    return { ok: true, data: result };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+}
+
+// ─────────────────────────────────────────────────
 // Specialized Roster Setup
 // ─────────────────────────────────────────────────
 

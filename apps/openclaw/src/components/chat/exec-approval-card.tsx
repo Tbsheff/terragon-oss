@@ -1,0 +1,132 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Shield, ShieldCheck, ShieldX, Terminal } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type { ExecApprovalDecision } from "@/lib/openclaw-types";
+import { resolveExecApproval } from "@/server-actions/exec-approvals";
+
+type ExecApprovalCardProps = {
+  id: string;
+  command: string;
+  args?: string[];
+  cwd?: string;
+  agentId: string;
+};
+
+export function ExecApprovalCard({
+  id,
+  command,
+  args,
+  cwd,
+  agentId,
+}: ExecApprovalCardProps) {
+  const [resolved, setResolved] = useState<ExecApprovalDecision | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: async (decision: ExecApprovalDecision) => {
+      const result = await resolveExecApproval(id, decision);
+      if (!result.ok) throw new Error(result.error);
+      return decision;
+    },
+    onSuccess: (decision) => {
+      setResolved(decision);
+    },
+    onError: (err: Error) => {
+      toast.error(`Approval failed: ${err.message}`);
+    },
+  });
+
+  const fullCommand = args?.length ? `${command} ${args.join(" ")}` : command;
+
+  if (resolved) {
+    return (
+      <div
+        className={cn(
+          "animate-fade-in flex items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-sm",
+          resolved === "deny"
+            ? "border-destructive/30 bg-destructive/5 text-destructive"
+            : "border-primary/30 bg-primary/5 text-primary",
+        )}
+      >
+        {resolved === "deny" ? (
+          <ShieldX className="h-4 w-4 shrink-0" />
+        ) : (
+          <ShieldCheck className="h-4 w-4 shrink-0" />
+        )}
+        <code className="truncate font-mono text-xs">{fullCommand}</code>
+        <span className="ml-auto shrink-0 text-xs font-medium">
+          {resolved === "allow_once"
+            ? "Allowed"
+            : resolved === "always_allow"
+              ? "Always allowed"
+              : "Denied"}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-fade-in rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+          <Shield className="h-4 w-4 text-amber-600" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-foreground">
+            Exec approval requested
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Agent <code className="text-foreground">{agentId}</code> wants to
+            run:
+          </p>
+          <div className="mt-2 flex items-center gap-2 rounded-md border border-border/60 bg-card px-3 py-2">
+            <Terminal className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <code className="truncate font-mono text-xs text-foreground">
+              {fullCommand}
+            </code>
+          </div>
+          {cwd && (
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              in <code>{cwd}</code>
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 border-primary/40 text-primary hover:bg-primary/10"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate("allow_once")}
+        >
+          Allow once
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate("always_allow")}
+        >
+          Always allow
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 border-destructive/40 text-destructive hover:bg-destructive/10"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate("deny")}
+        >
+          Deny
+        </Button>
+      </div>
+    </div>
+  );
+}

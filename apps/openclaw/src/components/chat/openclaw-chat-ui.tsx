@@ -11,7 +11,9 @@ import { toUIMessages } from "./toUIMessages";
 import {
   useRealtimeThread,
   useRealtimeChatMessages,
+  useExecApprovals,
 } from "@/hooks/use-realtime";
+import { ExecApprovalCard } from "./exec-approval-card";
 import { openClawHistoryToDBMessages } from "@/lib/message-adapter";
 import type { DBMessage, ThreadStatus } from "@/lib/types";
 import {
@@ -46,6 +48,9 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
 
   // Subscribe to realtime updates for this thread
   useRealtimeThread(threadId);
+
+  // Track pending exec approval requests
+  const { pending: pendingApprovals } = useExecApprovals(threadId);
 
   // Fetch initial history from gateway (no polling)
   const { data: historyData } = useQuery(threadMessagesQueryOptions(threadId));
@@ -211,6 +216,22 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
+
+        {/* Exec approval cards */}
+        {pendingApprovals.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-border/50 px-4 py-3">
+            {pendingApprovals.map((approval) => (
+              <ExecApprovalCard
+                key={approval.id}
+                id={approval.id}
+                command={approval.command}
+                args={approval.args}
+                cwd={approval.cwd}
+                agentId={approval.agentId}
+              />
+            ))}
+          </div>
+        )}
 
         <OpenClawPromptBox
           onSend={handleSend}
