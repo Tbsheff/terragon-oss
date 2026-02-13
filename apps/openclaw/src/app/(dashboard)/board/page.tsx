@@ -9,6 +9,9 @@ import {
   type PipelineStage,
 } from "@/lib/constants";
 import Link from "next/link";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 type PipelineState = {
   currentStage?: PipelineStage;
@@ -53,9 +56,13 @@ export default function BoardPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border px-6 py-3">
+      <div className="px-6 py-3">
         <h1 className="text-lg font-semibold">Board</h1>
+        <p className="text-sm text-muted-foreground">
+          Track tasks across pipeline stages
+        </p>
       </div>
+      <Separator />
       <div className="flex flex-1 overflow-x-auto p-4 gap-3">
         {columns.map((col) => {
           const columnThreads = activeThreads.filter((t) => {
@@ -66,47 +73,49 @@ export default function BoardPage() {
           });
 
           return (
-            <div
+            <Card
               key={col.stage}
-              className="flex w-56 flex-shrink-0 flex-col rounded-lg bg-muted/30 border border-border"
+              className="flex w-56 flex-shrink-0 flex-col bg-muted/30 gap-0 py-0 shadow-none"
             >
-              <div className="px-3 py-2 border-b border-border">
+              <CardHeader className="px-3 py-2 border-b border-border">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">
                     {col.label}
                   </span>
-                  <span className="text-xs text-muted-foreground/60">
+                  <Badge variant="secondary" className="text-[10px]">
                     {columnThreads.length}
-                  </span>
+                  </Badge>
                 </div>
-              </div>
+              </CardHeader>
               <div className="flex-1 overflow-y-auto p-2 space-y-2">
                 {columnThreads.map((thread) => (
                   <Link key={thread.id} href={`/task/${thread.id}`}>
-                    <div
+                    <Card
                       className={cn(
-                        "rounded-md border bg-card p-2.5 text-xs cursor-pointer hover:bg-card/80 transition-colors",
+                        "cursor-pointer hover:bg-card/80 transition-colors gap-0 py-0 shadow-none text-xs",
                         col.stage !== "none" && col.stage !== "done"
                           ? STAGE_COLORS[col.stage]
-                          : "border-border",
+                          : "",
                       )}
                     >
-                      <p className="font-medium text-foreground line-clamp-2">
-                        {thread.name}
-                      </p>
-                      <p className="mt-1 text-muted-foreground/70 truncate">
-                        {thread.githubRepoFullName || "No repo"}
-                      </p>
-                    </div>
+                      <CardContent className="p-2.5">
+                        <p className="font-medium text-foreground line-clamp-2">
+                          {thread.name}
+                        </p>
+                        <p className="mt-1 text-muted-foreground/70 truncate">
+                          {thread.githubRepoFullName || "No repo"}
+                        </p>
+                      </CardContent>
+                    </Card>
                   </Link>
                 ))}
                 {columnThreads.length === 0 && (
-                  <p className="text-center text-xs text-muted-foreground/40 py-4">
+                  <p className="text-center text-xs text-muted-foreground py-4">
                     No tasks
                   </p>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
