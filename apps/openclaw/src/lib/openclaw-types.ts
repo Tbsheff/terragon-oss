@@ -165,6 +165,9 @@ export type OpenClawSession = {
   createdAt?: string;
   lastMessageAt?: string;
   messageCount?: number;
+  queueMode?: "sequential" | "concurrent" | "collect";
+  resetPolicy?: { type: "idle" | "daily" | "off"; value?: number };
+  verboseLevel?: number;
 };
 
 // ─────────────────────────────────────────────────
@@ -187,6 +190,11 @@ export type HealthStatus = {
   cpu?: number;
   memory?: number;
   channels?: Record<string, unknown>;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalCost?: number;
+  };
 };
 
 // ─────────────────────────────────────────────────
@@ -335,4 +343,40 @@ export type ChatHistoryEntry = {
   };
   startedAt: string;
   completedAt?: string;
+};
+
+// ─────────────────────────────────────────────────
+// Sessions.spawn
+// ─────────────────────────────────────────────────
+
+export type SpawnSessionParams = {
+  agentId: string;
+  model?: string;
+  sessionKey?: string;
+  systemPrompt?: string;
+};
+
+// ─────────────────────────────────────────────────
+// Chat.inject
+// ─────────────────────────────────────────────────
+
+export type InjectParams = {
+  sessionKey: string;
+  content: string;
+  role?: "system" | "user";
+};
+
+// ─────────────────────────────────────────────────
+// Channels.status
+// ─────────────────────────────────────────────────
+
+export type ChannelStatus = {
+  id: string;
+  type: string;
+  connected: boolean;
+  accountId?: string;
+  dmPolicy?: string;
+  groupPolicy?: string;
+  lastActivity?: string;
+  error?: string;
 };

@@ -7,6 +7,7 @@
     "dev:full": "tsx watch src/server/custom-server.ts",
     "build": "next build",
     "start": "next start -p 3100",
+    "test": "vitest run",
     "tsc-check": "tsc --noEmit",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
@@ -73,6 +74,7 @@
     "drizzle-kit": "^0.31.9",
     "tailwindcss": "^4.1.18",
     "tsx": "4.21.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^3.0.5"
   }
 }

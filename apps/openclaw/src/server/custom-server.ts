@@ -77,6 +77,10 @@ async function main() {
     client.on("connected", () => bridge.onConnectionChange("connected"));
     client.on("disconnected", () => bridge.onConnectionChange("disconnected"));
 
+    // Channel and tick events (may not be emitted by gateway yet)
+    client.on("channels", (payload) => bridge.onChannelEvent(payload));
+    client.on("tick", (payload) => bridge.onTickEvent(payload));
+
     console.log(`> OpenClaw bridge connecting to ${gatewayUrl}`);
   } else {
     console.log(

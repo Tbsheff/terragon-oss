@@ -65,9 +65,9 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
   // Type assertion: message-adapter's DBMessage uses null where types.ts uses undefined —
   // structurally equivalent at runtime, toUIMessages handles both.
   const gatewayMessages = useMemo((): DBMessage[] => {
-    if (!historyData?.ok || !historyData.history.length) return [];
+    if (!historyData?.ok || !historyData.data.length) return [];
     return openClawHistoryToDBMessages(
-      historyData.history,
+      historyData.data,
     ) as unknown as DBMessage[];
   }, [historyData]);
 
@@ -139,34 +139,29 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
       });
       setIsWorking(true);
 
-      try {
-        const { sendChatMessage } = await import(
-          "@/server-actions/openclaw-chat"
-        );
-        await sendChatMessage(threadId, message);
-        // Trigger immediate refetch after send succeeds
-        queryClient.invalidateQueries({
-          queryKey: ["threads", "messages", threadId],
-        });
-      } catch (err) {
-        console.error("Failed to send message:", err);
-        toast.error(
-          err instanceof Error ? err.message : "Failed to send message",
-        );
+      const { sendChatMessage } = await import(
+        "@/server-actions/openclaw-chat"
+      );
+      const result = await sendChatMessage(threadId, message);
+      if (!result.ok) {
+        toast.error(result.error);
         setIsWorking(false);
         setPendingUserMsg(null);
+        return;
       }
+      // Trigger immediate refetch after send succeeds
+      queryClient.invalidateQueries({
+        queryKey: ["threads", "messages", threadId],
+      });
     },
     [threadId, queryClient],
   );
 
   const handleStop = useCallback(async () => {
-    try {
-      const { abortChat } = await import("@/server-actions/openclaw-chat");
-      await abortChat(threadId);
-    } catch (err) {
-      console.error("Failed to abort:", err);
-      toast.error("Failed to stop the agent");
+    const { abortChat } = await import("@/server-actions/openclaw-chat");
+    const result = await abortChat(threadId);
+    if (!result.ok) {
+      toast.error(result.error);
     }
     setIsWorking(false);
   }, [threadId]);

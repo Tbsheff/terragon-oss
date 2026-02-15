@@ -5,6 +5,13 @@ import { db } from "@/db";
 import { kvStore } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { OpenClawSession } from "@/lib/openclaw-types";
+import {
+  getSessionMeta,
+  setSessionMeta,
+  deleteSessionMeta,
+  batchGetSessionMeta,
+  type SessionMeta,
+} from "./session-meta-store";
 
 // ─────────────────────────────────────────────────
 // Types (preserved for React Query compatibility)
@@ -31,60 +38,6 @@ export type ThreadDetail = ThreadListItem & {
 };
 
 // ─────────────────────────────────────────────────
-// KV helpers for session metadata
-// ─────────────────────────────────────────────────
-
-function sessionMetaKey(sessionKey: string): string {
-  return `session-meta:${sessionKey}`;
-}
-
-type SessionMeta = {
-  name?: string;
-  githubRepoFullName?: string;
-  githubBranch?: string;
-  baseBranch?: string;
-  pipelineState?: string;
-  tokenUsage?: string;
-  environmentId?: string;
-  archived?: boolean;
-};
-
-async function getSessionMeta(sessionKey: string): Promise<SessionMeta | null> {
-  const key = sessionMetaKey(sessionKey);
-  const rows = await db
-    .select()
-    .from(kvStore)
-    .where(eq(kvStore.key, key))
-    .limit(1);
-  if (!rows[0]) return null;
-  try {
-    return JSON.parse(rows[0].value) as SessionMeta;
-  } catch {
-    return null;
-  }
-}
-
-async function setSessionMeta(
-  sessionKey: string,
-  meta: SessionMeta,
-): Promise<void> {
-  const key = sessionMetaKey(sessionKey);
-  const now = new Date().toISOString();
-  const value = JSON.stringify(meta);
-  await db
-    .insert(kvStore)
-    .values({ key, value, createdAt: now, updatedAt: now })
-    .onConflictDoUpdate({
-      target: kvStore.key,
-      set: { value, updatedAt: now },
-    });
-}
-
-async function deleteSessionMeta(sessionKey: string): Promise<void> {
-  await db.delete(kvStore).where(eq(kvStore.key, sessionMetaKey(sessionKey)));
-}
-
-// ─────────────────────────────────────────────────
 // Map gateway session to ThreadListItem
 // ─────────────────────────────────────────────────
 
@@ -92,10 +45,24 @@ function sessionToThreadListItem(
   session: OpenClawSession,
   meta: SessionMeta | null,
 ): ThreadListItem {
+  // Derive richer status from messageCount and lastMessageAt
+  let status = "draft";
+  if (session.messageCount && session.messageCount > 0) {
+    if (session.lastMessageAt) {
+      const lastMessageTime = new Date(session.lastMessageAt).getTime();
+      const now = Date.now();
+      const timeSinceLastMessage = now - lastMessageTime;
+      // If last message was within 60s, consider it "working"
+      status = timeSinceLastMessage < 60000 ? "working" : "working-done";
+    } else {
+      status = "working-done";
+    }
+  }
+
   return {
     id: session.key,
     name: meta?.name ?? session.agentId ?? null,
-    status: session.lastMessageAt ? "working-done" : "draft",
+    status,
     agent: session.agentId ?? "claudeCode",
     model: session.model ?? null,
     githubRepoFullName: meta?.githubRepoFullName ?? null,
@@ -118,9 +85,13 @@ export async function listThreads(opts?: {
   const client = getOpenClawClient();
   const sessions = await client.sessionsList();
 
+  // Batch load all session metadata in a single query
+  const sessionKeys = sessions.map((s) => s.key);
+  const metaMap = await batchGetSessionMeta(sessionKeys);
+
   const items: ThreadListItem[] = [];
   for (const session of sessions) {
-    const meta = await getSessionMeta(session.key);
+    const meta = metaMap.get(session.key) ?? null;
 
     // Only show sessions created through our UI (have local metadata).
     // Gateway may have many stale sessions from other clients.
@@ -170,6 +141,19 @@ export async function createThread(opts: {
   // Use a deterministic session key
   const { nanoid } = await import("nanoid");
   const sessionKey = `session-${nanoid()}`;
+
+  // Try to spawn a session on the gateway with our preferred key
+  try {
+    const client = getOpenClawClient();
+    await client.sessionsSpawn({
+      agentId: "claudeCode",
+      sessionKey,
+      model: opts.model,
+    });
+  } catch {
+    // Gateway unavailable or doesn't support sessions.spawn — fall back to local-only creation
+    // Thread creation always succeeds even if gateway is down
+  }
 
   // Store metadata in kvStore
   await setSessionMeta(sessionKey, {

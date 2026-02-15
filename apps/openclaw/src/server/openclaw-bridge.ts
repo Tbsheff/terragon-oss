@@ -22,19 +22,28 @@ export type BridgeOptions = {
 };
 
 /** Simplified broadcast message for the OpenClaw dashboard */
-export type OpenClawBroadcastMessage = {
-  type: "thread-update";
-  threadId: string;
-  data: {
-    messagesUpdated?: boolean;
-    threadStatusUpdated?: string;
-    threadName?: string;
-    isThreadCreated?: boolean;
-    isThreadDeleted?: boolean;
-    isThreadArchived?: boolean;
-    chatEvent?: ChatEventPayload;
-  };
-};
+export type OpenClawBroadcastMessage =
+  | {
+      type: "thread-update";
+      threadId: string;
+      data: {
+        messagesUpdated?: boolean;
+        threadStatusUpdated?: string;
+        threadName?: string;
+        isThreadCreated?: boolean;
+        isThreadDeleted?: boolean;
+        isThreadArchived?: boolean;
+        chatEvent?: ChatEventPayload;
+      };
+    }
+  | {
+      type: "channel-update";
+      data: Record<string, unknown>;
+    }
+  | {
+      type: "tick";
+      data: Record<string, unknown>;
+    };
 
 /**
  * Bridge between OpenClaw gateway events and the local broadcast server.
@@ -123,6 +132,22 @@ export class OpenClawBridge {
     this.broadcast.broadcastAll({
       type: "connection-status",
       status,
+    });
+  }
+
+  /** Handle channel status change — broadcast to all clients */
+  onChannelEvent(payload: Record<string, unknown>): void {
+    this.broadcast.broadcastAll({
+      type: "channel-update",
+      data: payload,
+    });
+  }
+
+  /** Handle periodic tick event from gateway — broadcast to all clients */
+  onTickEvent(payload: Record<string, unknown>): void {
+    this.broadcast.broadcastAll({
+      type: "tick",
+      data: payload,
     });
   }
 }

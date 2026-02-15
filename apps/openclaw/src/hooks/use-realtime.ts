@@ -179,7 +179,7 @@ export function useExecApprovals(threadId: string | null) {
 }
 
 /**
- * Hook that subscribes to global events (connection status, agent updates).
+ * Hook that subscribes to global events (connection status, agent updates, channels, tick).
  */
 export function useRealtimeGlobal() {
   const queryClient = useQueryClient();
@@ -207,6 +207,18 @@ export function useRealtimeGlobal() {
         });
         queryClient.invalidateQueries({
           queryKey: ["threads", "list"],
+        });
+      }
+      if (msg.type === "channel-update") {
+        // Invalidate channel status query on channel events
+        queryClient.invalidateQueries({
+          queryKey: ["channels", "status"],
+        });
+      }
+      if (msg.type === "tick") {
+        // Invalidate dashboard stats on periodic tick events
+        queryClient.invalidateQueries({
+          queryKey: ["dashboard", "stats"],
         });
       }
     },

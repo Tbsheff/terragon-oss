@@ -20,6 +20,9 @@ import type {
   GatewayConnectError,
   ExecApprovalRequest,
   ExecApprovalDecision,
+  SpawnSessionParams,
+  InjectParams,
+  ChannelStatus,
 } from "@/lib/openclaw-types";
 import { classifyConnectError } from "@/lib/openclaw-types";
 
@@ -392,6 +395,27 @@ export class OpenClawClient {
       pattern,
       decision,
     });
+  }
+
+  // ── Sessions.spawn ────────────────────────────
+
+  sessionsSpawn(params: SpawnSessionParams): Promise<OpenClawSession> {
+    return this.sendRequest<OpenClawSession>("sessions.spawn", params);
+  }
+
+  // ── Chat.inject ────────────────────────────────
+
+  chatInject(params: InjectParams): Promise<Record<string, unknown>> {
+    return this.sendRequest("chat.inject", params);
+  }
+
+  // ── Channels.status ────────────────────────────
+
+  channelsStatus(): Promise<ChannelStatus[]> {
+    return this.sendRequest<{ items: ChannelStatus[] }>(
+      "channels.status",
+      {},
+    ).then((res) => res.items ?? (res as unknown as ChannelStatus[]));
   }
 
   // ── Event Subscription ────────────────────────
