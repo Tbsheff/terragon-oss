@@ -8,7 +8,9 @@ import {
   Columns3,
   Bot,
   FileText,
-  Zap,
+  Clock,
+  Brain,
+  LayoutGrid,
   Settings,
   Plus,
   Sun,
@@ -46,7 +48,9 @@ const NAV_ITEMS = [
   { href: "/board", icon: Columns3, label: "Board" },
   { href: "/agents", icon: Bot, label: "Agents" },
   { href: "/templates", icon: FileText, label: "Templates" },
-  { href: "/automations", icon: Zap, label: "Automations" },
+  { href: "/automations", icon: Clock, label: "Cron Jobs" },
+  { href: "/memory", icon: Brain, label: "Memory" },
+  { href: "/parallel", icon: LayoutGrid, label: "Parallel" },
 ] as const;
 
 function ThemeToggle() {
