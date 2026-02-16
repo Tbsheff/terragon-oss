@@ -3,7 +3,6 @@
 import { Copy, GitFork, Pencil, Check } from "lucide-react";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -43,24 +42,27 @@ export function MessageToolbar({
   return (
     <div
       className={cn(
-        "flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
+        "flex items-center gap-0.5 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity",
+        {
+          "justify-start": message.role === "agent",
+          "justify-end": message.role === "user",
+        },
       )}
     >
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6 text-muted-foreground hover:text-foreground"
+          <button
+            className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50 transition-colors"
             onClick={handleCopy}
             aria-label={copied ? "Copied" : "Copy message"}
+            title={copied ? "Copied" : "Copy message"}
           >
             {copied ? (
-              <Check className="size-3" />
+              <Check className="h-3 w-3" />
             ) : (
-              <Copy className="size-3" />
+              <Copy className="h-3 w-3" />
             )}
-          </Button>
+          </button>
         </TooltipTrigger>
         <TooltipContent>{copied ? "Copied" : "Copy"}</TooltipContent>
       </Tooltip>
@@ -68,15 +70,14 @@ export function MessageToolbar({
       {showFork && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6 text-muted-foreground hover:text-foreground"
+            <button
+              className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50 transition-colors"
               onClick={() => onFork(messageIndex)}
               aria-label="Fork from here"
+              title="Fork from here"
             >
-              <GitFork className="size-3" />
-            </Button>
+              <GitFork className="h-3 w-3" />
+            </button>
           </TooltipTrigger>
           <TooltipContent>Fork from here</TooltipContent>
         </Tooltip>
@@ -85,15 +86,14 @@ export function MessageToolbar({
       {showEdit && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6 text-muted-foreground hover:text-foreground"
+            <button
+              className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted/50 transition-colors"
               onClick={() => onEditResend(messageIndex)}
               aria-label="Edit and resend"
+              title="Edit & resend"
             >
-              <Pencil className="size-3" />
-            </Button>
+              <Pencil className="h-3 w-3" />
+            </button>
           </TooltipTrigger>
           <TooltipContent>Edit &amp; resend</TooltipContent>
         </Tooltip>

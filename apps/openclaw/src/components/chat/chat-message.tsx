@@ -12,8 +12,6 @@ import type {
 import { MessagePart } from "./message-part";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MessageToolbar } from "./message-toolbar";
 
@@ -158,7 +156,6 @@ export const ChatMessage = memo(function ChatMessage({
     return <SystemMessage message={message} />;
   }
 
-  const from = message.role === "user" ? "user" : "assistant";
   const groups = groupParts({
     parts: message.parts,
     isLatestMessage,
@@ -167,49 +164,55 @@ export const ChatMessage = memo(function ChatMessage({
   const lastGroupIndex = groups.length - 1;
 
   return (
-    <Message from={from} className={cn("animate-fade-in", className)}>
-      <MessageContent>
-        <div className="flex flex-col gap-2">
-          {groups.map((group, groupIndex) => {
-            if (group.type === "collapsible-agent-activity") {
-              return (
-                <CollapsibleAgentActivityGroup
-                  key={groupIndex}
-                  agent={"agent" in message ? message.agent : null}
-                  group={group}
-                  isLatestMessage={isLatestMessage}
-                  isAgentWorking={isAgentWorking}
-                />
-              );
-            }
-            if (group.type === "image") {
-              return (
-                <ImageGroup
-                  key={groupIndex}
-                  group={group}
-                  isLatestMessage={isLatestMessage}
-                />
-              );
-            }
+    <div
+      style={{ overflowAnchor: "none" }}
+      className={cn(
+        "p-2 rounded-md w-full break-words animate-fade-in",
+        {
+          "bg-primary/10 ml-auto max-w-[80%] w-fit": message.role === "user",
+          "mr-auto": message.role === "agent",
+        },
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-2">
+        {groups.map((group, groupIndex) => {
+          if (group.type === "collapsible-agent-activity") {
             return (
-              <React.Fragment key={groupIndex}>
-                {group.parts.map((part, partIndex) => {
-                  return (
-                    <MessagePart
-                      key={`${groupIndex}-${partIndex}`}
-                      part={part}
-                      isLatest={
-                        isLatestMessage && groupIndex === lastGroupIndex
-                      }
-                    />
-                  );
-                })}
-              </React.Fragment>
+              <CollapsibleAgentActivityGroup
+                key={groupIndex}
+                agent={"agent" in message ? message.agent : null}
+                group={group}
+                isLatestMessage={isLatestMessage}
+                isAgentWorking={isAgentWorking}
+              />
             );
-          })}
-        </div>
-      </MessageContent>
-    </Message>
+          }
+          if (group.type === "image") {
+            return (
+              <ImageGroup
+                key={groupIndex}
+                group={group}
+                isLatestMessage={isLatestMessage}
+              />
+            );
+          }
+          return (
+            <React.Fragment key={groupIndex}>
+              {group.parts.map((part, partIndex) => {
+                return (
+                  <MessagePart
+                    key={`${groupIndex}-${partIndex}`}
+                    part={part}
+                    isLatest={isLatestMessage && groupIndex === lastGroupIndex}
+                  />
+                );
+              })}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
   );
 });
 
@@ -325,19 +328,13 @@ function SystemMessage({ message }: { message: UISystemMessage }) {
     );
   }
   return (
-    <div className="mr-auto flex w-fit flex-col gap-2 rounded-md p-2">
+    <div className="p-2 rounded-md mr-auto w-fit flex flex-col gap-2">
       <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          aria-label={
-            isCollapsed
-              ? "Show system message details"
-              : "Hide system message details"
-          }
-          className="grid grid-cols-[auto_1fr] gap-2 text-left text-muted-foreground"
+        <div
+          className="grid grid-cols-[auto_1fr] gap-2 text-muted-foreground"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
-          <span className="flex h-6 items-center">
+          <span className="h-6 flex items-center">
             <span
               className={cn(
                 "shrink-0 size-2 rounded-full inline-block",
@@ -351,13 +348,16 @@ function SystemMessage({ message }: { message: UISystemMessage }) {
             {showMoreButton && (
               <>
                 &nbsp;
-                <span className="inline-block select-none text-muted-foreground/70">
+                <span
+                  className="inline-block text-muted-foreground/70 select-none"
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                >
                   ({isCollapsed ? "Show more" : "Show less"})
                 </span>
               </>
             )}
           </span>
-        </button>
+        </div>
         {!isCollapsed && showMoreButton && (
           <div className="max-h-[150px] overflow-auto border border-border rounded-md p-1 mr-2">
             <pre className="whitespace-pre-wrap text-xs font-mono">
@@ -400,27 +400,25 @@ function CollapsibleAgentActivityGroup({
   const numParts = group.parts.length;
   return (
     <div className="flex flex-col gap-0.5 group/item">
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         aria-label={
           isCollapsed ? "Expand agent activity" : "Collapse agent activity"
         }
-        className="flex w-fit items-center gap-1 px-2 py-1 text-sm text-muted-foreground"
+        className="flex items-center gap-1 py-1 text-sm text-muted-foreground opacity-75 group-hover/item:opacity-100 transition-opacity"
       >
         <CollapsibleAgentActivityGroupLabel
           isLatestMessage={isLatestMessage}
           isAgentWorking={isAgentWorking}
         />
         {isCollapsed ? (
-          <ChevronRight className="size-4 shrink-0" />
+          <ChevronRight className="h-4 w-4 shrink-0 opacity-75 group-hover/item:opacity-100 transition-opacity sm:opacity-0" />
         ) : (
-          <ChevronDown className="size-4 shrink-0" />
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-75 group-hover/item:opacity-100 transition-opacity" />
         )}
-      </Button>
+      </button>
       {!isCollapsed && (
-        <div className="flex flex-col gap-2 p-2 max-h-[50dvh] overflow-y-auto border border-border/30 rounded-md bg-muted/30">
+        <div className="flex flex-col gap-2 p-2 max-h-[50dvh] overflow-y-auto border rounded-md">
           {group.parts.map((part, partIndex) => {
             return (
               <MessagePart
