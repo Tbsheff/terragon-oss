@@ -423,6 +423,112 @@ export type CronRunEntry = {
 };
 
 // ─────────────────────────────────────────────────
+// Sessions — extended operations
+// ─────────────────────────────────────────────────
+
+export type SessionPreview = {
+  key: string;
+  summary?: string;
+  messageCount?: number;
+  lastMessageAt?: string;
+};
+
+// ─────────────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────────────
+
+export type GatewayModel = {
+  id: string;
+  name?: string;
+  provider?: string;
+  maxTokens?: number;
+  supportsVision?: boolean;
+  supportsTools?: boolean;
+};
+
+// ─────────────────────────────────────────────────
+// Usage & Cost
+// ─────────────────────────────────────────────────
+
+export type UsageStatus = {
+  inputTokens: number;
+  outputTokens: number;
+  totalCost?: number;
+  periodStart?: string;
+  periodEnd?: string;
+  sessions?: number;
+};
+
+export type UsageCost = {
+  totalCost: number;
+  breakdown?: {
+    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    cost: number;
+  }[];
+  periodStart?: string;
+  periodEnd?: string;
+};
+
+// ─────────────────────────────────────────────────
+// Config — extended
+// ─────────────────────────────────────────────────
+
+export type ConfigSchema = {
+  properties?: Record<
+    string,
+    {
+      type: string;
+      description?: string;
+      default?: unknown;
+      enum?: unknown[];
+    }
+  >;
+  required?: string[];
+};
+
+// ─────────────────────────────────────────────────
+// Skills
+// ─────────────────────────────────────────────────
+
+export type SkillsStatus = {
+  installed: SkillInfo[];
+  available?: number;
+};
+
+export type SkillInfo = {
+  id: string;
+  name: string;
+  version?: string;
+  description?: string;
+  enabled?: boolean;
+  installedAt?: string;
+};
+
+export type SkillBin = {
+  id: string;
+  name: string;
+  description?: string;
+  version?: string;
+  author?: string;
+  downloadCount?: number;
+};
+
+// ─────────────────────────────────────────────────
+// Logs
+// ─────────────────────────────────────────────────
+
+export type LogEntry = {
+  ts: string;
+  level: "debug" | "info" | "warn" | "error";
+  message: string;
+  source?: string;
+  sessionKey?: string;
+  agentId?: string;
+};
+
+// ─────────────────────────────────────────────────
 // Terminal / PTY Types (future gateway extension)
 // ─────────────────────────────────────────────────
 

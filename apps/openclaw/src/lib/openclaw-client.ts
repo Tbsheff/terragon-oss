@@ -13,7 +13,10 @@ import type {
   OpenClawAgent,
   OpenClawAgentFile,
   OpenClawSession,
+  SessionPreview,
   GatewayConfig,
+  ConfigSchema,
+  GatewayModel,
   HealthStatus,
   OpenClawClientOptions,
   ConnectionState,
@@ -25,6 +28,12 @@ import type {
   ChannelStatus,
   CronJob,
   CronRunEntry,
+  UsageStatus,
+  UsageCost,
+  SkillsStatus,
+  SkillBin,
+  SkillInfo,
+  LogEntry,
 } from "@/lib/openclaw-types";
 import { classifyConnectError } from "@/lib/openclaw-types";
 
@@ -362,6 +371,105 @@ export class OpenClawClient {
 
   configPatch(partial: Partial<GatewayConfig>): Promise<GatewayConfig> {
     return this.sendRequest<GatewayConfig>("config.patch", partial);
+  }
+
+  // ── Sessions — extended ────────────────────────
+
+  sessionsPreview(sessionKey: string): Promise<SessionPreview> {
+    return this.sendRequest<SessionPreview>("sessions.preview", {
+      key: sessionKey,
+    });
+  }
+
+  sessionsReset(sessionKey: string): Promise<Record<string, unknown>> {
+    return this.sendRequest("sessions.reset", { key: sessionKey });
+  }
+
+  sessionsDelete(sessionKey: string): Promise<Record<string, unknown>> {
+    return this.sendRequest("sessions.delete", { key: sessionKey });
+  }
+
+  sessionsCompact(sessionKey: string): Promise<Record<string, unknown>> {
+    return this.sendRequest("sessions.compact", { key: sessionKey });
+  }
+
+  // ── Models ────────────────────────────────────
+
+  modelsList(): Promise<GatewayModel[]> {
+    return this.sendRequest<{ models: GatewayModel[] }>("models.list").then(
+      (res) => res.models ?? (res as unknown as GatewayModel[]),
+    );
+  }
+
+  // ── Usage & Cost ──────────────────────────────
+
+  usageStatus(): Promise<UsageStatus> {
+    return this.sendRequest<UsageStatus>("usage.status", {});
+  }
+
+  usageCost(opts?: {
+    periodStart?: string;
+    periodEnd?: string;
+  }): Promise<UsageCost> {
+    return this.sendRequest<UsageCost>("usage.cost", opts ?? {});
+  }
+
+  // ── Config — extended ─────────────────────────
+
+  configSchema(): Promise<ConfigSchema> {
+    return this.sendRequest<ConfigSchema>("config.schema");
+  }
+
+  configApply(): Promise<Record<string, unknown>> {
+    return this.sendRequest("config.apply", {});
+  }
+
+  // ── Skills ────────────────────────────────────
+
+  skillsStatus(): Promise<SkillsStatus> {
+    return this.sendRequest<SkillsStatus>("skills.status", {});
+  }
+
+  skillsBins(): Promise<SkillBin[]> {
+    return this.sendRequest<{ bins: SkillBin[] }>("skills.bins", {}).then(
+      (res) => res.bins ?? (res as unknown as SkillBin[]),
+    );
+  }
+
+  skillsInstall(skillId: string): Promise<SkillInfo> {
+    return this.sendRequest<SkillInfo>("skills.install", { id: skillId });
+  }
+
+  skillsUpdate(skillId: string): Promise<SkillInfo> {
+    return this.sendRequest<SkillInfo>("skills.update", { id: skillId });
+  }
+
+  // ── Logs ──────────────────────────────────────
+
+  logsTail(opts?: {
+    lines?: number;
+    level?: string;
+    sessionKey?: string;
+  }): Promise<LogEntry[]> {
+    return this.sendRequest<{ entries: LogEntry[] }>(
+      "logs.tail",
+      opts ?? {},
+    ).then((res) => res.entries ?? (res as unknown as LogEntry[]));
+  }
+
+  // ── Channels — extended ───────────────────────
+
+  channelsLogout(channelId: string): Promise<Record<string, unknown>> {
+    return this.sendRequest("channels.logout", { id: channelId });
+  }
+
+  // ── Raw send ──────────────────────────────────
+
+  send(
+    sessionKey: string,
+    payload: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.sendRequest("send", { sessionKey, ...payload });
   }
 
   // ── Exec Approvals ──────────────────────────────

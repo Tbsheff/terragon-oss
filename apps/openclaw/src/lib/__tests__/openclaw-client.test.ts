@@ -236,4 +236,281 @@ describe("OpenClawClient RPC methods", () => {
       expect(result.activeJobs).toBe(3);
     });
   });
+
+  // ── Sessions — extended ──────────────────────
+
+  describe("sessionsPreview", () => {
+    it("should call sessions.preview with key param", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        key: "s1",
+        summary: "Discussed auth",
+        messageCount: 5,
+      });
+
+      const result = await client.sessionsPreview("s1");
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("sessions.preview", {
+        key: "s1",
+      });
+      expect(result.summary).toBe("Discussed auth");
+    });
+  });
+
+  describe("sessionsReset", () => {
+    it("should call sessions.reset with key param", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({});
+
+      await client.sessionsReset("s1");
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("sessions.reset", {
+        key: "s1",
+      });
+    });
+  });
+
+  describe("sessionsDelete", () => {
+    it("should call sessions.delete with key param", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({});
+
+      await client.sessionsDelete("s1");
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("sessions.delete", {
+        key: "s1",
+      });
+    });
+  });
+
+  describe("sessionsCompact", () => {
+    it("should call sessions.compact with key param", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({});
+
+      await client.sessionsCompact("s1");
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("sessions.compact", {
+        key: "s1",
+      });
+    });
+  });
+
+  // ── Models ────────────────────────────────────
+
+  describe("modelsList", () => {
+    it("should call models.list and unwrap models array", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        models: [
+          {
+            id: "claude-sonnet-4-5-20250929",
+            name: "Sonnet 4.5",
+            provider: "anthropic",
+          },
+          { id: "claude-opus-4-6", name: "Opus 4.6", provider: "anthropic" },
+        ],
+      });
+
+      const result = await client.modelsList();
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("models.list");
+      expect(result).toHaveLength(2);
+      expect(result[0]?.id).toBe("claude-sonnet-4-5-20250929");
+    });
+  });
+
+  // ── Usage & Cost ──────────────────────────────
+
+  describe("usageStatus", () => {
+    it("should call usage.status RPC", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        inputTokens: 50000,
+        outputTokens: 12000,
+        totalCost: 0.42,
+      });
+
+      const result = await client.usageStatus();
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("usage.status", {});
+      expect(result.totalCost).toBe(0.42);
+    });
+  });
+
+  describe("usageCost", () => {
+    it("should call usage.cost with optional period", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        totalCost: 1.5,
+        breakdown: [
+          { model: "sonnet", inputTokens: 100, outputTokens: 50, cost: 0.5 },
+        ],
+      });
+
+      const result = await client.usageCost({
+        periodStart: "2026-02-01",
+        periodEnd: "2026-02-16",
+      });
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("usage.cost", {
+        periodStart: "2026-02-01",
+        periodEnd: "2026-02-16",
+      });
+      expect(result.breakdown).toHaveLength(1);
+    });
+
+    it("should work without options", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        totalCost: 0,
+      });
+
+      await client.usageCost();
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("usage.cost", {});
+    });
+  });
+
+  // ── Config — extended ─────────────────────────
+
+  describe("configSchema", () => {
+    it("should call config.schema RPC", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        properties: { model: { type: "string", description: "Default model" } },
+      });
+
+      const result = await client.configSchema();
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("config.schema");
+      expect(result.properties?.model?.type).toBe("string");
+    });
+  });
+
+  describe("configApply", () => {
+    it("should call config.apply RPC", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({});
+
+      await client.configApply();
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("config.apply", {});
+    });
+  });
+
+  // ── Skills ────────────────────────────────────
+
+  describe("skillsStatus", () => {
+    it("should call skills.status RPC", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        installed: [{ id: "web-search", name: "Web Search", version: "1.0.0" }],
+        available: 42,
+      });
+
+      const result = await client.skillsStatus();
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("skills.status", {});
+      expect(result.installed).toHaveLength(1);
+      expect(result.available).toBe(42);
+    });
+  });
+
+  describe("skillsBins", () => {
+    it("should call skills.bins and unwrap bins array", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        bins: [{ id: "browser", name: "Browser Control", version: "2.0.0" }],
+      });
+
+      const result = await client.skillsBins();
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("skills.bins", {});
+      expect(result).toHaveLength(1);
+      expect(result[0]?.id).toBe("browser");
+    });
+  });
+
+  describe("skillsInstall", () => {
+    it("should call skills.install with skill id", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        id: "browser",
+        name: "Browser Control",
+        version: "2.0.0",
+      });
+
+      const result = await client.skillsInstall("browser");
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("skills.install", {
+        id: "browser",
+      });
+      expect(result.name).toBe("Browser Control");
+    });
+  });
+
+  describe("skillsUpdate", () => {
+    it("should call skills.update with skill id", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        id: "browser",
+        name: "Browser Control",
+        version: "2.1.0",
+      });
+
+      const result = await client.skillsUpdate("browser");
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("skills.update", {
+        id: "browser",
+      });
+      expect(result.version).toBe("2.1.0");
+    });
+  });
+
+  // ── Logs ──────────────────────────────────────
+
+  describe("logsTail", () => {
+    it("should call logs.tail and unwrap entries", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        entries: [
+          { ts: "2026-02-16T10:00:00Z", level: "info", message: "Boot" },
+        ],
+      });
+
+      const result = await client.logsTail({ lines: 50 });
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("logs.tail", {
+        lines: 50,
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0]?.level).toBe("info");
+    });
+
+    it("should work without options", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({
+        entries: [],
+      });
+
+      const result = await client.logsTail();
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("logs.tail", {});
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  // ── Channels — extended ───────────────────────
+
+  describe("channelsLogout", () => {
+    it("should call channels.logout with channel id", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({});
+
+      await client.channelsLogout("ch1");
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("channels.logout", {
+        id: "ch1",
+      });
+    });
+  });
+
+  // ── Raw send ──────────────────────────────────
+
+  describe("send", () => {
+    it("should call send RPC with sessionKey and payload", async () => {
+      vi.spyOn(client as any, "sendRequest").mockResolvedValueOnce({});
+
+      await client.send("s1", { action: "ping" });
+
+      expect(client["sendRequest"]).toHaveBeenCalledWith("send", {
+        sessionKey: "s1",
+        action: "ping",
+      });
+    });
+  });
 });
