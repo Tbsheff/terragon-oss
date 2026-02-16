@@ -83,115 +83,122 @@ export function OpenClawChatHeader({
 
   if (!thread) return null;
 
-  const hasSecondaryInfo =
-    (hasPipeline && (stageElapsed || totalElapsed)) ||
-    (tokenUsage && totalTokens > 0) ||
-    latestPR;
-
   return (
     <div className="shrink-0">
-      <header className="border-b border-border/70 bg-card/50 backdrop-blur-sm px-4 py-2.5">
-        {/* Primary row: title + stage | actions */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <h1 className="truncate text-balance text-sm font-semibold font-[var(--font-cabin)]">
-              {thread.name ?? "Untitled Task"}
-            </h1>
-            {parentThreadId && (
-              <Link
-                href={`/task/${parentThreadId}`}
-                className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              >
-                <GitFork className="size-3" />
-                <span>Forked</span>
-              </Link>
-            )}
-            {hasPipeline && currentStage && currentStage !== "done" && (
-              <PipelineStagePill stage={currentStage} />
-            )}
-            {hasPipeline && currentStage === "done" && (
-              <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[11px] px-2 py-0">
-                Complete
-              </Badge>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            <ConnectionStatusBadge />
-            <FilesToggleButton />
-            {onArchive && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onArchive}
-                    aria-label="Archive task"
-                    className="size-7 text-muted-foreground hover:text-foreground"
-                  >
-                    <Archive className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Archive task</TooltipContent>
-              </Tooltip>
-            )}
+      <div className="flex w-full items-center justify-between px-4 border-b bg-card/80 backdrop-blur gap-2 sm:gap-4 overflow-hidden h-[62px]">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex flex-col min-w-0 w-full">
+            {/* Primary row: title + stage pill */}
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <h1 className="font-bold text-sm text-foreground truncate">
+                  {thread.name ?? "Untitled Task"}
+                </h1>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {hasPipeline && currentStage && currentStage !== "done" && (
+                    <PipelineStagePill stage={currentStage} />
+                  )}
+                  {hasPipeline && currentStage === "done" && (
+                    <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[11px] px-2 py-0">
+                      Complete
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+            {/* Metadata row: activity, timing, tokens, PR status */}
+            <div className="text-muted-foreground text-xs font-mono flex items-center gap-1.5 h-5 min-w-0">
+              {isWorking && activityLabel && (
+                <span className="truncate animate-fade-in">
+                  {activityLabel}
+                </span>
+              )}
+              {hasPipeline && stageElapsed && (
+                <span className="flex items-center gap-1 shrink-0">
+                  <Clock className="size-3 shrink-0" />
+                  {stageElapsed}
+                </span>
+              )}
+              {hasPipeline && totalElapsed && (
+                <span className="text-muted-foreground/60 shrink-0">
+                  {totalElapsed} total
+                </span>
+              )}
+              {tokenUsage && totalTokens > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1 text-muted-foreground/60 cursor-default shrink-0">
+                      <Coins className="size-3 shrink-0" />
+                      <span>{formatTokenCount(totalTokens)}</span>
+                      {tokenUsage.totalCost != null &&
+                        tokenUsage.totalCost > 0 && (
+                          <span>
+                            &middot; {formatCost(tokenUsage.totalCost)}
+                          </span>
+                        )}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {formatTokenCount(tokenUsage.inputTokens)} in /{" "}
+                    {formatTokenCount(tokenUsage.outputTokens)} out
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {latestPR && (
+                <PRStatusBadge
+                  prNumber={latestPR.prNumber}
+                  prStatus={latestPR.prStatus}
+                  prUrl={latestPR.prUrl}
+                  checksStatus={latestPR.checksStatus}
+                />
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Secondary row: timing, tokens, PR status, activity */}
-        {(hasSecondaryInfo || (isWorking && activityLabel)) && (
-          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-            {isWorking && activityLabel && (
-              <span className="text-[11px] text-muted-foreground truncate animate-fade-in">
-                {activityLabel}
-              </span>
-            )}
-            {hasPipeline && stageElapsed && (
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Clock className="size-3 shrink-0" />
-                {stageElapsed}
-              </span>
-            )}
-            {hasPipeline && totalElapsed && (
-              <span className="text-[11px] text-muted-foreground/60">
-                {totalElapsed} total
-              </span>
-            )}
-            {tokenUsage && totalTokens > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60 cursor-default">
-                    <Coins className="size-3 shrink-0" />
-                    <span>{formatTokenCount(totalTokens)}</span>
-                    {tokenUsage.totalCost != null &&
-                      tokenUsage.totalCost > 0 && (
-                        <span className="font-mono">
-                          &middot; {formatCost(tokenUsage.totalCost)}
-                        </span>
-                      )}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {formatTokenCount(tokenUsage.inputTokens)} in /{" "}
-                  {formatTokenCount(tokenUsage.outputTokens)} out
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {latestPR && (
-              <PRStatusBadge
-                prNumber={latestPR.prNumber}
-                prStatus={latestPR.prStatus}
-                prUrl={latestPR.prUrl}
-                checksStatus={latestPR.checksStatus}
-              />
-            )}
-          </div>
-        )}
-      </header>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <ConnectionStatusBadge />
+          <FilesToggleButton />
+          {onArchive && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onArchive}
+                  aria-label="Archive task"
+                  className="size-7 text-muted-foreground hover:text-foreground"
+                >
+                  <Archive className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Archive task</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </div>
 
-      {/* Error banner -- fixed height so it doesn't shift layout */}
+      {/* Fork lineage banner */}
+      {parentThreadId && (
+        <div className="flex w-full items-center px-4 py-2 border-b bg-muted overflow-hidden">
+          <div className="flex items-center gap-2">
+            <GitFork className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
+            <span className="text-xs font-mono font-medium">
+              Forked from{" "}
+              <Link
+                href={`/task/${parentThreadId}`}
+                className="underline hover:text-foreground"
+              >
+                parent task
+              </Link>
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Error banner */}
       {isError && latestError && (
-        <div className="flex items-center gap-2 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs font-medium text-destructive dark:text-red-400 animate-fade-in">
+        <div className="flex items-center gap-2 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs font-mono font-medium text-destructive dark:text-red-400 animate-fade-in">
           <AlertTriangle className="size-3.5 shrink-0" />
           <span className="truncate">{latestError.errorMessage}</span>
         </div>
