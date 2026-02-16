@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { listAgents, updateAgent } from "@/server-actions/agents";
 import { AgentFileEditor } from "@/components/agents/agent-file-editor";
 
@@ -77,11 +78,26 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
 
   if (agentQuery.isLoading) {
     return (
-      <div className="animate-fade-in flex flex-col items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
-        <span className="mt-3 text-sm text-muted-foreground">
-          Loading agent...
-        </span>
+      <div className="space-y-6">
+        <Skeleton className="h-5 w-28 rounded" />
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-36 rounded" />
+                <Skeleton className="h-5 w-16 rounded" />
+              </div>
+            </div>
+            <Skeleton className="mt-3 h-4 w-3/4 rounded" />
+          </CardHeader>
+        </Card>
+        <Separator />
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-32 rounded" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-[480px] w-full rounded-lg" />
+        </div>
       </div>
     );
   }
@@ -93,22 +109,30 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
           href="/agents"
           className="-ml-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="size-4" />
           Back to agents
         </Link>
         <Card className="animate-fade-in border-destructive/50 bg-destructive/5">
           <CardContent className="flex items-center gap-3 px-5 py-5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
-              <AlertTriangle className="h-4.5 w-4.5 text-destructive" />
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="size-4 text-destructive" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-destructive">
                 Failed to load agent
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {agentQuery.error.message}
               </p>
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => agentQuery.refetch()}
+            >
+              Retry
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -124,7 +148,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
         href="/agents"
         className="-ml-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="size-4" />
         Back to agents
       </Link>
 
@@ -133,11 +157,13 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
         <CardHeader>
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-2xl">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-2xl">
                 {agent.emoji ?? "🤖"}
               </span>
               <div className="min-w-0">
-                <CardTitle className="text-xl">{agent.name}</CardTitle>
+                <CardTitle className="text-balance text-xl">
+                  {agent.name}
+                </CardTitle>
                 {agent.model && (
                   <Badge variant="secondary" className="mt-1.5">
                     {agent.model}
@@ -151,12 +177,12 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
               className="shrink-0"
               onClick={startEditing}
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="size-3.5" />
               Edit
             </Button>
           </div>
           {agent.description && (
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">
               {agent.description}
             </p>
           )}
@@ -167,7 +193,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       {editing && (
         <Card className="animate-fade-in border-primary/20 bg-primary/[0.02]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Edit Agent</CardTitle>
+            <CardTitle className="text-balance text-base">Edit Agent</CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -233,9 +259,9 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
                   disabled={updateMutation.isPending}
                 >
                   {updateMutation.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="size-3.5 animate-spin" />
                   ) : (
-                    <Save className="h-3.5 w-3.5" />
+                    <Save className="size-3.5" />
                   )}
                   Save
                 </Button>
@@ -248,7 +274,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       {/* Workspace files */}
       <div>
         <Separator className="mb-6" />
-        <h2 className="font-[var(--font-cabin)] mb-4 text-lg font-semibold tracking-tight">
+        <h2 className="font-[var(--font-cabin)] mb-4 text-balance text-lg font-semibold tracking-tight">
           Workspace Files
         </h2>
         <AgentFileEditor agentId={agentId} />

@@ -46,6 +46,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { OpenClawAgent } from "@/lib/openclaw-types";
 import {
@@ -96,10 +97,10 @@ export function AgentManager() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+          <h1 className="font-[var(--font-cabin)] text-balance text-2xl font-bold tracking-tight">
             Agent Roster
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-pretty text-sm text-muted-foreground">
             Manage your specialized coding agents
           </p>
         </div>
@@ -107,7 +108,7 @@ export function AgentManager() {
           <Dialog open={rosterOpen} onOpenChange={setRosterOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="size-4" />
                 One-Click Setup
               </Button>
             </DialogTrigger>
@@ -131,7 +132,7 @@ export function AgentManager() {
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button>
-                <Plus className="h-4 w-4" />
+                <Plus className="size-4" />
                 Create Agent
               </Button>
             </DialogTrigger>
@@ -155,13 +156,26 @@ export function AgentManager() {
 
       <Separator />
 
-      {/* Loading */}
+      {/* Loading skeleton */}
       {agentsQuery.isLoading && (
-        <div className="animate-fade-in flex flex-col items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
-          <span className="mt-3 text-sm text-muted-foreground">
-            Loading agents...
-          </span>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="flex h-full flex-col">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-10 rounded-lg" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24 rounded" />
+                    <Skeleton className="h-4 w-14 rounded" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 pt-0">
+                <Skeleton className="h-4 w-full rounded" />
+                <Skeleton className="mt-1.5 h-4 w-2/3 rounded" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
@@ -169,8 +183,8 @@ export function AgentManager() {
       {agentsQuery.isError && (
         <Card className="animate-fade-in border-destructive/50 bg-destructive/5">
           <CardContent className="flex items-center gap-3 px-5 py-5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
-              <AlertTriangle className="h-4.5 w-4.5 text-destructive" />
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="size-4 text-destructive" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-destructive">
@@ -196,13 +210,13 @@ export function AgentManager() {
       {agentsQuery.data && agentsQuery.data.length === 0 && (
         <Card className="animate-fade-in border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              <Bot className="h-8 w-8 text-muted-foreground/50" />
+            <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+              <Bot className="size-8 text-muted-foreground/50" />
             </div>
-            <p className="mt-5 font-[var(--font-cabin)] text-base font-semibold text-foreground">
+            <p className="mt-5 font-[var(--font-cabin)] text-balance text-base font-semibold text-foreground">
               No agents yet
             </p>
-            <p className="mt-1.5 max-w-xs text-center text-sm text-muted-foreground">
+            <p className="mt-1.5 max-w-xs text-center text-pretty text-sm text-muted-foreground">
               Create one manually or use One-Click Setup to scaffold the full
               roster of specialized agents.
             </p>
@@ -212,11 +226,11 @@ export function AgentManager() {
                 size="sm"
                 onClick={() => setRosterOpen(true)}
               >
-                <Sparkles className="h-3.5 w-3.5" />
+                <Sparkles className="size-3.5" />
                 One-Click Setup
               </Button>
               <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="size-3.5" />
                 Create Agent
               </Button>
             </div>
@@ -266,9 +280,9 @@ export function AgentManager() {
               }}
             >
               {deleteMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="size-4" />
               )}
               Delete
             </Button>
@@ -314,14 +328,14 @@ function FleetStatusDot({ status }: { status: AgentFleetStatus }) {
           {config.pulseColor && (
             <span
               className={cn(
-                "absolute inline-flex h-2 w-2 animate-ping rounded-full opacity-75",
+                "absolute inline-flex size-2 animate-ping rounded-full opacity-75",
                 config.pulseColor,
               )}
             />
           )}
           <span
             className={cn(
-              "relative inline-flex h-2 w-2 rounded-full",
+              "relative inline-flex size-2 rounded-full",
               config.color,
             )}
           />
@@ -357,7 +371,7 @@ function AgentCard({
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-3">
-              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xl">
+              <span className="relative flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xl">
                 {agent.emoji ?? "🤖"}
                 <span className="absolute -right-0.5 -top-0.5">
                   <FleetStatusDot status={agent.fleetStatus} />
@@ -374,7 +388,10 @@ function AgentCard({
                     </Badge>
                   )}
                   {agent.activeSessions > 0 && (
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge
+                      variant="outline"
+                      className="tabular-nums text-[10px]"
+                    >
                       {agent.activeSessions} session
                       {agent.activeSessions !== 1 ? "s" : ""}
                     </Badge>
@@ -387,14 +404,15 @@ function AgentCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-label={`Delete ${agent.name}`}
+                  className="size-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     onDelete();
                   }}
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                  <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Delete agent</TooltipContent>
@@ -402,7 +420,7 @@ function AgentCard({
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">
-          <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+          <CardDescription className="line-clamp-2 min-h-[2.5rem] text-pretty">
             {agent.description || "No description"}
           </CardDescription>
         </CardContent>
@@ -501,9 +519,9 @@ function CreateAgentForm({ onCreated }: { onCreated: () => void }) {
       <DialogFooter className="pt-2">
         <Button type="submit" disabled={!name.trim() || mutation.isPending}>
           {mutation.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="size-4 animate-spin" />
           ) : (
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
           )}
           Create
         </Button>

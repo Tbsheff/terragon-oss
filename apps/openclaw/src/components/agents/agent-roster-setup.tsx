@@ -118,12 +118,12 @@ export function AgentRosterSetup({ onComplete }: { onComplete?: () => void }) {
       >
         {isRunning ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="size-4 animate-spin" />
             Setting up roster...
           </>
         ) : (
           <>
-            <Sparkles className="h-4 w-4" />
+            <Sparkles className="size-4" />
             Create All 5 Agents
           </>
         )}
@@ -153,7 +153,7 @@ function RosterProgressItem({
       )}
       style={{ animationDelay: `${index * 75}ms` }}
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-base">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-base">
         {item.agent.emoji}
       </span>
       <div className="min-w-0 flex-1">
@@ -162,7 +162,9 @@ function RosterProgressItem({
           {item.agent.description}
         </div>
         {item.error && (
-          <div className="mt-1 text-xs text-destructive">{item.error}</div>
+          <div className="mt-1 truncate text-xs text-destructive">
+            {item.error}
+          </div>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -179,13 +181,13 @@ function StatusIcon({ status }: { status: SetupProgress["status"] }) {
   switch (status) {
     case "pending":
       return (
-        <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/20" />
+        <div className="size-4 rounded-full border-2 border-muted-foreground/20" />
       );
     case "creating":
-      return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
+      return <Loader2 className="size-4 animate-spin text-primary" />;
     case "done":
-      return <CheckCircle2 className="h-4 w-4 text-primary" />;
+      return <CheckCircle2 className="size-4 text-primary" />;
     case "error":
-      return <XCircle className="h-4 w-4 text-destructive" />;
+      return <XCircle className="size-4 text-destructive" />;
   }
 }

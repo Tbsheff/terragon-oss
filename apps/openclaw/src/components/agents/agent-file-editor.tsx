@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Save, Loader2, Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { getAgentFiles, setAgentFile } from "@/server-actions/agents";
@@ -112,11 +113,12 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
 
   if (filesQuery.isLoading) {
     return (
-      <div className="animate-fade-in flex flex-col items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
-        <span className="mt-3 text-sm text-muted-foreground">
-          Loading files...
-        </span>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-9 w-72 rounded-lg" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+        </div>
+        <Skeleton className="h-[480px] w-full rounded-lg" />
       </div>
     );
   }
@@ -124,15 +126,23 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
   if (filesQuery.isError) {
     return (
       <div className="animate-fade-in flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-4 text-sm text-destructive">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
           <span className="text-xs">!</span>
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="font-medium">Failed to load agent files</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {filesQuery.error.message}
           </p>
         </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="shrink-0"
+          onClick={() => filesQuery.refetch()}
+        >
+          Retry
+        </Button>
       </div>
     );
   }
@@ -149,7 +159,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
               <TabsTrigger key={f} value={f} className="relative">
                 {f}
                 {dirty[f] && (
-                  <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                  <span className="absolute -right-0.5 -top-0.5 size-1.5 animate-pulse rounded-full bg-primary" />
                 )}
               </TabsTrigger>
             ))}
@@ -163,7 +173,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
               onClick={handleManualSave}
               disabled={!dirty[activeTab] && saveStatus !== "idle"}
             >
-              <Save className="h-3.5 w-3.5" />
+              <Save className="size-3.5" />
               Save
             </Button>
           </div>
@@ -177,7 +187,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
               placeholder={`# ${f}\n\nStart writing...`}
               spellCheck={false}
               className={cn(
-                "w-full min-h-[480px] resize-y rounded-lg border border-border/80 bg-card p-4",
+                "w-full min-h-[480px] resize-y rounded-lg border border-border bg-muted/30 p-4",
                 "font-mono text-sm leading-relaxed text-foreground",
                 "placeholder:text-muted-foreground/40",
                 "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40",
@@ -207,13 +217,13 @@ function SaveStatusIndicator({ status }: { status: SaveStatus }) {
     >
       {status === "saving" && (
         <>
-          <Loader2 className="h-3 w-3 animate-spin" />
+          <Loader2 className="size-3 animate-spin" />
           Saving...
         </>
       )}
       {status === "saved" && (
         <>
-          <Check className="h-3 w-3" />
+          <Check className="size-3" />
           Saved
         </>
       )}
