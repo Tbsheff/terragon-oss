@@ -31,7 +31,7 @@ export function ActiveAgentsPanel({ threads }: ActiveAgentsPanelProps) {
     >
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 font-[var(--font-cabin)] text-base tracking-tight">
-          <Activity className="h-4 w-4 text-primary" />
+          <Activity className="size-4 text-primary" />
           Active Agents
           {activeThreads && activeThreads.length > 0 && (
             <Badge variant="secondary" className="ml-auto text-xs tabular-nums">
@@ -43,9 +43,9 @@ export function ActiveAgentsPanel({ threads }: ActiveAgentsPanelProps) {
       <CardContent className="space-y-2.5">
         {!activeThreads || activeThreads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-            <Bot className="h-10 w-10 mb-3 opacity-30" />
+            <Bot className="size-10 mb-3 opacity-30" />
             <p className="text-sm font-medium">No active agents</p>
-            <p className="mt-0.5 text-xs opacity-50">
+            <p className="mt-0.5 text-xs opacity-50 text-pretty">
               Start a task to see agents here
             </p>
           </div>
@@ -96,7 +96,7 @@ function AgentCard({
               {thread.name ?? "Untitled"}
             </h4>
             {thread.status === "working-error" && (
-              <span className="h-2 w-2 shrink-0 rounded-full bg-destructive animate-pulse" />
+              <span className="size-2 shrink-0 rounded-full bg-destructive animate-pulse" />
             )}
           </div>
           {activityLabel && (

@@ -22,11 +22,11 @@ function StatCard({ label, value, icon: Icon, color, delay }: StatCardProps) {
       <CardContent className="flex items-center gap-3 px-4 py-3.5">
         <div
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+            "flex size-9 shrink-0 items-center justify-center rounded-lg",
             color,
           )}
         >
-          <Icon className="h-4.5 w-4.5" />
+          <Icon className="size-4.5" />
         </div>
         <div className="min-w-0">
           <p className="text-2xl font-bold font-[var(--font-cabin)] tabular-nums leading-none">

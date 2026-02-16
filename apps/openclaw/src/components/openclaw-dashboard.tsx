@@ -122,10 +122,10 @@ export function OpenClawDashboard() {
             style={{ animationDelay: "100ms" }}
           >
             <CardHeader className="pb-2">
-              <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
+              <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight text-balance">
                 New Task
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-xs text-pretty">
                 Tell your agents what to build
               </CardDescription>
             </CardHeader>
@@ -168,7 +168,7 @@ export function OpenClawDashboard() {
                     htmlFor="pipeline-toggle"
                     className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer"
                   >
-                    <Workflow className="h-3.5 w-3.5" />
+                    <Workflow className="size-3.5" />
                     Pipeline mode
                   </Label>
                   <Switch
@@ -179,7 +179,7 @@ export function OpenClawDashboard() {
                   />
                 </div>
                 {!usePipeline && (
-                  <p className="text-[11px] text-muted-foreground/60">
+                  <p className="text-[11px] text-muted-foreground/60 text-pretty">
                     Single-chat mode: one session, one conversation.
                   </p>
                 )}
@@ -210,7 +210,7 @@ export function OpenClawDashboard() {
                         >
                           <t.icon
                             className={cn(
-                              "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
+                              "size-3.5 shrink-0 transition-colors duration-150",
                               isSelected
                                 ? "text-primary"
                                 : "text-muted-foreground",
@@ -220,7 +220,7 @@ export function OpenClawDashboard() {
                             {t.label}
                           </span>
                           {isSelected && (
-                            <Check className="ml-auto h-3 w-3 shrink-0 text-primary" />
+                            <Check className="ml-auto size-3 shrink-0 text-primary" />
                           )}
                         </button>
                       );
@@ -238,12 +238,12 @@ export function OpenClawDashboard() {
               >
                 {isCreating ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Creating...
                   </>
                 ) : (
                   <>
-                    <Rocket className="h-4 w-4" />
+                    <Rocket className="size-4" />
                     Start Task
                   </>
                 )}

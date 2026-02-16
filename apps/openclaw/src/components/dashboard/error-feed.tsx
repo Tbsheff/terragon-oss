@@ -28,7 +28,7 @@ export function ErrorFeed({ errors }: ErrorFeedProps) {
     >
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 font-[var(--font-cabin)] text-base tracking-tight">
-          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertTriangle className="size-4 text-destructive" />
           Recent Errors
           {errors && errors.length > 0 && (
             <Badge
@@ -43,9 +43,11 @@ export function ErrorFeed({ errors }: ErrorFeedProps) {
       <CardContent>
         {!errors || errors.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <AlertTriangle className="h-8 w-8 mb-2 opacity-20" />
+            <AlertTriangle className="size-8 mb-2 opacity-20" />
             <p className="text-sm font-medium">No recent errors</p>
-            <p className="mt-0.5 text-xs opacity-50">Looking good</p>
+            <p className="mt-0.5 text-xs opacity-50 text-pretty">
+              Looking good
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -55,7 +57,7 @@ export function ErrorFeed({ errors }: ErrorFeedProps) {
                 href={`/task/${err.threadId}`}
                 className="group flex items-start gap-2.5 rounded-lg border border-destructive/15 bg-destructive/[0.03] p-3 transition-all duration-200 hover:bg-destructive/[0.07] hover:border-destructive/25"
               >
-                <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-destructive/70" />
+                <div className="mt-1 size-2 shrink-0 rounded-full bg-destructive/70" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-xs font-medium text-destructive">
@@ -70,14 +72,14 @@ export function ErrorFeed({ errors }: ErrorFeedProps) {
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1 truncate text-[11px] text-muted-foreground leading-relaxed">
+                  <p className="mt-1 truncate text-[11px] text-muted-foreground leading-relaxed text-pretty">
                     {err.errorMessage}
                   </p>
                   <span className="mt-1 block text-[10px] text-muted-foreground/50 tabular-nums">
                     {timeAgo(err.updatedAt)}
                   </span>
                 </div>
-                <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100" />
+                <ExternalLink className="mt-1 size-3 shrink-0 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100" />
               </Link>
             ))}
           </div>

@@ -63,16 +63,16 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
     >
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 font-[var(--font-cabin)] text-base tracking-tight">
-          <Clock className="h-4 w-4 text-muted-foreground" />
+          <Clock className="size-4 text-muted-foreground" />
           Recent Activity
         </CardTitle>
       </CardHeader>
       <CardContent>
         {!recent || recent.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-            <Clock className="h-10 w-10 mb-3 opacity-30" />
+            <Clock className="size-10 mb-3 opacity-30" />
             <p className="text-sm font-medium">No recent activity</p>
-            <p className="mt-0.5 text-xs opacity-50">
+            <p className="mt-0.5 text-xs opacity-50 text-pretty">
               Tasks will appear here as they run
             </p>
           </div>
@@ -96,7 +96,7 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
                 >
                   <Icon
                     className={cn(
-                      "h-3.5 w-3.5 shrink-0",
+                      "size-3.5 shrink-0",
                       config.color,
                       t.status === "working" && "animate-spin",
                     )}
