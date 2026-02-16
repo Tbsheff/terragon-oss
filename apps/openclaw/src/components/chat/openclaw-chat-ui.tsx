@@ -13,6 +13,7 @@ import {
   useRealtimeChatMessages,
   useExecApprovals,
 } from "@/hooks/use-realtime";
+import { useDirectChat } from "@/hooks/use-direct-chat";
 import { ExecApprovalCard } from "./exec-approval-card";
 import { openClawHistoryToDBMessages } from "@/lib/message-adapter";
 import type { DBMessage, ThreadStatus } from "@/lib/types";
@@ -27,6 +28,10 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 
+const DIRECT_STREAMING =
+  process.env.NEXT_PUBLIC_DIRECT_STREAMING === "true" ||
+  process.env.NEXT_PUBLIC_DIRECT_STREAMING === "1";
+
 type OpenClawChatUIProps = {
   threadId: string;
 };
@@ -36,9 +41,191 @@ type OpenClawChatUIProps = {
  * Wires together: OpenClaw client, message adapter, realtime, and chat rendering.
  *
  * Data flow:
- *   OpenClaw events → message-adapter → DBMessage[] → toUIMessages() → UIMessage[] → ChatMessages
+ *   OpenClaw events -> message-adapter -> DBMessage[] -> toUIMessages() -> UIMessage[] -> ChatMessages
+ *
+ * When NEXT_PUBLIC_DIRECT_STREAMING is enabled, chat messages stream directly
+ * from the browser's WebSocket connection to the gateway, bypassing server actions.
  */
 export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
+  if (DIRECT_STREAMING) {
+    return <DirectStreamingChatUI threadId={threadId} />;
+  }
+  return <ServerActionChatUI threadId={threadId} />;
+}
+
+// ─────────────────────────────────────────────────
+// Direct streaming path (browser → gateway WebSocket)
+// ─────────────────────────────────────────────────
+
+function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
+  const queryClient = useQueryClient();
+  const [pendingUserMsg, setPendingUserMsg] = useState<DBMessage | null>(null);
+  const [isWorking, setIsWorking] = useState(false);
+
+  const { data: threadDetail } = useQuery(threadDetailQueryOptions(threadId));
+  useRealtimeThread(threadId);
+  const { pending: pendingApprovals } = useExecApprovals(threadId);
+
+  // Direct chat via browser gateway client
+  const {
+    messages: directMessages,
+    streamingMessages: directStreaming,
+    sendMessage,
+    abort,
+  } = useDirectChat(threadId);
+
+  // Clear pending user message once real messages arrive
+  const hasRealMessages =
+    directMessages.length > 0 || directStreaming.length > 0;
+  useEffect(() => {
+    if (hasRealMessages) setPendingUserMsg(null);
+  }, [hasRealMessages]);
+
+  const dbMessages = useMemo(() => {
+    if (pendingUserMsg && !directMessages.length) {
+      return [pendingUserMsg];
+    }
+    return directMessages.length > 0 ? directMessages : [];
+  }, [directMessages, pendingUserMsg]);
+
+  const openClawThread: OpenClawThread | null = threadDetail
+    ? {
+        id: threadDetail.id,
+        name: threadDetail.name,
+        status: threadDetail.status,
+        pipelineState: threadDetail.pipelineState,
+        tokenUsage: threadDetail.tokenUsage,
+        githubRepoFullName: threadDetail.githubRepoFullName,
+        createdAt: threadDetail.createdAt,
+      }
+    : null;
+
+  const uiMessages = useMemo(
+    () =>
+      toUIMessages({
+        dbMessages,
+        agent: "claudeCode",
+        threadStatus: (threadDetail?.status as ThreadStatus) ?? null,
+      }),
+    [dbMessages, threadDetail?.status],
+  );
+
+  // Sync external thread status into local isWorking state
+  useEffect(() => {
+    if (threadDetail) {
+      setIsWorking(
+        threadDetail.status === "working" || threadDetail.status === "stopping",
+      );
+    }
+  }, [threadDetail?.status]);
+
+  const handleSend = useCallback(
+    async (message: string) => {
+      setPendingUserMsg({
+        type: "user",
+        model: null,
+        parts: [{ type: "text", text: message }],
+        timestamp: new Date().toISOString(),
+      });
+      setIsWorking(true);
+
+      try {
+        await sendMessage(message);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to send message",
+        );
+        setIsWorking(false);
+        setPendingUserMsg(null);
+      }
+    },
+    [sendMessage],
+  );
+
+  const handleStop = useCallback(async () => {
+    try {
+      await abort();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to abort");
+    }
+    setIsWorking(false);
+  }, [abort]);
+
+  const handleArchive = useCallback(async () => {
+    const { archiveThread } = await import("@/server-actions/threads");
+    await archiveThread(threadId);
+    queryClient.invalidateQueries({ queryKey: ["threads"] });
+  }, [threadId, queryClient]);
+
+  return (
+    <ThreadProvider thread={openClawThread} isReadOnly={false}>
+      <div className="flex h-full flex-col overflow-hidden">
+        <OpenClawChatHeader onArchive={handleArchive} />
+
+        <Conversation className="min-h-0 flex-1">
+          <ConversationContent className="gap-4 px-4 py-6">
+            {uiMessages.length === 0 && !isWorking ? (
+              <ConversationEmptyState
+                icon={
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="h-8 w-8 text-primary/40"
+                  >
+                    <path d="M12 3c-1.2 0-2.4.6-3 1.7A3.6 3.6 0 0 0 4.5 9c-1.2 1-2 2.6-2 4.3 0 3 2.5 5.5 5.5 5.5h.5c.5 1.3 1.8 2.2 3.5 2.2s3-1 3.5-2.2h.5c3 0 5.5-2.5 5.5-5.5 0-1.7-.8-3.3-2-4.3A3.6 3.6 0 0 0 15 4.7C14.4 3.6 13.2 3 12 3z" />
+                  </svg>
+                }
+                title="Start a conversation"
+                description="Describe a coding task and the agent will get to work."
+                className="opacity-80"
+              />
+            ) : (
+              <>
+                <ChatMessages
+                  messages={uiMessages}
+                  isAgentWorking={isWorking}
+                />
+                {isWorking && uiMessages.length === 0 && (
+                  <WorkingMessage message="Agent is starting..." />
+                )}
+              </>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+
+        {pendingApprovals.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-border/50 px-4 py-3">
+            {pendingApprovals.map((approval) => (
+              <ExecApprovalCard
+                key={approval.id}
+                id={approval.id}
+                command={approval.command}
+                args={approval.args}
+                cwd={approval.cwd}
+                agentId={approval.agentId}
+              />
+            ))}
+          </div>
+        )}
+
+        <OpenClawPromptBox
+          onSend={handleSend}
+          onStop={handleStop}
+          isWorking={isWorking}
+        />
+      </div>
+    </ThreadProvider>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Server-action path (existing behavior)
+// ─────────────────────────────────────────────────
+
+function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
   const queryClient = useQueryClient();
   const [pendingUserMsg, setPendingUserMsg] = useState<DBMessage | null>(null);
   const [isWorking, setIsWorking] = useState(false);
@@ -61,7 +248,7 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
     threadId,
   ) as unknown as DBMessage[];
 
-  // Convert gateway history → DBMessage[]
+  // Convert gateway history -> DBMessage[]
   // Type assertion: message-adapter's DBMessage uses null where types.ts uses undefined —
   // structurally equivalent at runtime, toUIMessages handles both.
   const gatewayMessages = useMemo((): DBMessage[] => {
@@ -106,7 +293,7 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
       }
     : null;
 
-  // Convert DBMessages → UIMessages via the forked toUIMessages pipeline
+  // Convert DBMessages -> UIMessages via the forked toUIMessages pipeline
   const uiMessages = useMemo(
     () =>
       toUIMessages({
