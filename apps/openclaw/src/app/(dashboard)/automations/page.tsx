@@ -3,26 +3,23 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  listAutomations,
-  createAutomation,
-  deleteAutomation,
-  toggleAutomation,
-  type TriggerConfig,
-} from "@/server-actions/automations";
+  removeCronJob,
+  updateCronJob,
+  runCronJob,
+} from "@/server-actions/cron";
+import { cronListQueryOptions, cronQueryKeys } from "@/queries/cron-queries";
 import { cn } from "@/lib/utils";
 import {
-  Zap,
+  Clock,
   Plus,
   Trash2,
-  Clock,
-  GitPullRequest,
-  LayoutList,
+  Play,
   Power,
   PowerOff,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -31,47 +28,62 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-const TRIGGER_ICONS = {
-  cron: Clock,
-  linear: LayoutList,
-  "github-pr": GitPullRequest,
-} as const;
-
-const TRIGGER_LABELS = {
-  cron: "Scheduled (Cron)",
-  linear: "Linear Issue",
-  "github-pr": "GitHub PR",
-} as const;
-
-const TRIGGER_BADGE_COLORS: Record<string, string> = {
-  cron: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  linear:
-    "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-  "github-pr":
-    "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-};
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { CronJobForm } from "@/components/cron/cron-job-form";
 
 export default function AutomationsPage() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
 
-  const { data: automationList } = useQuery({
-    queryKey: ["automations"],
-    queryFn: listAutomations,
+  const { data: jobsResult, isLoading } = useQuery(cronListQueryOptions());
+
+  const jobs = jobsResult?.ok ? jobsResult.data : [];
+  const error = jobsResult?.ok === false ? jobsResult.error : null;
+
+  const toggleMut = useMutation({
+    mutationFn: ({ jobId, enabled }: { jobId: string; enabled: boolean }) =>
+      updateCronJob(jobId, { enabled }),
+    onSuccess: (result) => {
+      if (result.ok) {
+        queryClient.invalidateQueries({ queryKey: cronQueryKeys.all });
+        toast.success(result.data.enabled ? "Job enabled" : "Job disabled");
+      } else {
+        toast.error(`Failed to toggle job: ${result.error}`);
+      }
+    },
   });
 
   const deleteMut = useMutation({
-    mutationFn: deleteAutomation,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["automations"] }),
+    mutationFn: removeCronJob,
+    onSuccess: (result) => {
+      if (result.ok) {
+        queryClient.invalidateQueries({ queryKey: cronQueryKeys.all });
+        toast.success("Job deleted");
+        setDeleteJobId(null);
+      } else {
+        toast.error(`Failed to delete job: ${result.error}`);
+      }
+    },
   });
 
-  const toggleMut = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      toggleAutomation(id, enabled),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["automations"] }),
+  const runMut = useMutation({
+    mutationFn: runCronJob,
+    onSuccess: (result, jobId) => {
+      if (result.ok) {
+        toast.success(`Job started: run ${result.data.runId}`);
+      } else {
+        toast.error(`Failed to run job: ${result.error}`);
+      }
+    },
   });
 
   return (
@@ -79,343 +91,277 @@ export default function AutomationsPage() {
       <div className="px-6 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold font-[var(--font-cabin)]">
-              Automations
+            <h1 className="text-lg font-semibold text-balance font-[var(--font-cabin)]">
+              Cron Jobs
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Scheduled and event-triggered task pipelines
+            <p className="text-xs text-pretty text-muted-foreground mt-0.5">
+              Gateway-managed scheduled tasks
             </p>
           </div>
           <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
-            <Plus className="h-3.5 w-3.5" />
-            New Automation
+            <Plus className="size-3.5" />
+            New Job
           </Button>
         </div>
       </div>
       <Separator />
 
-      <div className="flex-1 overflow-y-auto p-6">
-        {showCreate && (
-          <CreateAutomationForm onClose={() => setShowCreate(false)} />
-        )}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {showCreate && <CronJobForm onClose={() => setShowCreate(false)} />}
 
-        <div className="grid gap-3 mt-4">
-          {(automationList ?? []).map((auto) => {
-            const TriggerIcon =
-              TRIGGER_ICONS[auto.triggerType as keyof typeof TRIGGER_ICONS] ??
-              Zap;
-            const config: TriggerConfig = JSON.parse(auto.triggerConfig);
-
-            return (
-              <Card
-                key={auto.id}
-                className={cn(
-                  "py-0 transition-all duration-200",
-                  auto.enabled
-                    ? "hover:shadow-md hover:-translate-y-0.5"
-                    : "opacity-50 border-dashed bg-muted/20",
-                )}
-              >
+        {isLoading && (
+          <div className="grid gap-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="py-0 animate-pulse">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-2.5">
-                      <div
-                        className={cn(
-                          "mt-0.5 flex h-7 w-7 items-center justify-center rounded-md",
-                          auto.enabled
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground",
-                        )}
-                      >
-                        <TriggerIcon className="h-3.5 w-3.5" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium">{auto.name}</h3>
-                        {auto.description && (
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {auto.description}
-                          </p>
-                        )}
+                      <div className="mt-0.5 size-7 rounded-md bg-muted" />
+                      <div className="space-y-2">
+                        <div className="h-4 w-32 rounded bg-muted" />
+                        <div className="h-3 w-48 rounded bg-muted" />
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                              "h-7 w-7",
-                              auto.enabled
-                                ? "text-primary hover:bg-primary/10"
-                                : "text-muted-foreground hover:bg-muted",
-                            )}
-                            onClick={() =>
-                              toggleMut.mutate({
-                                id: auto.id,
-                                enabled: !auto.enabled,
-                              })
-                            }
-                          >
-                            {auto.enabled ? (
-                              <Power className="h-3.5 w-3.5" />
-                            ) : (
-                              <PowerOff className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {auto.enabled ? "Disable" : "Enable"}
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            onClick={() => deleteMut.mutate(auto.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Delete automation</TooltipContent>
-                      </Tooltip>
+                      <div className="size-7 rounded-md bg-muted" />
+                      <div className="size-7 rounded-md bg-muted" />
+                      <div className="size-7 rounded-md bg-muted" />
                     </div>
                   </div>
-
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-[10px]",
-                        TRIGGER_BADGE_COLORS[auto.triggerType],
-                      )}
-                    >
-                      {
-                        TRIGGER_LABELS[
-                          auto.triggerType as keyof typeof TRIGGER_LABELS
-                        ]
-                      }
-                    </Badge>
-                    {config.type === "cron" && (
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-[10px] font-mono",
-                          TRIGGER_BADGE_COLORS[auto.triggerType],
-                        )}
-                      >
-                        {config.expression}
-                      </Badge>
-                    )}
-                    {config.type === "linear" && (
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-[10px]",
-                          TRIGGER_BADGE_COLORS[auto.triggerType],
-                        )}
-                      >
-                        label: {config.labelFilter}
-                      </Badge>
-                    )}
-                    {config.type === "github-pr" && (
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-[10px]",
-                          TRIGGER_BADGE_COLORS[auto.triggerType],
-                        )}
-                      >
-                        {config.repoFullName} ({config.event})
-                      </Badge>
-                    )}
+                  <div className="mt-3 flex gap-1.5">
+                    <div className="h-5 w-16 rounded-full bg-muted" />
+                    <div className="h-5 w-14 rounded-full bg-muted" />
+                    <div className="h-5 w-20 rounded-full bg-muted" />
                   </div>
-
-                  <p className="mt-3 text-xs text-muted-foreground truncate font-mono rounded-md bg-muted/50 px-2 py-1.5 border border-border/50">
-                    {auto.prompt}
-                  </p>
                 </CardContent>
               </Card>
-            );
-          })}
+            ))}
+          </div>
+        )}
 
-          {(automationList ?? []).length === 0 && !showCreate && (
-            <Card className="animate-fade-in border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Zap className="h-6 w-6 text-primary/60" />
-                </div>
-                <p className="mt-3 text-sm font-medium text-foreground">
-                  No automations yet
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground max-w-[280px] text-center">
-                  Create one to run tasks on a schedule or in response to events
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-5"
-                  onClick={() => setShowCreate(true)}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  New Automation
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+        {error && (
+          <Card className="animate-fade-in border-destructive/50 bg-destructive/5">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
+                <AlertCircle className="size-6 text-destructive" />
+              </div>
+              <p className="mt-3 text-sm font-medium text-balance text-foreground">
+                Gateway disconnected
+              </p>
+              <p className="mt-1 text-xs text-pretty text-muted-foreground max-w-[280px] text-center">
+                {error}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-function CreateAutomationForm({ onClose }: { onClose: () => void }) {
-  const queryClient = useQueryClient();
-  const [name, setName] = useState("");
-  const [triggerType, setTriggerType] = useState<
-    "cron" | "linear" | "github-pr"
-  >("cron");
-  const [cronExpression, setCronExpression] = useState("0 9 * * 1-5");
-  const [linearLabel, setLinearLabel] = useState("agent");
-  const [githubRepo, setGithubRepo] = useState("");
-  const [prompt, setPrompt] = useState("");
+        {!isLoading && !error && jobs.length === 0 && !showCreate && (
+          <Card className="animate-fade-in border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
+                <Clock className="size-6 text-primary/60" />
+              </div>
+              <p className="mt-3 text-sm font-medium text-balance text-foreground">
+                No cron jobs yet
+              </p>
+              <p className="mt-1 text-xs text-pretty text-muted-foreground max-w-[280px] text-center">
+                Create a job to run tasks on a schedule
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-5"
+                onClick={() => setShowCreate(true)}
+              >
+                <Plus className="size-3.5" />
+                New Job
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-  const createMut = useMutation({
-    mutationFn: () => {
-      let triggerConfig: TriggerConfig;
-      if (triggerType === "cron") {
-        triggerConfig = { type: "cron", expression: cronExpression };
-      } else if (triggerType === "linear") {
-        triggerConfig = {
-          type: "linear",
-          teamId: "",
-          labelFilter: linearLabel,
-        };
-      } else {
-        triggerConfig = {
-          type: "github-pr",
-          repoFullName: githubRepo,
-          event: "opened",
-        };
-      }
-      return createAutomation({ name, triggerType, triggerConfig, prompt });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["automations"] });
-      onClose();
-    },
-  });
+        {!isLoading && !error && jobs.length > 0 && (
+          <div className="grid gap-3">
+            {jobs.map((job) => {
+              let scheduleText = "";
+              if (job.schedule.kind === "cron") {
+                scheduleText = job.schedule.expression;
+              } else if (job.schedule.kind === "every") {
+                const seconds = Number(job.schedule.intervalMs) / 1000;
+                if (Number.isNaN(seconds) || seconds <= 0) {
+                  scheduleText = "Invalid interval";
+                } else if (seconds < 60) {
+                  scheduleText = `Every ${seconds}s`;
+                } else if (seconds < 3600) {
+                  scheduleText = `Every ${Math.floor(seconds / 60)}m`;
+                } else {
+                  scheduleText = `Every ${Math.floor(seconds / 3600)}h`;
+                }
+              } else {
+                scheduleText = `At ${job.schedule.datetime}`;
+              }
 
-  return (
-    <Card className="border-primary/30 py-0 animate-fade-in">
-      <CardContent className="p-4 space-y-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="automation-name" className="text-xs">
-            Name
-          </Label>
-          <Input
-            id="automation-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Automation name"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">Trigger</Label>
-          <div className="flex gap-2">
-            {(["cron", "linear", "github-pr"] as const).map((t) => {
-              const Icon = TRIGGER_ICONS[t];
               return (
-                <Button
-                  key={t}
-                  variant={triggerType === t ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTriggerType(t)}
-                  className={cn(triggerType === t && "shadow-sm")}
+                <Card
+                  key={job.jobId}
+                  className={cn(
+                    "py-0 transition-all duration-200",
+                    job.enabled
+                      ? "hover:shadow-md hover:-translate-y-0.5"
+                      : "opacity-50 border-dashed bg-muted/20",
+                  )}
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  {TRIGGER_LABELS[t]}
-                </Button>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-2.5">
+                        <div
+                          className={cn(
+                            "mt-0.5 flex size-7 items-center justify-center rounded-md",
+                            job.enabled
+                              ? "bg-primary/10 text-primary"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <Clock className="size-3.5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium truncate">
+                            {job.name}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-pretty text-muted-foreground line-clamp-1">
+                            {job.payload.kind === "agentTurn"
+                              ? job.payload.message.slice(0, 80)
+                              : `Event: ${job.payload.event}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Run job now"
+                              className="size-7 text-muted-foreground hover:text-primary"
+                              onClick={() => runMut.mutate(job.jobId)}
+                              disabled={
+                                runMut.isPending &&
+                                runMut.variables === job.jobId
+                              }
+                            >
+                              {runMut.isPending &&
+                              runMut.variables === job.jobId ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <Play className="size-3.5" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Run now</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={
+                                job.enabled ? "Disable job" : "Enable job"
+                              }
+                              className={cn(
+                                "size-7",
+                                job.enabled
+                                  ? "text-primary hover:bg-primary/10"
+                                  : "text-muted-foreground hover:bg-muted",
+                              )}
+                              onClick={() =>
+                                toggleMut.mutate({
+                                  jobId: job.jobId,
+                                  enabled: !job.enabled,
+                                })
+                              }
+                            >
+                              {job.enabled ? (
+                                <Power className="size-3.5" />
+                              ) : (
+                                <PowerOff className="size-3.5" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {job.enabled ? "Disable" : "Enable"}
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Delete job"
+                              className="size-7 text-muted-foreground hover:text-destructive"
+                              onClick={() => setDeleteJobId(job.jobId)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete job</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-mono tabular-nums bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                      >
+                        {scheduleText}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                      >
+                        {job.sessionTarget}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
+                      >
+                        {job.payload.kind}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
-        </div>
-
-        {triggerType === "cron" && (
-          <div className="space-y-1.5 animate-fade-in">
-            <Label htmlFor="cron-expression" className="text-xs">
-              Cron Expression
-            </Label>
-            <Input
-              id="cron-expression"
-              type="text"
-              value={cronExpression}
-              onChange={(e) => setCronExpression(e.target.value)}
-              placeholder="Cron expression (e.g. 0 9 * * 1-5)"
-              className="font-mono"
-            />
-          </div>
         )}
-        {triggerType === "linear" && (
-          <div className="space-y-1.5 animate-fade-in">
-            <Label htmlFor="linear-label" className="text-xs">
-              Label Filter
-            </Label>
-            <Input
-              id="linear-label"
-              type="text"
-              value={linearLabel}
-              onChange={(e) => setLinearLabel(e.target.value)}
-              placeholder="Linear label filter (e.g. agent)"
-            />
-          </div>
-        )}
-        {triggerType === "github-pr" && (
-          <div className="space-y-1.5 animate-fade-in">
-            <Label htmlFor="github-repo" className="text-xs">
-              Repository
-            </Label>
-            <Input
-              id="github-repo"
-              type="text"
-              value={githubRepo}
-              onChange={(e) => setGithubRepo(e.target.value)}
-              placeholder="owner/repo"
-            />
-          </div>
-        )}
+      </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="automation-prompt" className="text-xs">
-            Prompt
-          </Label>
-          <textarea
-            id="automation-prompt"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Prompt for the pipeline"
-            rows={3}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm resize-none shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
-          />
-        </div>
-
-        <div className="flex gap-2 justify-end">
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => createMut.mutate()}
-            disabled={!name.trim() || !prompt.trim()}
-          >
-            Create
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <Dialog
+        open={deleteJobId !== null}
+        onOpenChange={(open) => !open && setDeleteJobId(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-balance">Delete cron job?</DialogTitle>
+            <DialogDescription className="text-pretty">
+              This action cannot be undone. The job will be permanently deleted
+              from the gateway.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteJobId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteJobId && deleteMut.mutate(deleteJobId)}
+              disabled={deleteMut.isPending}
+            >
+              {deleteMut.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
