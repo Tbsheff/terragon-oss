@@ -138,6 +138,7 @@ export async function getThread(id: string): Promise<ThreadDetail | null> {
 
 export async function createThread(opts: {
   name: string;
+  agentId?: string;
   githubRepoFullName?: string;
   model?: string;
   pipelineTemplateId?: string;
@@ -150,7 +151,7 @@ export async function createThread(opts: {
   try {
     const client = getOpenClawClient();
     await client.sessionsSpawn({
-      agentId: "claudeCode",
+      agentId: opts.agentId ?? "claudeCode",
       sessionKey,
       model: opts.model,
     });

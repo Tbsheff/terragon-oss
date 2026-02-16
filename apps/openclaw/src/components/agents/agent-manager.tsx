@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -11,6 +12,7 @@ import {
   Bot,
   AlertTriangle,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -56,14 +58,31 @@ import {
   type AgentWithStatus,
 } from "@/server-actions/agents";
 import { AgentRosterSetup } from "@/components/agents/agent-roster-setup";
+import { createThread } from "@/server-actions/threads";
 
 // ─────────────────────────────────────────────────
 
 export function AgentManager() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [rosterOpen, setRosterOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<OpenClawAgent | null>(null);
+
+  const startChat = useCallback(
+    async (agent: AgentWithStatus) => {
+      try {
+        const result = await createThread({
+          name: `Chat with ${agent.name}`,
+          agentId: agent.id,
+        });
+        router.push(`/task/${result.id}`);
+      } catch (err) {
+        toast.error(`Failed to start chat: ${(err as Error).message}`);
+      }
+    },
+    [router],
+  );
 
   const agentsQuery = useQuery({
     queryKey: ["agents"],
@@ -252,6 +271,7 @@ export function AgentManager() {
               agent={agent}
               index={index}
               onDelete={() => setDeleteTarget(agent)}
+              onChat={() => startChat(agent)}
             />
           ))}
         </div>
@@ -361,10 +381,12 @@ function AgentCard({
   agent,
   index,
   onDelete,
+  onChat,
 }: {
   agent: AgentWithStatus;
   index: number;
   onDelete: () => void;
+  onChat: () => void;
 }) {
   return (
     <Link
@@ -404,24 +426,44 @@ function AgentCard({
                 </div>
               </div>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${agent.name}`}
-                  className="size-7 shrink-0 opacity-0 transition-all group-hover:opacity-100 hover:text-destructive"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onDelete();
-                  }}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Delete agent</TooltipContent>
-            </Tooltip>
+            <div className="flex items-center gap-0.5 shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Chat with ${agent.name}`}
+                    className="size-7 opacity-0 transition-all group-hover:opacity-100 hover:text-primary"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onChat();
+                    }}
+                  >
+                    <MessageSquare className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Chat with {agent.name}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Delete ${agent.name}`}
+                    className="size-7 opacity-0 transition-all group-hover:opacity-100 hover:text-destructive"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete agent</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="flex-1 pt-0">

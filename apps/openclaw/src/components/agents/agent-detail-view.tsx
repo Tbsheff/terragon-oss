@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Pencil, Save, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  MessageSquare,
+  Pencil,
+  Save,
+  AlertTriangle,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,13 +29,16 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listAgents, updateAgent } from "@/server-actions/agents";
+import { createThread } from "@/server-actions/threads";
 import { AgentFileEditor } from "@/components/agents/agent-file-editor";
 
 // ─────────────────────────────────────────────────
 
 export function AgentDetailView({ agentId }: { agentId: string }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
   const [editName, setEditName] = useState("");
   const [editEmoji, setEditEmoji] = useState("");
   const [editModel, setEditModel] = useState("");
@@ -75,6 +86,21 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
     setEditDescription(agent.description ?? "");
     setEditing(true);
   }
+
+  const startChat = useCallback(async () => {
+    if (!agent) return;
+    setChatLoading(true);
+    try {
+      const result = await createThread({
+        name: `Chat with ${agent.name}`,
+        agentId: agent.id,
+      });
+      router.push(`/task/${result.id}`);
+    } catch (err) {
+      toast.error(`Failed to start chat: ${(err as Error).message}`);
+      setChatLoading(false);
+    }
+  }, [agent, router]);
 
   if (agentQuery.isLoading) {
     return (
@@ -174,15 +200,30 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
                 )}
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0 border-border/60"
-              onClick={startEditing}
-            >
-              <Pencil className="size-3.5" />
-              Edit
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                className="bg-primary text-primary-foreground"
+                onClick={startChat}
+                disabled={chatLoading}
+              >
+                {chatLoading ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <MessageSquare className="size-3.5" />
+                )}
+                Chat
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-border/60"
+                onClick={startEditing}
+              >
+                <Pencil className="size-3.5" />
+                Edit
+              </Button>
+            </div>
           </div>
           {agent.description && (
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">

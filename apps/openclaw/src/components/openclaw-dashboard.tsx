@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { createThread } from "@/server-actions/threads";
+import { listAgents } from "@/server-actions/agents";
 import { threadListQueryOptions } from "@/queries/thread-queries";
 import { dashboardStatsQueryOptions } from "@/queries/dashboard-queries";
 import { useRealtimeGlobal } from "@/hooks/use-realtime";
@@ -30,6 +31,13 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { QuickStatsRow } from "@/components/dashboard/quick-stats-row";
 import { ActiveAgentsPanel } from "@/components/dashboard/active-agents-panel";
@@ -71,6 +79,7 @@ export function OpenClawDashboard() {
   const [usePipeline, setUsePipeline] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("feature-fast");
   const [repoFullName, setRepoFullName] = useState("");
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [isCreating, setIsCreating] = useState(false);
 
   // Subscribe to global real-time updates for auto-refresh
@@ -81,6 +90,14 @@ export function OpenClawDashboard() {
   const { data: threads } = useQuery(
     threadListQueryOptions({ archived: false }),
   );
+  const { data: agents } = useQuery({
+    queryKey: ["agents"],
+    queryFn: async () => {
+      const result = await listAgents();
+      if (!result.ok) return [];
+      return result.data;
+    },
+  });
 
   const handleCreate = useCallback(async () => {
     if (!prompt.trim()) return;
@@ -88,6 +105,7 @@ export function OpenClawDashboard() {
     try {
       const result = await createThread({
         name: prompt.slice(0, 100),
+        agentId: selectedAgentId || undefined,
         githubRepoFullName: repoFullName || undefined,
         pipelineTemplateId: usePipeline ? selectedTemplate : undefined,
       });
@@ -97,7 +115,14 @@ export function OpenClawDashboard() {
     } finally {
       setIsCreating(false);
     }
-  }, [prompt, repoFullName, usePipeline, selectedTemplate, router]);
+  }, [
+    prompt,
+    selectedAgentId,
+    repoFullName,
+    usePipeline,
+    selectedTemplate,
+    router,
+  ]);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto px-6 py-6">
@@ -143,6 +168,40 @@ export function OpenClawDashboard() {
                   }
                 }}
               />
+
+              {/* Agent picker */}
+              {agents && agents.length > 0 && (
+                <div className="space-y-1">
+                  <Label
+                    htmlFor="agent-select"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Agent
+                  </Label>
+                  <Select
+                    value={selectedAgentId}
+                    onValueChange={setSelectedAgentId}
+                  >
+                    <SelectTrigger
+                      size="sm"
+                      id="agent-select"
+                      className="h-8 text-sm"
+                    >
+                      <SelectValue placeholder="Default (claudeCode)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agents.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          <span className="flex items-center gap-1.5">
+                            <span>{a.emoji ?? "🤖"}</span>
+                            <span>{a.name}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Repo input */}
               <div className="space-y-1">
