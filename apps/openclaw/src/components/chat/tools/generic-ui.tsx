@@ -170,16 +170,8 @@ export function GenericToolPartClickToExpand({
 }) {
   return (
     <span
-      role="button"
-      tabIndex={0}
-      className="inline text-muted-foreground/70 select-none cursor-pointer hover:text-muted-foreground transition-colors"
+      className="inline text-muted-foreground/70 select-none"
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
     >
       ({label})
     </span>
@@ -277,7 +269,9 @@ export function GenericToolPartContentResultWithLines({
           </GenericToolPartContentRow>
         ))}
         <GenericToolPartContentRow index={-1} singleColumn={singleColumn}>
-          <span>... +{lines.length - lineClamp} more lines</span>{" "}
+          <span>
+            {"\u2026"} +{lines.length - lineClamp} more lines
+          </span>{" "}
           <GenericToolPartClickToExpand
             label="Show all"
             onClick={() => setExpanded(true)}
