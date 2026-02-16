@@ -62,9 +62,11 @@ export function ContextInjectionDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md border-border/60">
         <DialogHeader>
-          <DialogTitle className="text-balance">Inject Context</DialogTitle>
+          <DialogTitle className="text-balance font-[var(--font-cabin)]">
+            Inject Context
+          </DialogTitle>
           <DialogDescription className="text-pretty">
             Add a message to the session without triggering a response.
           </DialogDescription>
@@ -102,7 +104,9 @@ export function ContextInjectionDialog({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Enter context to inject..."
-              className={cn("min-h-[120px] resize-none")}
+              className={cn(
+                "focus-glow min-h-[120px] resize-none border-border/60",
+              )}
             />
           </div>
         </div>

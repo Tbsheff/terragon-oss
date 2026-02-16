@@ -36,16 +36,20 @@ export function AgentModelSelector({
         size="sm"
         aria-label="Select model"
         className={cn(
-          "h-7 w-auto min-w-0 gap-1 border-none bg-transparent px-2",
-          "text-xs text-muted-foreground shadow-none",
-          "transition-colors hover:text-foreground",
+          "h-7 w-auto min-w-0 gap-1 rounded-md border border-border/60 bg-muted/30 px-2",
+          "text-xs text-muted-foreground/80 shadow-none",
+          "transition-colors hover:bg-muted/60 hover:text-foreground",
         )}
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="rounded-lg border border-border/60">
         {AVAILABLE_MODELS.map((m) => (
-          <SelectItem key={m.value} value={m.value} className="text-xs">
+          <SelectItem
+            key={m.value}
+            value={m.value}
+            className="text-xs rounded-md"
+          >
             {m.label}
           </SelectItem>
         ))}

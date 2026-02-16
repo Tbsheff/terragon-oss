@@ -52,7 +52,7 @@ export function SlashCommandPopover({
       ref={ref}
       className={cn(
         "absolute bottom-full left-0 z-50 mb-1 w-72",
-        "rounded-lg border border-border bg-popover shadow-md",
+        "rounded-lg border border-border/60 bg-popover shadow-md",
       )}
       role="listbox"
       aria-label="Slash commands"
@@ -78,7 +78,7 @@ export function SlashCommandPopover({
                     {cmd.argPlaceholder}
                   </span>
                 )}
-                <span className="ml-auto truncate text-xs text-pretty text-muted-foreground">
+                <span className="ml-auto truncate text-xs text-pretty text-muted-foreground/70">
                   {cmd.description}
                 </span>
               </CommandItem>
@@ -88,24 +88,24 @@ export function SlashCommandPopover({
         {filtered.length > 0 && (
           <div
             className={cn(
-              "flex items-center gap-3 border-t border-border px-3 py-1.5",
-              "text-[10px] text-muted-foreground",
+              "flex items-center gap-3 border-t border-border/60 px-3 py-1.5",
+              "text-[11px] text-muted-foreground/60",
             )}
           >
             <span>
-              <kbd className="inline-flex items-center rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px]">
+              <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[10px] font-mono">
                 ↑↓
               </kbd>
               {" navigate"}
             </span>
             <span>
-              <kbd className="inline-flex items-center rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px]">
+              <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[10px] font-mono">
                 ↵
               </kbd>
               {" select"}
             </span>
             <span>
-              <kbd className="inline-flex items-center rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px]">
+              <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[10px] font-mono">
                 esc
               </kbd>
               {" close"}

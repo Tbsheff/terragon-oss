@@ -178,9 +178,8 @@ export function OpenClawPromptBox({
         <PromptInput
           onSubmit={handleSubmit}
           className={cn(
-            "rounded-lg border border-border bg-card shadow-sm",
+            "focus-glow rounded-lg border border-border/60 bg-card shadow-sm",
             "transition-shadow duration-200",
-            "focus-within:shadow-md focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/20",
           )}
         >
           <PromptInputTextarea
@@ -231,7 +230,7 @@ export function OpenClawPromptBox({
 
       <div
         className={cn(
-          "mt-1.5 text-center text-[10px] text-pretty text-muted-foreground",
+          "mt-1.5 text-center text-[11px] text-pretty text-muted-foreground/60",
         )}
       >
         {isWorking ? (
@@ -241,11 +240,11 @@ export function OpenClawPromptBox({
           </span>
         ) : (
           <span>
-            <kbd className="inline-flex items-center rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
+            <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[10px] font-mono">
               Enter
             </kbd>
             {" to send, "}
-            <kbd className="inline-flex items-center rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
+            <kbd className="rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[10px] font-mono">
               /
             </kbd>
             {" for commands"}
