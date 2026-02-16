@@ -54,9 +54,9 @@ export function ExecApprovalCard({
         )}
       >
         {resolved === "deny" ? (
-          <ShieldX className="h-4 w-4 shrink-0" />
+          <ShieldX className="size-4 shrink-0" />
         ) : (
-          <ShieldCheck className="h-4 w-4 shrink-0" />
+          <ShieldCheck className="size-4 shrink-0" />
         )}
         <code className="truncate font-mono text-xs">{fullCommand}</code>
         <span className="ml-auto shrink-0 text-xs font-medium">
@@ -71,27 +71,36 @@ export function ExecApprovalCard({
   }
 
   return (
-    <div className="animate-fade-in rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5">
+    <div
+      className={cn(
+        "animate-fade-in rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5",
+      )}
+    >
       <div className="flex items-start gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-          <Shield className="h-4 w-4 text-amber-600" />
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+          <Shield className="size-4 text-amber-600" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground">
+          <p className="text-sm font-medium text-balance text-foreground">
             Exec approval requested
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-xs text-pretty text-muted-foreground">
             Agent <code className="text-foreground">{agentId}</code> wants to
             run:
           </p>
-          <div className="mt-2 flex items-center gap-2 rounded-md border border-border/60 bg-card px-3 py-2">
-            <Terminal className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <div
+            className={cn(
+              "mt-2 flex items-center gap-2 rounded-md border border-border/60",
+              "bg-card px-3 py-2",
+            )}
+          >
+            <Terminal className="size-3.5 shrink-0 text-muted-foreground" />
             <code className="truncate font-mono text-xs text-foreground">
               {fullCommand}
             </code>
           </div>
           {cwd && (
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
+            <p className="mt-1.5 text-[11px] text-pretty text-muted-foreground">
               in <code>{cwd}</code>
             </p>
           )}
@@ -102,7 +111,10 @@ export function ExecApprovalCard({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 border-primary/40 text-primary hover:bg-primary/10"
+          aria-label="Allow command once"
+          className={cn(
+            "h-7 border-primary/40 text-primary hover:bg-primary/10",
+          )}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate("allow_once")}
         >
@@ -111,7 +123,10 @@ export function ExecApprovalCard({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10"
+          aria-label="Always allow this command"
+          className={cn(
+            "h-7 border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10",
+          )}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate("always_allow")}
         >
@@ -120,7 +135,10 @@ export function ExecApprovalCard({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 border-destructive/40 text-destructive hover:bg-destructive/10"
+          aria-label="Deny command execution"
+          className={cn(
+            "h-7 border-destructive/40 text-destructive hover:bg-destructive/10",
+          )}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate("deny")}
         >

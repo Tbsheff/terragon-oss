@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const AVAILABLE_MODELS = [
   { value: "claude-sonnet-4-5-20250929", label: "Sonnet 4.5" },
@@ -33,7 +34,12 @@ export function AgentModelSelector({
     >
       <SelectTrigger
         size="sm"
-        className="h-7 w-auto min-w-0 gap-1 border-none bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:text-foreground"
+        aria-label="Select model"
+        className={cn(
+          "h-7 w-auto min-w-0 gap-1 border-none bg-transparent px-2",
+          "text-xs text-muted-foreground shadow-none",
+          "transition-colors hover:text-foreground",
+        )}
       >
         <SelectValue />
       </SelectTrigger>

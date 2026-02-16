@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { PlusIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -47,6 +48,12 @@ export function OpenClawPromptBox({
   const [showInjectDialog, setShowInjectDialog] = useState(false);
   const [localMessage, setLocalMessage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const localMsgTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  // Clean up timer on unmount
+  useEffect(() => () => clearTimeout(localMsgTimer.current), []);
 
   // Track slash command state from input changes
   const handleInputChange = useCallback((value: string) => {
@@ -55,7 +62,7 @@ export function OpenClawPromptBox({
     if (value.startsWith("/")) {
       const afterSlash = value.slice(1).split(" ")[0] ?? "";
       // Only show menu if no space yet (still typing command name)
-      if (!value.includes(" ") || value.indexOf(" ") > value.length - 1) {
+      if (!value.includes(" ")) {
         setSlashFilter(afterSlash);
         setShowSlashMenu(true);
       } else {
@@ -73,16 +80,25 @@ export function OpenClawPromptBox({
       if (cmd.immediate && slashCommandContext) {
         // Execute immediately
         setInput("");
-        executeSlashCommand(
-          { name: cmd.name, args: "" },
-          slashCommandContext,
-        ).then((result) => {
-          if (result) {
-            setLocalMessage(result);
-            // Auto-clear after 5s
-            setTimeout(() => setLocalMessage(null), 5000);
-          }
-        });
+        executeSlashCommand({ name: cmd.name, args: "" }, slashCommandContext)
+          .then((result) => {
+            if (result) {
+              setLocalMessage(result);
+              clearTimeout(localMsgTimer.current);
+              localMsgTimer.current = setTimeout(
+                () => setLocalMessage(null),
+                5000,
+              );
+            }
+          })
+          .catch((err) => {
+            setLocalMessage(`Error: ${(err as Error).message}`);
+            clearTimeout(localMsgTimer.current);
+            localMsgTimer.current = setTimeout(
+              () => setLocalMessage(null),
+              5000,
+            );
+          });
       } else {
         // Replace input with command + space for args
         setInput(`/${cmd.name} `);
@@ -105,7 +121,8 @@ export function OpenClawPromptBox({
         const result = await executeSlashCommand(parsed, slashCommandContext);
         if (result) {
           setLocalMessage(result);
-          setTimeout(() => setLocalMessage(null), 5000);
+          clearTimeout(localMsgTimer.current);
+          localMsgTimer.current = setTimeout(() => setLocalMessage(null), 5000);
         }
         return;
       }
@@ -144,7 +161,11 @@ export function OpenClawPromptBox({
   const status = isWorking ? "streaming" : "ready";
 
   return (
-    <div className="shrink-0 border-t border-border/50 bg-card/80 backdrop-blur-sm p-4">
+    <div
+      className={cn(
+        "shrink-0 border-t border-border/50 bg-card/80 backdrop-blur-sm p-4",
+      )}
+    >
       <div className="relative">
         {showSlashMenu && (
           <SlashCommandPopover
@@ -156,7 +177,11 @@ export function OpenClawPromptBox({
 
         <PromptInput
           onSubmit={handleSubmit}
-          className="rounded-lg border border-border/50 bg-card shadow-sm transition-shadow duration-200 focus-within:shadow-md focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10"
+          className={cn(
+            "rounded-lg border border-border bg-card shadow-sm",
+            "transition-shadow duration-200",
+            "focus-within:shadow-md focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/20",
+          )}
         >
           <PromptInputTextarea
             ref={textareaRef}
@@ -176,6 +201,7 @@ export function OpenClawPromptBox({
               {slashCommandContext && (
                 <PromptInputButton
                   tooltip="Inject context"
+                  aria-label="Inject context"
                   onClick={() => setShowInjectDialog(true)}
                 >
                   <PlusIcon className="size-4" />
@@ -193,24 +219,33 @@ export function OpenClawPromptBox({
 
       {/* Local message display (e.g. /help output) */}
       {localMessage && (
-        <pre className="mt-2 max-h-40 overflow-auto rounded-md border border-border/50 bg-muted/50 p-3 text-xs text-muted-foreground whitespace-pre-wrap">
+        <pre
+          className={cn(
+            "mt-2 max-h-40 overflow-auto rounded-md border border-border/50",
+            "bg-muted/50 p-3 text-xs text-pretty text-muted-foreground whitespace-pre-wrap",
+          )}
+        >
           {localMessage}
         </pre>
       )}
 
-      <div className="mt-1.5 text-center text-[10px] text-muted-foreground">
+      <div
+        className={cn(
+          "mt-1.5 text-center text-[10px] text-pretty text-muted-foreground",
+        )}
+      >
         {isWorking ? (
           <span className="flex items-center justify-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="size-1.5 rounded-full bg-primary animate-pulse" />
             Agent is working...
           </span>
         ) : (
           <span>
-            <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px] font-mono">
+            <kbd className="inline-flex items-center rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
               Enter
             </kbd>
             {" to send, "}
-            <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px] font-mono">
+            <kbd className="inline-flex items-center rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
               /
             </kbd>
             {" for commands"}
