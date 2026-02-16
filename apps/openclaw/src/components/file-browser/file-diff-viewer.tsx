@@ -142,10 +142,12 @@ export function FileDiffViewer() {
   if (!diff) {
     return (
       <div className="flex flex-1 items-center justify-center text-muted-foreground text-sm">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <GitCompare className="size-8 opacity-40" />
-          <span className="text-balance font-medium">No diff selected</span>
-          <p className="text-xs text-pretty text-muted-foreground/60">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <GitCompare className="size-8 text-muted-foreground/30" />
+          <span className="text-sm font-medium text-muted-foreground/70">
+            No diff selected
+          </span>
+          <p className="text-xs text-pretty text-muted-foreground/50">
             Click an edit tool result to view the diff
           </p>
         </div>
@@ -163,8 +165,8 @@ export function FileDiffViewer() {
 
   return (
     <ScrollArea className="flex-1">
-      <div className="border-b border-border/50 bg-muted/30 px-3 py-2 text-xs font-mono flex items-center gap-2">
-        <span className="truncate font-medium">
+      <div className="glass border-b border-border/60 px-3 py-2 text-xs font-mono flex items-center gap-2">
+        <span className="truncate font-medium text-foreground/80">
           {diff.path.split("/").pop()}
         </span>
         <span className="tabular-nums text-green-600 dark:text-green-400 shrink-0">
@@ -187,10 +189,10 @@ export function FileDiffViewer() {
               line.type === "context" && "text-foreground/80",
             )}
           >
-            <span className="w-10 shrink-0 text-right pr-2 tabular-nums text-muted-foreground/50 select-none">
+            <span className="w-10 shrink-0 text-right pr-2 tabular-nums text-muted-foreground/40 select-none">
               {line.oldLineNo ?? " "}
             </span>
-            <span className="w-10 shrink-0 text-right pr-2 tabular-nums text-muted-foreground/50 select-none border-r border-border/30 mr-2">
+            <span className="w-10 shrink-0 text-right pr-2 tabular-nums text-muted-foreground/40 select-none border-r border-border/40 mr-2">
               {line.newLineNo ?? " "}
             </span>
             <span className="w-4 shrink-0 select-none">

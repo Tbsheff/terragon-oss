@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useAtomValue } from "jotai";
 import { cn } from "@/lib/utils";
-import { useOpenFile } from "@/hooks/use-file-panel";
+import { useOpenFile, selectedFileAtom } from "@/hooks/use-file-panel";
 import { detectLanguage } from "@/lib/language-detect";
 import {
   Collapsible,
@@ -131,10 +132,12 @@ export function FileTree({ files }: FileTreeProps) {
   if (tree.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center text-muted-foreground text-sm p-4">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <Folder className="size-8 opacity-40" />
-          <span className="text-balance font-medium">No files yet</span>
-          <p className="text-xs text-pretty text-muted-foreground/60">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <Folder className="size-8 text-muted-foreground/30" />
+          <span className="text-sm font-medium text-muted-foreground/70">
+            No files yet
+          </span>
+          <p className="text-xs text-pretty text-muted-foreground/50">
             Send a message to the agent to start generating files
           </p>
         </div>
@@ -164,6 +167,8 @@ function TreeNodeItem({
 }) {
   const [isOpen, setIsOpen] = useState(depth < 2);
   const openFile = useOpenFile();
+  const selectedFile = useAtomValue(selectedFileAtom);
+  const isSelected = !node.isDir && selectedFile?.path === node.path;
 
   const handleFileClick = useCallback(() => {
     const content = files.get(node.path) ?? "";
@@ -180,22 +185,23 @@ function TreeNodeItem({
         <CollapsibleTrigger asChild>
           <button
             className={cn(
-              "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-xs hover:bg-muted/60 transition-colors",
+              "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors",
+              "hover:bg-muted",
             )}
             style={{ paddingLeft: `${depth * 12 + 8}px` }}
           >
             <ChevronRight
               className={cn(
-                "size-3 shrink-0 text-muted-foreground transition-transform",
+                "size-3 shrink-0 text-muted-foreground/60 transition-transform",
                 isOpen && "rotate-90",
               )}
             />
             {isOpen ? (
-              <FolderOpen className="size-3.5 shrink-0 text-blue-500" />
+              <FolderOpen className="size-3.5 shrink-0 text-primary/70" />
             ) : (
-              <Folder className="size-3.5 shrink-0 text-blue-500" />
+              <Folder className="size-3.5 shrink-0 text-primary/70" />
             )}
-            <span className="truncate font-medium text-foreground/90">
+            <span className="truncate font-medium text-foreground/80">
               {node.name}
             </span>
           </button>
@@ -218,12 +224,15 @@ function TreeNodeItem({
     <button
       onClick={handleFileClick}
       className={cn(
-        "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-xs hover:bg-muted/60 transition-colors",
+        "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors",
+        isSelected
+          ? "bg-primary/10 text-primary"
+          : "hover:bg-muted text-foreground/70",
       )}
       style={{ paddingLeft: `${depth * 12 + 8 + 16}px` }}
     >
       {getFileIcon(node.name)}
-      <span className="truncate text-foreground/80">{node.name}</span>
+      <span className="truncate">{node.name}</span>
     </button>
   );
 }

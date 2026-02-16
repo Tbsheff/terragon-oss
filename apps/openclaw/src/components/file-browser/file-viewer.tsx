@@ -23,10 +23,12 @@ export function FileViewer() {
   if (!file) {
     return (
       <div className="flex flex-1 items-center justify-center text-muted-foreground text-sm">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <FileCode className="size-8 opacity-40" />
-          <span className="text-balance font-medium">No file selected</span>
-          <p className="text-xs text-pretty text-muted-foreground/60">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <FileCode className="size-8 text-muted-foreground/30" />
+          <span className="text-sm font-medium text-muted-foreground/70">
+            No file selected
+          </span>
+          <p className="text-xs text-pretty text-muted-foreground/50">
             Click a file in the tree or a tool result to view it
           </p>
         </div>
@@ -42,10 +44,10 @@ export function FileViewer() {
   return (
     <ScrollArea className="flex-1">
       <CodeBlockContainer language={language} className="border-0 rounded-none">
-        <CodeBlockHeader>
+        <CodeBlockHeader className="border-b border-border/60">
           <CodeBlockTitle>
             <CodeBlockFilename>{filename}</CodeBlockFilename>
-            <span className="tabular-nums text-muted-foreground/60">
+            <span className="tabular-nums text-muted-foreground/50">
               {lineCount} lines
             </span>
           </CodeBlockTitle>
@@ -87,7 +89,7 @@ function CopyButton({ text }: { text: string }) {
       size="icon"
       onClick={handleCopy}
       aria-label={copied ? "Copied" : "Copy file contents"}
-      className="size-6 shrink-0 hover:bg-muted"
+      className="size-6 shrink-0 rounded-md hover:bg-muted transition-colors"
     >
       <Icon className="size-3" />
     </Button>

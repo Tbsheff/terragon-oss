@@ -70,8 +70,8 @@ export function FileBrowserPanel({ messages }: FileBrowserPanelProps) {
         aria-label="Resize file panel"
         onMouseDown={handleMouseDown}
         className={cn(
-          "w-1 shrink-0 cursor-col-resize select-none transition-colors hover:bg-muted active:bg-muted/80",
-          "border-l border-border/70",
+          "w-1 shrink-0 cursor-col-resize select-none transition-colors hover:bg-primary/10 active:bg-primary/15",
+          "border-l border-border/60",
         )}
       />
 
