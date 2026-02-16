@@ -1,8 +1,16 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Terminal, Eye, Keyboard, X, Maximize2, Minimize2 } from "lucide-react";
+import { toast } from "sonner";
+import { useRealtime } from "@/hooks/use-realtime";
+import type { ChatEventPayload } from "@/lib/openclaw-types";
+import {
+  XtermTerminal,
+  type XtermTerminalHandle,
+} from "@/components/terminal/xterm-terminal";
+import "@/styles/xterm-override.css";
 
 type TerminalPanelProps = {
   sessionKey: string;
@@ -11,11 +19,29 @@ type TerminalPanelProps = {
 };
 
 /**
- * Live terminal panel for observing agent output or interacting with the Mac Mini workspace.
+ * ANSI color helpers for terminal output formatting.
+ */
+const ANSI = {
+  reset: "\x1b[0m",
+  dim: "\x1b[2m",
+  bold: "\x1b[1m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  cyan: "\x1b[36m",
+  red: "\x1b[31m",
+  gray: "\x1b[90m",
+} as const;
+
+function isBashTool(name: string): boolean {
+  return name === "Bash" || name === "bash" || name === "exec";
+}
+
+/**
+ * Live terminal panel for observing agent output or interacting with the workspace.
  *
  * Two modes:
- * - Observe (default): read-only view of agent's terminal output in real-time
- * - Interactive: full terminal connected to the Mac Mini workspace (explicit safety toggle)
+ * - Observe (default): read-only xterm view of agent's Bash tool output in real-time
+ * - Interactive: sends commands via chat.inject, shows response when it arrives
  */
 export function TerminalPanel({
   sessionKey,
@@ -24,37 +50,191 @@ export function TerminalPanel({
 }: TerminalPanelProps) {
   const [mode, setMode] = useState<"observe" | "interactive">("observe");
   const [isExpanded, setIsExpanded] = useState(false);
-  const [lines, setLines] = useState<string[]>([
-    "$ Connected to OpenClaw session: " + sessionKey,
-    "Waiting for agent output...",
-  ]);
-  const terminalRef = useRef<HTMLDivElement>(null);
-  const [inputValue, setInputValue] = useState("");
+  const xtermRef = useRef<XtermTerminalHandle>(null);
+  const [isReady, setIsReady] = useState(false);
+  // Track which tool_use IDs we've already written to prevent duplicates
+  const writtenToolIdsRef = useRef(new Set<string>());
+  // Buffer for writes that arrive before terminal is ready
+  const pendingWritesRef = useRef<string[]>([]);
+  // Line buffer for interactive input
+  const inputBufferRef = useRef("");
+
+  // Flush pending writes when terminal becomes ready
+  useEffect(() => {
+    if (isReady && xtermRef.current && pendingWritesRef.current.length > 0) {
+      for (const data of pendingWritesRef.current) {
+        xtermRef.current.write(data);
+      }
+      pendingWritesRef.current = [];
+    }
+  }, [isReady]);
+
+  /**
+   * Safe write — buffers if terminal not ready yet.
+   */
+  const safeWrite = useCallback(
+    (data: string) => {
+      if (isReady && xtermRef.current) {
+        xtermRef.current.write(data);
+      } else {
+        pendingWritesRef.current.push(data);
+      }
+    },
+    [isReady],
+  );
+
+  // Subscribe to realtime chat events for this session to extract Bash output
+  useRealtime({
+    room: sessionKey,
+    enabled: isOpen,
+    onMessage: (msg) => {
+      if (msg.type !== "thread-update" || !msg.data?.chatEvent) return;
+
+      const chatEvent = msg.data.chatEvent as ChatEventPayload;
+      const content = chatEvent.message?.content;
+      if (!content) return;
+
+      // Deduplicate and write Bash tool calls/results to xterm
+      for (const block of content) {
+        if (block.type === "tool_use" && isBashTool(block.name)) {
+          if (writtenToolIdsRef.current.has(block.id)) continue;
+          writtenToolIdsRef.current.add(block.id);
+
+          const command = (block.input as Record<string, unknown>)[
+            "command"
+          ] as string | undefined;
+          if (command) {
+            safeWrite(
+              `${ANSI.green}${ANSI.bold}$ ${ANSI.reset}${ANSI.green}${command}${ANSI.reset}\r\n`,
+            );
+          }
+        }
+
+        if (block.type === "tool_result") {
+          const matchingToolUse = content.find(
+            (b) => b.type === "tool_use" && b.id === block.tool_use_id,
+          );
+          if (
+            matchingToolUse &&
+            matchingToolUse.type === "tool_use" &&
+            isBashTool(matchingToolUse.name)
+          ) {
+            if (writtenToolIdsRef.current.has(`result-${block.tool_use_id}`))
+              continue;
+            writtenToolIdsRef.current.add(`result-${block.tool_use_id}`);
+
+            if (block.content) {
+              const lines = block.content.split("\n");
+              const color = block.is_error ? ANSI.red : "";
+              const reset = block.is_error ? ANSI.reset : "";
+              for (const line of lines) {
+                safeWrite(`${color}${line}${reset}\r\n`);
+              }
+            }
+          }
+        }
+      }
+    },
+  });
+
+  // Write welcome message when terminal first becomes ready
+  const hasWrittenWelcomeRef = useRef(false);
+  useEffect(() => {
+    if (isReady && xtermRef.current && !hasWrittenWelcomeRef.current) {
+      hasWrittenWelcomeRef.current = true;
+      xtermRef.current.writeMessage(`Connected to session: ${sessionKey}`);
+      xtermRef.current.writeMessage(
+        mode === "observe"
+          ? "Observe mode — watching agent Bash output"
+          : "Interactive mode — type commands to send via chat.inject",
+      );
+      xtermRef.current.write("\r\n");
+    }
+  }, [isReady, sessionKey, mode]);
 
   const handleInteractiveToggle = useCallback(() => {
     if (mode === "observe") {
-      // Show confirmation before enabling interactive mode
       const confirmed = window.confirm(
-        "Enable interactive terminal? The Mac Mini is not sandboxed — " +
+        "Enable interactive terminal? Commands are sent via chat.inject — " +
           "typing simultaneously with the agent can cause state corruption.",
       );
       if (confirmed) {
         setMode("interactive");
-        setLines((prev) => [...prev, "--- Interactive mode enabled ---"]);
+        if (xtermRef.current) {
+          xtermRef.current.writeMessage("--- Interactive mode enabled ---");
+          xtermRef.current.write(
+            `\r\n${ANSI.green}${ANSI.bold}$ ${ANSI.reset}`,
+          );
+        }
       }
     } else {
       setMode("observe");
-      setLines((prev) => [...prev, "--- Switched to observe mode ---"]);
+      xtermRef.current?.writeMessage("--- Switched to observe mode ---");
     }
   }, [mode]);
 
-  const handleSendInput = useCallback(() => {
-    if (!inputValue.trim() || mode !== "interactive") return;
-    setLines((prev) => [...prev, `$ ${inputValue}`]);
-    // In a real implementation, this would send the input to the OpenClaw
-    // gateway via the exec tool or PTY session
-    setInputValue("");
-  }, [inputValue, mode]);
+  /**
+   * Handle interactive terminal input.
+   * Accumulates a line buffer and sends on Enter.
+   */
+  const handleData = useCallback(
+    (data: string) => {
+      if (mode !== "interactive") return;
+
+      // Handle special keys
+      for (const char of data) {
+        if (char === "\r" || char === "\n") {
+          // Enter: send the command
+          xtermRef.current?.write("\r\n");
+          const command = inputBufferRef.current.trim();
+          inputBufferRef.current = "";
+
+          if (command) {
+            (async () => {
+              try {
+                const { sendTerminalCommand } = await import(
+                  "@/server-actions/terminal"
+                );
+                const result = await sendTerminalCommand(sessionKey, command);
+                if (!result.ok) {
+                  xtermRef.current?.write(
+                    `${ANSI.red}Error: ${result.error}${ANSI.reset}\r\n`,
+                  );
+                }
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Failed to send command",
+                );
+              }
+              // Re-print prompt
+              xtermRef.current?.write(
+                `${ANSI.green}${ANSI.bold}$ ${ANSI.reset}`,
+              );
+            })();
+          } else {
+            // Empty enter — just re-print prompt
+            xtermRef.current?.write(`${ANSI.green}${ANSI.bold}$ ${ANSI.reset}`);
+          }
+        } else if (char === "\x7f" || char === "\b") {
+          // Backspace
+          if (inputBufferRef.current.length > 0) {
+            inputBufferRef.current = inputBufferRef.current.slice(0, -1);
+            xtermRef.current?.write("\b \b");
+          }
+        } else if (char === "\x03") {
+          // Ctrl-C: clear current input
+          inputBufferRef.current = "";
+          xtermRef.current?.write("^C\r\n");
+          xtermRef.current?.write(`${ANSI.green}${ANSI.bold}$ ${ANSI.reset}`);
+        } else if (char >= " ") {
+          // Printable character
+          inputBufferRef.current += char;
+          xtermRef.current?.write(char);
+        }
+      }
+    },
+    [mode, sessionKey],
+  );
 
   if (!isOpen) return null;
 
@@ -123,41 +303,18 @@ export function TerminalPanel({
         </div>
       </div>
 
-      {/* Terminal output */}
-      <div
-        ref={terminalRef}
-        className="flex-1 overflow-y-auto p-3 font-mono text-xs leading-relaxed"
-      >
-        {lines.map((line, i) => (
-          <div
-            key={i}
-            className={cn(
-              line.startsWith("$")
-                ? "text-emerald-400"
-                : line.startsWith("---")
-                  ? "text-amber-400/60"
-                  : "text-muted-foreground/80",
-            )}
-          >
-            {line}
-          </div>
-        ))}
+      {/* xterm terminal area */}
+      <div className="flex-1 overflow-hidden p-1">
+        <XtermTerminal
+          ref={xtermRef}
+          onData={handleData}
+          disabled={mode === "observe"}
+          onResize={() => {
+            // Mark ready on first resize (means terminal is mounted and sized)
+            if (!isReady) setIsReady(true);
+          }}
+        />
       </div>
-
-      {/* Interactive input */}
-      {mode === "interactive" && (
-        <div className="flex items-center border-t border-border/50 px-3 py-1.5">
-          <span className="text-xs text-emerald-400 font-mono mr-2">$</span>
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendInput()}
-            placeholder="Type a command..."
-            className="flex-1 bg-transparent text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
-          />
-        </div>
-      )}
     </div>
   );
 }

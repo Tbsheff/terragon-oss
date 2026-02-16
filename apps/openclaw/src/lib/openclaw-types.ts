@@ -380,3 +380,106 @@ export type ChannelStatus = {
   lastActivity?: string;
   error?: string;
 };
+
+// ─────────────────────────────────────────────────
+// Cron Types
+// ─────────────────────────────────────────────────
+
+export type CronSchedule =
+  | { kind: "at"; datetime: string }
+  | { kind: "every"; intervalMs: number }
+  | { kind: "cron"; expression: string };
+
+export type CronPayload =
+  | { kind: "systemEvent"; event: string; data?: Record<string, unknown> }
+  | { kind: "agentTurn"; message: string };
+
+export type CronDelivery = {
+  channels?: string[];
+};
+
+export type CronJob = {
+  jobId: string;
+  name: string;
+  agentId?: string;
+  enabled: boolean;
+  schedule: CronSchedule;
+  sessionTarget: "main" | "isolated";
+  payload: CronPayload;
+  delivery?: CronDelivery;
+  deleteAfterRun?: boolean;
+  createdAt?: string;
+  lastRunAt?: string;
+  nextRunAt?: string;
+};
+
+export type CronRunEntry = {
+  runId: string;
+  jobId: string;
+  startedAt: string;
+  completedAt?: string;
+  status: "running" | "success" | "failed";
+  error?: string;
+};
+
+// ─────────────────────────────────────────────────
+// Memory Types
+// ─────────────────────────────────────────────────
+
+export type MemorySearchResult = {
+  text: string;
+  filePath: string;
+  lineStart: number;
+  lineEnd: number;
+  score: number;
+};
+
+export type MemorySearchParams = {
+  agentId: string;
+  query: string;
+  limit?: number;
+};
+
+export type MemoryFileContent = {
+  path: string;
+  content: string;
+  lines: number;
+};
+
+// ─────────────────────────────────────────────────
+// Terminal / PTY Types (future gateway extension)
+// ─────────────────────────────────────────────────
+
+export type TerminalOpenParams = {
+  sessionKey: string;
+  cols?: number;
+  rows?: number;
+  shell?: string;
+  cwd?: string;
+};
+
+export type TerminalOpenResult = {
+  terminalId: string;
+  pid: number;
+};
+
+export type TerminalInputParams = {
+  terminalId: string;
+  data: string;
+};
+
+export type TerminalResizeParams = {
+  terminalId: string;
+  cols: number;
+  rows: number;
+};
+
+export type TerminalCloseParams = {
+  terminalId: string;
+};
+
+export type TerminalOutputEvent = {
+  terminalId: string;
+  data: string;
+  seq: number;
+};
