@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useGateway } from "@/components/gateway-provider";
 import {
   StreamingMessageAccumulator,
@@ -59,8 +59,8 @@ export function useDirectChat(threadId: string | null) {
       const dbMsgs = openClawHistoryToDBMessages(entries);
       setHistoryMessages(dbMsgs as unknown as DBMessage[]);
       setHistoryLoaded(true);
-    } catch {
-      // History load failure is non-fatal — streaming still works
+    } catch (err) {
+      console.warn("[useDirectChat] Failed to load history:", err);
     }
   }, [client, threadId, historyLoaded]);
 
@@ -82,11 +82,15 @@ export function useDirectChat(threadId: string | null) {
     await client.chatAbort(threadId);
   }, [client, threadId]);
 
-  // Merge: history is the base, streaming messages overlay the current turn
-  const messages: DBMessage[] =
-    streamingMessages.length > 0
-      ? [...historyMessages, ...streamingMessages]
-      : historyMessages;
+  // Merge: history is the base, streaming messages overlay the current turn.
+  // Memoize to avoid new array identity on every streaming delta.
+  const messages = useMemo<DBMessage[]>(
+    () =>
+      streamingMessages.length > 0
+        ? [...historyMessages, ...streamingMessages]
+        : historyMessages,
+    [historyMessages, streamingMessages],
+  );
 
   return {
     messages,

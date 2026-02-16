@@ -2,6 +2,7 @@
 
 import { Copy, GitFork, Pencil, Check } from "lucide-react";
 import { useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -40,19 +41,24 @@ export function MessageToolbar({
   const showEdit = message.role === "user" && !isAgentWorking && onEditResend;
 
   return (
-    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div
+      className={cn(
+        "flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
+      )}
+    >
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            className="size-6 text-muted-foreground hover:text-foreground"
             onClick={handleCopy}
+            aria-label={copied ? "Copied" : "Copy message"}
           >
             {copied ? (
-              <Check className="h-3 w-3" />
+              <Check className="size-3" />
             ) : (
-              <Copy className="h-3 w-3" />
+              <Copy className="size-3" />
             )}
           </Button>
         </TooltipTrigger>
@@ -65,10 +71,11 @@ export function MessageToolbar({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="size-6 text-muted-foreground hover:text-foreground"
               onClick={() => onFork(messageIndex)}
+              aria-label="Fork from here"
             >
-              <GitFork className="h-3 w-3" />
+              <GitFork className="size-3" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Fork from here</TooltipContent>
@@ -81,10 +88,11 @@ export function MessageToolbar({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="size-6 text-muted-foreground hover:text-foreground"
               onClick={() => onEditResend(messageIndex)}
+              aria-label="Edit and resend"
             >
-              <Pencil className="h-3 w-3" />
+              <Pencil className="size-3" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Edit &amp; resend</TooltipContent>

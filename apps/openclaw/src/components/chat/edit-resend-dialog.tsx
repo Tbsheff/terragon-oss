@@ -72,8 +72,8 @@ export function EditResendDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit &amp; resend</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-balance">Edit &amp; resend</DialogTitle>
+          <DialogDescription className="text-pretty">
             Edit your message and resend it in a new forked conversation.
           </DialogDescription>
         </DialogHeader>

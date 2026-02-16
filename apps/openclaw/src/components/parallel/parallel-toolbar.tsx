@@ -31,10 +31,10 @@ export function ParallelToolbar() {
     <div className="flex items-center justify-between border-b border-border/50 px-4 py-2">
       <div className="flex items-center gap-2">
         <div className="flex items-center justify-center rounded-lg bg-primary/10 p-1.5">
-          <LayoutGrid className="h-4 w-4 text-primary" />
+          <LayoutGrid className="size-4 text-primary" />
         </div>
         <div>
-          <h1 className="text-sm font-semibold font-[var(--font-cabin)] tracking-tight">
+          <h1 className="text-sm font-semibold font-[var(--font-cabin)] tracking-tight text-balance">
             Parallel View
           </h1>
         </div>
@@ -54,14 +54,15 @@ export function ParallelToolbar() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setLayout(mode)}
+                  aria-label={label}
                   className={cn(
-                    "inline-flex h-7 w-7 items-center justify-center rounded-sm transition-colors",
+                    "inline-flex size-7 items-center justify-center rounded-sm transition-colors",
                     layoutMode === mode
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                   )}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="size-3.5" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>{label}</TooltipContent>
@@ -76,7 +77,7 @@ export function ParallelToolbar() {
           className="h-7 text-xs gap-1"
           onClick={() => setPickerOpen(true)}
         >
-          <Plus className="h-3 w-3" />
+          <Plus className="size-3" />
           Add Agent
         </Button>
       </div>

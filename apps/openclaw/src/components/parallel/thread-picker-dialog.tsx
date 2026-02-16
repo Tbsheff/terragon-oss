@@ -63,8 +63,8 @@ export function ThreadPickerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Agents to View</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-balance">Add Agents to View</DialogTitle>
+          <DialogDescription className="text-pretty">
             Select active threads to add to the parallel view.
           </DialogDescription>
         </DialogHeader>
@@ -72,14 +72,25 @@ export function ThreadPickerDialog({
         <div className="max-h-64 overflow-y-auto -mx-2 px-2">
           {isLoading && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             </div>
           )}
 
           {!isLoading && available.length === 0 && (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No available threads to add.
-            </p>
+            <div className="flex flex-col items-center gap-2 py-8">
+              <p className="text-center text-sm text-muted-foreground text-pretty">
+                No available threads to add.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => onOpenChange(false)}
+                asChild
+              >
+                <a href="/task/new">Create a new task</a>
+              </Button>
+            </div>
           )}
 
           {available.map((thread) => {
@@ -95,13 +106,13 @@ export function ThreadPickerDialog({
               >
                 <div
                   className={cn(
-                    "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                    "flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors",
                     isSelected
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-muted-foreground/30",
                   )}
                 >
-                  {isSelected && <Check className="h-3 w-3" />}
+                  {isSelected && <Check className="size-3" />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">

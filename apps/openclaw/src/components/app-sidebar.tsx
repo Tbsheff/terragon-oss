@@ -100,7 +100,10 @@ export function AppSidebar() {
       <SidebarHeader className="pb-0">
         <div className="flex h-10 items-center justify-between">
           <Wordmark />
-          <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
+          <SidebarTrigger
+            className="group-data-[collapsible=icon]:hidden"
+            aria-label="Toggle sidebar"
+          />
         </div>
       </SidebarHeader>
 

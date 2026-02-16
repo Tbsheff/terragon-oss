@@ -31,7 +31,7 @@ export function Wordmark({ size = "md", className }: WordmarkProps) {
       </div>
       <span
         className={cn(
-          "font-[var(--font-cabin)] font-extrabold text-foreground group-data-[collapsible=icon]:hidden",
+          "font-[var(--font-cabin)] font-extrabold text-balance text-foreground group-data-[collapsible=icon]:hidden",
           s.text,
         )}
       >

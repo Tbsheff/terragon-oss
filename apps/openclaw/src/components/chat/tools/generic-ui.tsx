@@ -170,8 +170,16 @@ export function GenericToolPartClickToExpand({
 }) {
   return (
     <span
-      className="inline text-muted-foreground/70 select-none"
+      role="button"
+      tabIndex={0}
+      className="inline text-muted-foreground/70 select-none cursor-pointer hover:text-muted-foreground transition-colors"
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       ({label})
     </span>

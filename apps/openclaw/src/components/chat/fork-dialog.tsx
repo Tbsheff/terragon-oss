@@ -63,8 +63,10 @@ export function ForkDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Fork from this point</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-balance">
+            Fork from this point
+          </DialogTitle>
+          <DialogDescription className="text-pretty">
             Create a new conversation branching from this message.
           </DialogDescription>
         </DialogHeader>

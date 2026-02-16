@@ -89,7 +89,7 @@ export function CondensedChatView({ threadId }: CondensedChatViewProps) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
         {recentMessages.length === 0 && !isWorking && (
-          <p className="text-[11px] text-muted-foreground/50 text-center py-4">
+          <p className="text-[11px] text-muted-foreground/50 text-center text-pretty py-4">
             No messages yet
           </p>
         )}
@@ -116,7 +116,7 @@ export function CondensedChatView({ threadId }: CondensedChatViewProps) {
       <div className="border-t border-border/30 px-3 py-1.5">
         {isWorking ? (
           <div className="flex items-center gap-1.5">
-            <Loader2 className="h-3 w-3 animate-spin text-primary" />
+            <Loader2 className="size-3 animate-spin text-primary" />
             <span className="text-[10px] text-primary font-medium">
               Agent is working...
             </span>

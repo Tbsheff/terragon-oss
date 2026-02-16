@@ -80,6 +80,9 @@ export class BrowserGatewayClient {
   // ── Lifecycle ──────────────────────────────────
 
   connect(): Promise<HelloPayload> {
+    // Idempotent — clean up any existing connection first
+    if (this.ws) this.disconnect();
+
     this.setState("connecting");
     this.resetReady();
 
@@ -117,7 +120,9 @@ export class BrowserGatewayClient {
 
       this.ws.addEventListener("message", (event: MessageEvent) => {
         try {
-          const frame = JSON.parse(event.data as string) as OpenClawFrame;
+          const raw =
+            typeof event.data === "string" ? event.data : String(event.data);
+          const frame = JSON.parse(raw) as OpenClawFrame;
 
           if (frame.type === "res") {
             this.handleResponse(frame);
@@ -322,15 +327,16 @@ export class BrowserGatewayClient {
   >(method: string, params?: Record<string, unknown>): Promise<T> {
     // Gate non-connect requests until handshake completes
     if (method !== "connect" && this.readyPromise) {
+      let readyTimer: ReturnType<typeof setTimeout>;
       await Promise.race([
         this.readyPromise,
-        new Promise<never>((_, reject) =>
-          setTimeout(
+        new Promise<never>((_, reject) => {
+          readyTimer = setTimeout(
             () => reject(new Error("Gateway connection timed out")),
             REQUEST_TIMEOUT_MS,
-          ),
-        ),
-      ]);
+          );
+        }),
+      ]).finally(() => clearTimeout(readyTimer!));
     }
 
     return new Promise<T>((resolve, reject) => {

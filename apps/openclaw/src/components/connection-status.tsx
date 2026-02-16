@@ -37,27 +37,23 @@ function StatusDot({
       {status === "connected" && (
         <span
           className={cn(
-            "absolute inline-flex h-2 w-2 animate-ping rounded-full opacity-75",
+            "absolute inline-flex size-2 animate-ping rounded-full opacity-75",
             config.pulseColor,
           )}
         />
       )}
       <span
-        className={cn(
-          "relative inline-flex h-2 w-2 rounded-full",
-          config.color,
-        )}
+        className={cn("relative inline-flex size-2 rounded-full", config.color)}
       />
     </span>
   );
 }
 
 export function ConnectionStatusBadge() {
-  const { status, lastCheck, health, isLoading } = useConnection();
+  const { status, lastCheck, health, isLoading, connectError } =
+    useConnection();
 
   const config = statusConfig[status];
-
-  const { connectError } = useConnection();
 
   const tooltipLines = isLoading
     ? "Checking connection..."
@@ -79,7 +75,7 @@ export function ConnectionStatusBadge() {
       className="cursor-default hover:bg-transparent active:bg-transparent"
     >
       <StatusDot status={status} config={config} />
-      <span className="text-muted-foreground text-xs">
+      <span className="truncate text-muted-foreground text-xs text-pretty">
         {isLoading ? "Checking..." : config.label}
       </span>
     </SidebarMenuButton>

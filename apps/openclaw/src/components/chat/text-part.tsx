@@ -51,7 +51,7 @@ const TextPart = memo(function TextPart({
     hasCheckpoint,
   );
   return (
-    <div className="prose prose-sm max-w-none text-foreground">
+    <div className="prose prose-sm max-w-none text-pretty text-foreground">
       <MessageResponse>{processedText}</MessageResponse>
     </div>
   );

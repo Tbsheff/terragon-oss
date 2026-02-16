@@ -94,7 +94,7 @@ export function OpenClawChatHeader({
         {/* Primary row: title + stage | actions */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <h1 className="truncate text-sm font-semibold font-[var(--font-cabin)]">
+            <h1 className="truncate text-balance text-sm font-semibold font-[var(--font-cabin)]">
               {thread.name ?? "Untitled Task"}
             </h1>
             {parentThreadId && (
@@ -102,7 +102,7 @@ export function OpenClawChatHeader({
                 href={`/task/${parentThreadId}`}
                 className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
               >
-                <GitFork className="h-3 w-3" />
+                <GitFork className="size-3" />
                 <span>Forked</span>
               </Link>
             )}
@@ -126,9 +126,10 @@ export function OpenClawChatHeader({
                     variant="ghost"
                     size="icon"
                     onClick={onArchive}
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    aria-label="Archive task"
+                    className="size-7 text-muted-foreground hover:text-foreground"
                   >
-                    <Archive className="h-3.5 w-3.5" />
+                    <Archive className="size-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Archive task</TooltipContent>
@@ -147,7 +148,7 @@ export function OpenClawChatHeader({
             )}
             {hasPipeline && stageElapsed && (
               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Clock className="h-3 w-3 shrink-0" />
+                <Clock className="size-3 shrink-0" />
                 {stageElapsed}
               </span>
             )}
@@ -160,7 +161,7 @@ export function OpenClawChatHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60 cursor-default">
-                    <Coins className="h-3 w-3 shrink-0" />
+                    <Coins className="size-3 shrink-0" />
                     <span>{formatTokenCount(totalTokens)}</span>
                     {tokenUsage.totalCost != null &&
                       tokenUsage.totalCost > 0 && (
@@ -191,7 +192,7 @@ export function OpenClawChatHeader({
       {/* Error banner -- fixed height so it doesn't shift layout */}
       {isError && latestError && (
         <div className="flex items-center gap-2 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs font-medium text-destructive dark:text-red-400 animate-fade-in">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          <AlertTriangle className="size-3.5 shrink-0" />
           <span className="truncate">{latestError.errorMessage}</span>
         </div>
       )}
@@ -208,12 +209,13 @@ function FilesToggleButton() {
           variant="ghost"
           size="icon"
           onClick={toggle}
+          aria-label={isOpen ? "Close files" : "Open files"}
           className={cn(
-            "h-7 w-7 text-muted-foreground hover:text-foreground",
+            "size-7 text-muted-foreground hover:text-foreground",
             isOpen && "bg-muted text-foreground",
           )}
         >
-          <FolderOpen className="h-3.5 w-3.5" />
+          <FolderOpen className="size-3.5" />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{isOpen ? "Close files" : "Open files"}</TooltipContent>
@@ -265,7 +267,7 @@ function PipelineStagePill({ stage }: { stage: PipelineStage }) {
     >
       <span
         className={cn(
-          "h-1.5 w-1.5 rounded-full opacity-75 animate-pulse",
+          "size-1.5 rounded-full opacity-75 animate-pulse",
           colors.dot,
         )}
       />

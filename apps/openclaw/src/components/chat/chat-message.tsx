@@ -129,7 +129,7 @@ function ImageGroup({
 }) {
   const numParts = group.parts.length;
   return (
-    <div className="flex gap-2 flex-wrap">
+    <div className="flex flex-wrap gap-2">
       {group.parts.map((part, partIndex) => {
         return (
           <MessagePart
@@ -312,7 +312,7 @@ function SystemMessage({ message }: { message: UISystemMessage }) {
     const gitDiffPart = message.parts[0] as UIGitDiffPart;
     return (
       <Card className="bg-muted/30 border-border/30 p-3 text-sm text-muted-foreground">
-        <div className="font-semibold">Git Diff</div>
+        <div className="text-balance font-semibold">Git Diff</div>
         {gitDiffPart.description && <div>{gitDiffPart.description}</div>}
         {gitDiffPart.diffStats && (
           <div>
@@ -325,13 +325,19 @@ function SystemMessage({ message }: { message: UISystemMessage }) {
     );
   }
   return (
-    <div className="p-2 rounded-md mr-auto w-fit flex flex-col gap-2">
+    <div className="mr-auto flex w-fit flex-col gap-2 rounded-md p-2">
       <div className="flex flex-col gap-2">
-        <div
-          className="grid grid-cols-[auto_1fr] gap-2 text-muted-foreground"
+        <button
+          type="button"
+          aria-label={
+            isCollapsed
+              ? "Show system message details"
+              : "Hide system message details"
+          }
+          className="grid grid-cols-[auto_1fr] gap-2 text-left text-muted-foreground"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
-          <span className="h-6 flex items-center">
+          <span className="flex h-6 items-center">
             <span
               className={cn(
                 "shrink-0 size-2 rounded-full inline-block",
@@ -345,16 +351,13 @@ function SystemMessage({ message }: { message: UISystemMessage }) {
             {showMoreButton && (
               <>
                 &nbsp;
-                <span
-                  className="inline-block text-muted-foreground/70 select-none"
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                >
+                <span className="inline-block select-none text-muted-foreground/70">
                   ({isCollapsed ? "Show more" : "Show less"})
                 </span>
               </>
             )}
           </span>
-        </div>
+        </button>
         {!isCollapsed && showMoreButton && (
           <div className="max-h-[150px] overflow-auto border border-border rounded-md p-1 mr-2">
             <pre className="whitespace-pre-wrap text-xs font-mono">
@@ -401,6 +404,9 @@ function CollapsibleAgentActivityGroup({
         variant="ghost"
         size="sm"
         onClick={() => setIsCollapsed(!isCollapsed)}
+        aria-label={
+          isCollapsed ? "Expand agent activity" : "Collapse agent activity"
+        }
         className="flex w-fit items-center gap-1 px-2 py-1 text-sm text-muted-foreground"
       >
         <CollapsibleAgentActivityGroupLabel
@@ -408,9 +414,9 @@ function CollapsibleAgentActivityGroup({
           isAgentWorking={isAgentWorking}
         />
         {isCollapsed ? (
-          <ChevronRight className="h-4 w-4 shrink-0" />
+          <ChevronRight className="size-4 shrink-0" />
         ) : (
-          <ChevronDown className="h-4 w-4 shrink-0" />
+          <ChevronDown className="size-4 shrink-0" />
         )}
       </Button>
       {!isCollapsed && (

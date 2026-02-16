@@ -56,7 +56,7 @@ export function PaneHeader({ threadId, isActive }: PaneHeaderProps) {
       )}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <span className={cn("h-2 w-2 shrink-0 rounded-full", statusColor)} />
+        <span className={cn("size-2 shrink-0 rounded-full", statusColor)} />
         <span className="text-xs font-medium truncate">
           {thread?.name ?? "Loading..."}
         </span>
@@ -72,9 +72,10 @@ export function PaneHeader({ threadId, isActive }: PaneHeaderProps) {
           <TooltipTrigger asChild>
             <Link
               href={`/task/${threadId}`}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              aria-label="Full view"
+              className="inline-flex size-6 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
-              <Maximize2 className="h-3 w-3" />
+              <Maximize2 className="size-3" />
             </Link>
           </TooltipTrigger>
           <TooltipContent>Full view</TooltipContent>
@@ -83,9 +84,10 @@ export function PaneHeader({ threadId, isActive }: PaneHeaderProps) {
           <TooltipTrigger asChild>
             <button
               onClick={() => removePane(threadId)}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              aria-label="Remove from view"
+              className="inline-flex size-6 items-center justify-center rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
             >
-              <X className="h-3 w-3" />
+              <X className="size-3" />
             </button>
           </TooltipTrigger>
           <TooltipContent>Remove from view</TooltipContent>

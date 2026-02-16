@@ -1,5 +1,3 @@
-"use server";
-
 import { getOpenClawClient } from "@/lib/openclaw-client";
 
 export type ActionResult<T> =

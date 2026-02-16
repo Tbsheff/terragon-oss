@@ -95,7 +95,7 @@ const EmptyStateIcon = (
     fill="none"
     stroke="currentColor"
     strokeWidth="1.5"
-    className="h-8 w-8 text-primary/40"
+    className="size-8 text-primary/40"
   >
     <path d="M12 3c-1.2 0-2.4.6-3 1.7A3.6 3.6 0 0 0 4.5 9c-1.2 1-2 2.6-2 4.3 0 3 2.5 5.5 5.5 5.5h.5c.5 1.3 1.8 2.2 3.5 2.2s3-1 3.5-2.2h.5c3 0 5.5-2.5 5.5-5.5 0-1.7-.8-3.3-2-4.3A3.6 3.6 0 0 0 15 4.7C14.4 3.6 13.2 3 12 3z" />
   </svg>

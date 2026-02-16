@@ -23,6 +23,11 @@ import type {
   SpawnSessionParams,
   InjectParams,
   ChannelStatus,
+  CronJob,
+  CronRunEntry,
+  MemorySearchParams,
+  MemorySearchResult,
+  MemoryFileContent,
 } from "@/lib/openclaw-types";
 import { classifyConnectError } from "@/lib/openclaw-types";
 
@@ -416,6 +421,69 @@ export class OpenClawClient {
       "channels.status",
       {},
     ).then((res) => res.items ?? (res as unknown as ChannelStatus[]));
+  }
+
+  // ── Cron RPC ────────────────────────────────────
+
+  cronList(): Promise<CronJob[]> {
+    return this.sendRequest<{ jobs: CronJob[] }>("cron.list", {}).then(
+      (res) => res.jobs ?? [],
+    );
+  }
+
+  cronAdd(
+    job: Omit<CronJob, "jobId" | "createdAt" | "lastRunAt" | "nextRunAt">,
+  ): Promise<CronJob> {
+    return this.sendRequest<CronJob>("cron.add", job);
+  }
+
+  cronUpdate(
+    jobId: string,
+    patch: Partial<Omit<CronJob, "jobId" | "createdAt">>,
+  ): Promise<CronJob> {
+    return this.sendRequest<CronJob>("cron.update", { jobId, ...patch });
+  }
+
+  cronRemove(jobId: string): Promise<void> {
+    return this.sendRequest("cron.remove", { jobId }).then(() => undefined);
+  }
+
+  cronRun(jobId: string): Promise<{ runId: string }> {
+    return this.sendRequest<{ runId: string }>("cron.run", { jobId });
+  }
+
+  cronRuns(jobId: string): Promise<CronRunEntry[]> {
+    return this.sendRequest<{ runs: CronRunEntry[] }>("cron.runs", {
+      jobId,
+    }).then((res) => res.runs ?? []);
+  }
+
+  cronStatus(): Promise<{ enabled: boolean; activeJobs: number }> {
+    return this.sendRequest<{ enabled: boolean; activeJobs: number }>(
+      "cron.status",
+      {},
+    );
+  }
+
+  // ── Memory RPC ──────────────────────────────────
+
+  memorySearch(params: MemorySearchParams): Promise<MemorySearchResult[]> {
+    return this.sendRequest<{ results: MemorySearchResult[] }>(
+      "memory.search",
+      params,
+    ).then((res) => res.results ?? []);
+  }
+
+  memoryGet(
+    agentId: string,
+    path: string,
+    options?: { lineStart?: number; lineCount?: number },
+  ): Promise<MemoryFileContent> {
+    return this.sendRequest<MemoryFileContent>("memory.get", {
+      agentId,
+      path,
+      ...options,
+    });
   }
 
   // ── Event Subscription ────────────────────────

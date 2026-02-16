@@ -248,7 +248,7 @@ export function TerminalPanel({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/50 px-3 py-1.5">
         <div className="flex items-center gap-2">
-          <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+          <Terminal className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Terminal
           </span>
@@ -272,33 +272,35 @@ export function TerminalPanel({
                 ? "text-amber-400 hover:bg-amber-500/10"
                 : "text-muted-foreground hover:bg-muted",
             )}
-            title={
+            aria-label={
               mode === "observe"
                 ? "Enable interactive mode"
                 : "Switch to observe mode"
             }
           >
             {mode === "observe" ? (
-              <Eye className="h-3.5 w-3.5" />
+              <Eye className="size-3.5" />
             ) : (
-              <Keyboard className="h-3.5 w-3.5" />
+              <Keyboard className="size-3.5" />
             )}
           </button>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1 text-muted-foreground hover:bg-muted rounded-md transition-colors"
+            aria-label={isExpanded ? "Collapse terminal" : "Expand terminal"}
           >
             {isExpanded ? (
-              <Minimize2 className="h-3.5 w-3.5" />
+              <Minimize2 className="size-3.5" />
             ) : (
-              <Maximize2 className="h-3.5 w-3.5" />
+              <Maximize2 className="size-3.5" />
             )}
           </button>
           <button
             onClick={onClose}
             className="p-1 text-muted-foreground hover:bg-muted rounded-md transition-colors"
+            aria-label="Close terminal"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="size-3.5" />
           </button>
         </div>
       </div>

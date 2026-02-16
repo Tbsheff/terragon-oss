@@ -11,7 +11,7 @@ type ParallelPaneProps = {
 };
 
 export function ParallelPane({ threadId }: ParallelPaneProps) {
-  const { activePaneId, setActivePane, layoutMode } = useParallelLayout();
+  const { activePaneId, setActivePane } = useParallelLayout();
   const isActive = activePaneId === threadId;
 
   return (
@@ -29,9 +29,7 @@ export function ParallelPane({ threadId }: ParallelPaneProps) {
       <PaneHeader threadId={threadId} isActive={isActive} />
 
       <div className="flex-1 overflow-hidden">
-        {isActive && layoutMode === "focus" ? (
-          <OpenClawChatUI threadId={threadId} />
-        ) : isActive ? (
+        {isActive ? (
           <OpenClawChatUI threadId={threadId} />
         ) : (
           <CondensedChatView threadId={threadId} />
