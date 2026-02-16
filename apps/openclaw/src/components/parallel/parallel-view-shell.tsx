@@ -42,7 +42,7 @@ function ParallelViewInner() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-background">
       <ParallelToolbar />
       <ParallelGrid />
     </div>

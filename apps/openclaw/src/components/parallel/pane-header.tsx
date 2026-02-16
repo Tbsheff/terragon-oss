@@ -16,7 +16,7 @@ import { PIPELINE_STAGE_LABELS, type PipelineStage } from "@/lib/constants";
 import { useParallelLayout } from "./parallel-layout-provider";
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-muted-foreground/40",
+  draft: "bg-muted-foreground",
   working: "bg-primary animate-pulse",
   "working-done": "bg-green-500",
   "working-error": "bg-destructive",
@@ -51,13 +51,13 @@ export function PaneHeader({ threadId, isActive }: PaneHeaderProps) {
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-2 border-b px-3 py-1.5",
-        isActive ? "border-primary/30 bg-primary/[0.03]" : "border-border/50",
+        "flex items-center justify-between gap-2 border-b px-3 py-1.5 bg-card/80 backdrop-blur",
+        isActive ? "border-border/60" : "border-border/60",
       )}
     >
       <div className="flex items-center gap-2 min-w-0">
         <span className={cn("size-2 shrink-0 rounded-full", statusColor)} />
-        <span className="text-xs font-medium truncate">
+        <span className="text-xs font-medium font-[var(--font-cabin)] tracking-tight truncate">
           {thread?.name ?? "Loading..."}
         </span>
         {stageLabel && (

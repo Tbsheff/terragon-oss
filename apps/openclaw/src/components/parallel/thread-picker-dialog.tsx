@@ -61,15 +61,17 @@ export function ThreadPickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md border-border/60 shadow-xs">
         <DialogHeader>
-          <DialogTitle className="text-balance">Add Agents to View</DialogTitle>
+          <DialogTitle className="font-[var(--font-cabin)] tracking-tight text-balance">
+            Add Agents to View
+          </DialogTitle>
           <DialogDescription className="text-pretty">
             Select active threads to add to the parallel view.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-64 overflow-y-auto -mx-2 px-2">
+        <div className="max-h-64 overflow-y-auto -mx-2 px-2 space-y-1.5">
           {isLoading && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -78,13 +80,13 @@ export function ThreadPickerDialog({
 
           {!isLoading && available.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-8">
-              <p className="text-center text-sm text-muted-foreground text-pretty">
+              <p className="text-center text-sm text-muted-foreground/60 text-pretty">
                 No available threads to add.
               </p>
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs"
+                className="text-xs border-border/60 hover:border-primary/30 transition-colors"
                 onClick={() => onOpenChange(false)}
                 asChild
               >
@@ -93,16 +95,19 @@ export function ThreadPickerDialog({
             </div>
           )}
 
-          {available.map((thread) => {
+          {available.map((thread, i) => {
             const isSelected = selected.has(thread.id);
             return (
               <button
                 key={thread.id}
                 onClick={() => toggleThread(thread.id)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors",
-                  isSelected ? "bg-primary/10" : "hover:bg-muted/50",
+                  "animate-fade-in flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all",
+                  isSelected
+                    ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20 shadow-xs"
+                    : "border-border/60 hover:border-primary/30 hover:shadow-xs",
                 )}
+                style={{ animationDelay: `${i * 40}ms` }}
               >
                 <div
                   className={cn(

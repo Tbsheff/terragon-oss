@@ -28,7 +28,7 @@ export function ParallelToolbar() {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <div className="flex items-center justify-between border-b border-border/50 px-4 py-2">
+    <div className="flex items-center justify-between border-b border-border/60 bg-card/80 backdrop-blur px-4 py-2">
       <div className="flex items-center gap-2">
         <div className="flex items-center justify-center rounded-lg bg-primary/10 p-1.5">
           <LayoutGrid className="size-4 text-primary" />
@@ -48,7 +48,7 @@ export function ParallelToolbar() {
 
       <div className="flex items-center gap-1.5">
         {/* Layout mode toggles */}
-        <div className="flex items-center rounded-md border border-border/50 p-0.5">
+        <div className="flex items-center rounded-md border border-border/60 bg-card/80 p-0.5">
           {LAYOUT_OPTIONS.map(({ mode, icon: Icon, label }) => (
             <Tooltip key={mode}>
               <TooltipTrigger asChild>
@@ -72,9 +72,9 @@ export function ParallelToolbar() {
 
         {/* Add agent button */}
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-7 text-xs gap-1"
+          className="h-7 text-xs gap-1 hover:bg-primary/10 hover:text-primary"
           onClick={() => setPickerOpen(true)}
         >
           <Plus className="size-3" />

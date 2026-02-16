@@ -11,8 +11,9 @@ type ParallelPaneProps = {
 };
 
 export function ParallelPane({ threadId }: ParallelPaneProps) {
-  const { activePaneId, setActivePane } = useParallelLayout();
+  const { activePaneId, setActivePane, paneIds } = useParallelLayout();
   const isActive = activePaneId === threadId;
+  const index = paneIds.indexOf(threadId);
 
   return (
     <div
@@ -20,11 +21,12 @@ export function ParallelPane({ threadId }: ParallelPaneProps) {
         if (!isActive) setActivePane(threadId);
       }}
       className={cn(
-        "flex flex-col overflow-hidden rounded-lg border transition-all",
+        "animate-fade-in flex flex-col overflow-hidden rounded-lg border shadow-xs transition-all",
         isActive
-          ? "border-primary/40 shadow-sm"
-          : "border-border/50 cursor-pointer hover:border-border",
+          ? "border-border/60 ring-1 ring-primary/20 border-t-2 border-t-primary/20"
+          : "border-border/60 cursor-pointer hover:border-primary/30",
       )}
+      style={{ animationDelay: `${100 + index * 80}ms` }}
     >
       <PaneHeader threadId={threadId} isActive={isActive} />
 

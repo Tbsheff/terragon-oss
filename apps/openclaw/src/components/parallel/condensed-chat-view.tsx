@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import {
   threadDetailQueryOptions,
   threadMessagesQueryOptions,
@@ -89,7 +88,7 @@ export function CondensedChatView({ threadId }: CondensedChatViewProps) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
         {recentMessages.length === 0 && !isWorking && (
-          <p className="text-[11px] text-muted-foreground/50 text-center text-pretty py-4">
+          <p className="text-[11px] text-muted-foreground/60 text-center text-pretty py-4">
             No messages yet
           </p>
         )}
@@ -100,7 +99,11 @@ export function CondensedChatView({ threadId }: CondensedChatViewProps) {
 
           const isUser = msg.role === "user";
           return (
-            <div key={i} className="flex gap-1.5 items-start">
+            <div
+              key={i}
+              className="animate-fade-in flex gap-1.5 items-start"
+              style={{ animationDelay: `${i * 30}ms` }}
+            >
               <span className="text-[9px] font-semibold text-muted-foreground/60 uppercase mt-0.5 w-8 shrink-0">
                 {isUser ? "You" : "AI"}
               </span>
@@ -113,16 +116,19 @@ export function CondensedChatView({ threadId }: CondensedChatViewProps) {
       </div>
 
       {/* Activity indicator */}
-      <div className="border-t border-border/30 px-3 py-1.5">
+      <div className="border-t border-border/60 px-3 py-1.5 bg-card/80 backdrop-blur">
         {isWorking ? (
           <div className="flex items-center gap-1.5">
-            <Loader2 className="size-3 animate-spin text-primary" />
+            <span className="size-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-[10px] text-primary font-medium">
               Agent is working...
             </span>
           </div>
         ) : (
-          <span className="text-[10px] text-muted-foreground/50">Idle</span>
+          <div className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground/60">Idle</span>
+          </div>
         )}
       </div>
     </div>
