@@ -68,7 +68,7 @@ export default function MemoryPage() {
       <div className="px-6 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-balance font-[var(--font-cabin)]">
+            <h1 className="text-xl font-semibold tracking-tight text-balance font-[var(--font-cabin)]">
               Memory
             </h1>
             <p className="text-xs text-pretty text-muted-foreground mt-0.5">
@@ -86,10 +86,10 @@ export default function MemoryPage() {
             Select Agent
           </label>
           <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-            <SelectTrigger>
+            <SelectTrigger className="border-border/60 bg-muted/20">
               <SelectValue placeholder="Choose an agent" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="border-border/60">
               {agents.map((agent) => (
                 <SelectItem key={agent.id} value={agent.id}>
                   {agent.emoji || "🤖"} {agent.name}
@@ -112,7 +112,7 @@ export default function MemoryPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Enter search query..."
-                className="pl-10"
+                className="pl-10 bg-muted/20 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               />
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function MemoryPage() {
 
         {/* States */}
         {!selectedAgent && (
-          <Card className="animate-fade-in border-dashed">
+          <Card className="animate-fade-in border-dashed border-border/60 shadow-xs">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
                 <Brain className="size-6 text-primary/60" />
@@ -128,7 +128,7 @@ export default function MemoryPage() {
               <p className="mt-3 text-sm font-medium text-balance text-foreground">
                 Select an agent
               </p>
-              <p className="mt-1 text-xs text-pretty text-muted-foreground max-w-[280px] text-center">
+              <p className="mt-1 text-xs text-pretty text-muted-foreground/60 max-w-[280px] text-center">
                 Choose an agent above to search their memory files
               </p>
             </CardContent>
@@ -136,7 +136,7 @@ export default function MemoryPage() {
         )}
 
         {selectedAgent && !debouncedQuery && (
-          <Card className="animate-fade-in border-dashed">
+          <Card className="animate-fade-in border-dashed border-border/60 shadow-xs">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
                 <Search className="size-6 text-primary/60" />
@@ -144,7 +144,7 @@ export default function MemoryPage() {
               <p className="mt-3 text-sm font-medium text-balance text-foreground">
                 Enter a search query
               </p>
-              <p className="mt-1 text-xs text-pretty text-muted-foreground max-w-[280px] text-center">
+              <p className="mt-1 text-xs text-pretty text-muted-foreground/60 max-w-[280px] text-center">
                 Search for specific content in this agent&apos;s memory
               </p>
             </CardContent>
@@ -156,7 +156,10 @@ export default function MemoryPage() {
             <div className="h-4 w-20 rounded bg-muted animate-pulse" />
             <div className="grid gap-2">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="py-0 animate-pulse">
+                <Card
+                  key={i}
+                  className="py-0 animate-pulse border-border/60 shadow-xs"
+                >
                   <CardContent className="p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0 space-y-2">
@@ -180,7 +183,7 @@ export default function MemoryPage() {
         )}
 
         {searchError && (
-          <Card className="animate-fade-in border-destructive/50 bg-destructive/5">
+          <Card className="animate-fade-in border-destructive/50 bg-destructive/5 shadow-xs">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
                 <AlertCircle className="size-6 text-destructive" />
@@ -188,7 +191,7 @@ export default function MemoryPage() {
               <p className="mt-3 text-sm font-medium text-balance text-foreground">
                 Gateway disconnected
               </p>
-              <p className="mt-1 text-xs text-pretty text-muted-foreground max-w-[280px] text-center">
+              <p className="mt-1 text-xs text-pretty text-muted-foreground/60 max-w-[280px] text-center">
                 {searchError}
               </p>
             </CardContent>
@@ -199,7 +202,7 @@ export default function MemoryPage() {
           !searchError &&
           debouncedQuery &&
           results.length === 0 && (
-            <Card className="animate-fade-in border-dashed">
+            <Card className="animate-fade-in border-dashed border-border/60 shadow-xs">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
                   <FileText className="size-6 text-primary/60" />
@@ -207,7 +210,7 @@ export default function MemoryPage() {
                 <p className="mt-3 text-sm font-medium text-balance text-foreground">
                   No results found
                 </p>
-                <p className="mt-1 text-xs text-pretty text-muted-foreground max-w-[280px] text-center">
+                <p className="mt-1 text-xs text-pretty text-muted-foreground/60 max-w-[280px] text-center">
                   Try a different search query
                 </p>
               </CardContent>
@@ -221,13 +224,14 @@ export default function MemoryPage() {
               {results.length} result{results.length !== 1 ? "s" : ""}
             </p>
             <div className="grid gap-2">
-              {results.map((result) => (
+              {results.map((result, index) => (
                 <Card
                   key={`${result.filePath}:${result.lineStart}-${result.lineEnd}`}
                   className={cn(
-                    "py-0 cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5",
+                    "py-0 cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 animate-fade-in border-border/60 shadow-xs border-t-2 border-t-primary/20",
                     selectedFile === result.filePath && "border-primary",
                   )}
+                  style={{ animationDelay: `${index * 50}ms` }}
                   onClick={() => setSelectedFile(result.filePath)}
                 >
                   <CardContent className="p-3">
@@ -245,13 +249,13 @@ export default function MemoryPage() {
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <Badge
                             variant="outline"
-                            className="text-[10px] tabular-nums bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                            className="text-[10px] font-mono tabular-nums bg-muted/50 border-border/60"
                           >
                             Lines {result.lineStart}-{result.lineEnd}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="text-[10px] tabular-nums bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                            className="text-[10px] font-mono tabular-nums bg-muted/50 border-border/60"
                           >
                             Score: {result.score.toFixed(2)}
                           </Badge>
@@ -271,17 +275,17 @@ export default function MemoryPage() {
           <div className="space-y-2 animate-fade-in">
             <div className="flex items-center gap-2">
               <FileText className="size-4 text-muted-foreground flex-shrink-0" />
-              <p className="text-xs font-medium font-mono text-foreground truncate">
+              <p className="text-xs font-medium font-mono tabular-nums text-foreground truncate">
                 {fileContent.path}
               </p>
               <Badge
                 variant="outline"
-                className="text-[10px] tabular-nums ml-auto flex-shrink-0"
+                className="text-[10px] font-mono tabular-nums ml-auto flex-shrink-0 bg-muted/50 border-border/60"
               >
                 {fileContent.lines} lines
               </Badge>
             </div>
-            <Card>
+            <Card className="border-border/60 shadow-xs">
               <CardContent className="p-4">
                 <pre className="text-xs font-mono whitespace-pre-wrap break-words">
                   {fileContent.content}

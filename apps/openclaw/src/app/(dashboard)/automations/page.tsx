@@ -91,7 +91,7 @@ export default function AutomationsPage() {
       <div className="px-6 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-balance font-[var(--font-cabin)]">
+            <h1 className="text-xl font-semibold tracking-tight text-balance font-[var(--font-cabin)]">
               Cron Jobs
             </h1>
             <p className="text-xs text-pretty text-muted-foreground mt-0.5">
@@ -112,7 +112,10 @@ export default function AutomationsPage() {
         {isLoading && (
           <div className="grid gap-3">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="py-0 animate-pulse">
+              <Card
+                key={i}
+                className="py-0 animate-pulse border-border/60 shadow-xs"
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-2.5">
@@ -140,7 +143,7 @@ export default function AutomationsPage() {
         )}
 
         {error && (
-          <Card className="animate-fade-in border-destructive/50 bg-destructive/5">
+          <Card className="animate-fade-in border-destructive/50 bg-destructive/5 shadow-xs">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
                 <AlertCircle className="size-6 text-destructive" />
@@ -148,7 +151,7 @@ export default function AutomationsPage() {
               <p className="mt-3 text-sm font-medium text-balance text-foreground">
                 Gateway disconnected
               </p>
-              <p className="mt-1 text-xs text-pretty text-muted-foreground max-w-[280px] text-center">
+              <p className="mt-1 text-xs text-pretty text-muted-foreground/60 max-w-[280px] text-center">
                 {error}
               </p>
             </CardContent>
@@ -156,7 +159,7 @@ export default function AutomationsPage() {
         )}
 
         {!isLoading && !error && jobs.length === 0 && !showCreate && (
-          <Card className="animate-fade-in border-dashed">
+          <Card className="animate-fade-in border-dashed border-border/60 shadow-xs">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
                 <Clock className="size-6 text-primary/60" />
@@ -164,7 +167,7 @@ export default function AutomationsPage() {
               <p className="mt-3 text-sm font-medium text-balance text-foreground">
                 No cron jobs yet
               </p>
-              <p className="mt-1 text-xs text-pretty text-muted-foreground max-w-[280px] text-center">
+              <p className="mt-1 text-xs text-pretty text-muted-foreground/60 max-w-[280px] text-center">
                 Create a job to run tasks on a schedule
               </p>
               <Button
@@ -182,7 +185,7 @@ export default function AutomationsPage() {
 
         {!isLoading && !error && jobs.length > 0 && (
           <div className="grid gap-3">
-            {jobs.map((job) => {
+            {jobs.map((job, index) => {
               let scheduleText = "";
               if (job.schedule.kind === "cron") {
                 scheduleText = job.schedule.expression;
@@ -205,11 +208,12 @@ export default function AutomationsPage() {
                 <Card
                   key={job.jobId}
                   className={cn(
-                    "py-0 transition-all duration-200",
+                    "py-0 transition-all duration-200 animate-fade-in border-border/60 shadow-xs border-t-2 border-t-primary/20",
                     job.enabled
                       ? "hover:shadow-md hover:-translate-y-0.5"
                       : "opacity-50 border-dashed bg-muted/20",
                   )}
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -225,10 +229,10 @@ export default function AutomationsPage() {
                           <Clock className="size-3.5" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-medium truncate">
+                          <h3 className="text-base font-medium tracking-tight font-[var(--font-cabin)] truncate">
                             {job.name}
                           </h3>
-                          <p className="mt-0.5 text-xs text-pretty text-muted-foreground line-clamp-1">
+                          <p className="mt-0.5 text-xs text-pretty text-muted-foreground font-mono tabular-nums line-clamp-1">
                             {job.payload.kind === "agentTurn"
                               ? job.payload.message.slice(0, 80)
                               : `Event: ${job.payload.event}`}
@@ -311,19 +315,19 @@ export default function AutomationsPage() {
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       <Badge
                         variant="outline"
-                        className="text-[10px] font-mono tabular-nums bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                        className="text-[10px] font-mono text-xs tabular-nums bg-muted/50 border-border/60"
                       >
                         {scheduleText}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                        className="text-[10px] bg-muted/50 border-border/60"
                       >
                         {job.sessionTarget}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="text-[10px] bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
+                        className="text-[10px] bg-muted/50 border-border/60"
                       >
                         {job.payload.kind}
                       </Badge>

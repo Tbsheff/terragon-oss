@@ -106,7 +106,7 @@ export function CronJobForm({ onClose, existingJob }: CronJobFormProps) {
   });
 
   return (
-    <Card className="border-primary/30 py-0 animate-fade-in">
+    <Card className="border-border/60 border-t-2 border-t-primary/20 shadow-xs py-0 animate-fade-in">
       <CardContent className="p-4 space-y-3">
         <div className="space-y-1.5">
           <Label htmlFor="job-name" className="text-xs">
@@ -118,6 +118,7 @@ export function CronJobForm({ onClose, existingJob }: CronJobFormProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Job name"
+            className="bg-muted/20 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
           />
         </div>
 
@@ -150,7 +151,7 @@ export function CronJobForm({ onClose, existingJob }: CronJobFormProps) {
               value={cronExpression}
               onChange={(e) => setCronExpression(e.target.value)}
               placeholder="0 9 * * * (9am daily)"
-              className="font-mono"
+              className="font-mono bg-muted/20 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             />
           </div>
         )}
@@ -166,7 +167,7 @@ export function CronJobForm({ onClose, existingJob }: CronJobFormProps) {
               value={intervalMs}
               onChange={(e) => setIntervalMs(e.target.value)}
               placeholder="3600"
-              className="font-mono tabular-nums"
+              className="font-mono tabular-nums bg-muted/20 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             />
           </div>
         )}
@@ -182,7 +183,7 @@ export function CronJobForm({ onClose, existingJob }: CronJobFormProps) {
               value={datetime}
               onChange={(e) => setDatetime(e.target.value)}
               placeholder="2026-02-15T10:00:00Z"
-              className="font-mono tabular-nums"
+              className="font-mono tabular-nums bg-muted/20 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             />
           </div>
         )}
@@ -239,7 +240,7 @@ export function CronJobForm({ onClose, existingJob }: CronJobFormProps) {
               placeholder="Message for the agent"
               rows={3}
               className={cn(
-                "w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm",
+                "w-full rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-sm",
                 "resize-none shadow-xs transition-[color,box-shadow] outline-none",
                 "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
               )}
@@ -258,6 +259,7 @@ export function CronJobForm({ onClose, existingJob }: CronJobFormProps) {
               value={event}
               onChange={(e) => setEvent(e.target.value)}
               placeholder="tick"
+              className="bg-muted/20 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             />
           </div>
         )}
