@@ -80,10 +80,10 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-5 w-28 rounded" />
-        <Card>
+        <Card className="border-border/60 shadow-xs">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Skeleton className="size-12 rounded-xl" />
+              <Skeleton className="size-12 rounded-full" />
               <div className="space-y-2">
                 <Skeleton className="h-5 w-36 rounded" />
                 <Skeleton className="h-5 w-16 rounded" />
@@ -112,7 +112,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
           <ArrowLeft className="size-4" />
           Back to agents
         </Link>
-        <Card className="animate-fade-in border-destructive/50 bg-destructive/5">
+        <Card className="animate-fade-in border-destructive/50 bg-destructive/5 shadow-xs">
           <CardContent className="flex items-center gap-3 px-5 py-5">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
               <AlertTriangle className="size-4 text-destructive" />
@@ -128,7 +128,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
             <Button
               size="sm"
               variant="outline"
-              className="shrink-0"
+              className="shrink-0 border-border/60"
               onClick={() => agentQuery.refetch()}
             >
               Retry
@@ -153,15 +153,18 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       </Link>
 
       {/* Agent info card */}
-      <Card className="animate-fade-in">
+      <Card
+        className="animate-fade-in border-t-2 border-t-primary/20 border-border/60 shadow-xs"
+        style={{ animationDelay: "0ms" }}
+      >
         <CardHeader>
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-2xl">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-2xl">
                 {agent.emoji ?? "🤖"}
               </span>
               <div className="min-w-0">
-                <CardTitle className="text-balance text-xl">
+                <CardTitle className="font-[var(--font-cabin)] text-xl tracking-tight">
                   {agent.name}
                 </CardTitle>
                 {agent.model && (
@@ -174,7 +177,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
             <Button
               variant="outline"
               size="sm"
-              className="shrink-0"
+              className="shrink-0 border-border/60"
               onClick={startEditing}
             >
               <Pencil className="size-3.5" />
@@ -182,7 +185,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
             </Button>
           </div>
           {agent.description && (
-            <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               {agent.description}
             </p>
           )}
@@ -191,9 +194,14 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
 
       {/* Edit dialog (inline) */}
       {editing && (
-        <Card className="animate-fade-in border-primary/20 bg-primary/[0.02]">
+        <Card
+          className="animate-fade-in border-t-2 border-t-primary/20 border-border/60 bg-primary/[0.02] shadow-xs"
+          style={{ animationDelay: "60ms" }}
+        >
           <CardHeader className="pb-2">
-            <CardTitle className="text-balance text-base">Edit Agent</CardTitle>
+            <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
+              Edit Agent
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -249,6 +257,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
                   type="button"
                   variant="outline"
                   size="sm"
+                  className="border-border/60"
                   onClick={() => setEditing(false)}
                 >
                   Cancel
@@ -256,6 +265,7 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
                 <Button
                   type="submit"
                   size="sm"
+                  className="bg-primary text-primary-foreground"
                   disabled={updateMutation.isPending}
                 >
                   {updateMutation.isPending ? (
@@ -272,9 +282,12 @@ export function AgentDetailView({ agentId }: { agentId: string }) {
       )}
 
       {/* Workspace files */}
-      <div>
+      <div
+        className="animate-fade-in opacity-0 [animation-fill-mode:forwards]"
+        style={{ animationDelay: "120ms" }}
+      >
         <Separator className="mb-6" />
-        <h2 className="font-[var(--font-cabin)] mb-4 text-balance text-lg font-semibold tracking-tight">
+        <h2 className="font-[var(--font-cabin)] mb-4 text-lg font-semibold tracking-tight">
           Workspace Files
         </h2>
         <AgentFileEditor agentId={agentId} />

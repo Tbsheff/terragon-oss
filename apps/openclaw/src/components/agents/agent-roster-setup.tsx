@@ -114,7 +114,7 @@ export function AgentRosterSetup({ onComplete }: { onComplete?: () => void }) {
       <Button
         onClick={() => setupMutation.mutate()}
         disabled={isRunning}
-        className="w-full"
+        className="w-full bg-primary text-primary-foreground"
       >
         {isRunning ? (
           <>
@@ -146,18 +146,22 @@ function RosterProgressItem({
       className={cn(
         "animate-fade-in opacity-0 [animation-fill-mode:forwards]",
         "flex items-center gap-3 rounded-lg border px-3.5 py-2.5 text-sm transition-colors duration-200",
-        item.status === "pending" && "border-border bg-card",
-        item.status === "done" && "border-primary/30 bg-primary/5",
-        item.status === "error" && "border-destructive/30 bg-destructive/5",
-        item.status === "creating" && "border-primary/40 bg-primary/10",
+        item.status === "pending" && "border-border/60 bg-card shadow-xs",
+        item.status === "done" && "border-primary/30 bg-primary/5 shadow-xs",
+        item.status === "error" &&
+          "border-destructive/30 bg-destructive/5 shadow-xs",
+        item.status === "creating" &&
+          "border-primary/40 bg-primary/10 shadow-xs",
       )}
       style={{ animationDelay: `${index * 75}ms` }}
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-base">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-base">
         {item.agent.emoji}
       </span>
       <div className="min-w-0 flex-1">
-        <div className="font-medium">{item.agent.name}</div>
+        <div className="font-[var(--font-cabin)] font-medium tracking-tight">
+          {item.agent.name}
+        </div>
         <div className="truncate text-xs text-muted-foreground">
           {item.agent.description}
         </div>
@@ -168,7 +172,7 @@ function RosterProgressItem({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Badge variant="outline" className="text-[10px]">
+        <Badge variant="outline" className="text-[10px] border-border/60">
           {item.agent.model}
         </Badge>
         <StatusIcon status={item.status} />

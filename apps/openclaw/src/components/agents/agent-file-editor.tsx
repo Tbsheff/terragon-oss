@@ -125,7 +125,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
 
   if (filesQuery.isError) {
     return (
-      <div className="animate-fade-in flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-4 text-sm text-destructive">
+      <div className="animate-fade-in flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-4 text-sm text-destructive shadow-xs">
         <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
           <span className="text-xs">!</span>
         </div>
@@ -138,7 +138,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
         <Button
           size="sm"
           variant="outline"
-          className="shrink-0"
+          className="shrink-0 border-border/60"
           onClick={() => filesQuery.refetch()}
         >
           Retry
@@ -170,6 +170,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
             <Button
               size="sm"
               variant="outline"
+              className="border-border/60"
               onClick={handleManualSave}
               disabled={!dirty[activeTab] && saveStatus !== "idle"}
             >
@@ -187,7 +188,7 @@ export function AgentFileEditor({ agentId }: { agentId: string }) {
               placeholder={`# ${f}\n\nStart writing...`}
               spellCheck={false}
               className={cn(
-                "w-full min-h-[480px] resize-y rounded-lg border border-border bg-muted/30 p-4",
+                "w-full min-h-[480px] resize-y rounded-lg border border-border/60 bg-muted/30 p-4 shadow-xs",
                 "font-mono text-sm leading-relaxed text-foreground",
                 "placeholder:text-muted-foreground/40",
                 "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40",
