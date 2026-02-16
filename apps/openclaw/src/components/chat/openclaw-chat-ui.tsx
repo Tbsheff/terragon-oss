@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import { ThreadProvider, type OpenClawThread } from "./thread-context";
 import { OpenClawChatHeader } from "./openclaw-chat-header";
 import { OpenClawPromptBox } from "./openclaw-promptbox";
@@ -16,7 +17,8 @@ import {
 import { useDirectChat } from "@/hooks/use-direct-chat";
 import { ExecApprovalCard } from "./exec-approval-card";
 import { openClawHistoryToDBMessages } from "@/lib/message-adapter";
-import type { DBMessage, ThreadStatus } from "@/lib/types";
+import type { DBMessage, ThreadStatus, UIMessage } from "@/lib/types";
+import type { SlashCommandContext } from "@/lib/slash-commands";
 import {
   threadDetailQueryOptions,
   threadMessagesQueryOptions,
@@ -27,6 +29,8 @@ import {
   ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { filePanelOpenAtom } from "@/hooks/use-file-panel";
+import { FileBrowserPanel } from "@/components/file-browser/file-browser-panel";
 
 const DIRECT_STREAMING =
   process.env.NEXT_PUBLIC_DIRECT_STREAMING === "true" ||
@@ -54,7 +58,107 @@ export function OpenClawChatUI({ threadId }: OpenClawChatUIProps) {
 }
 
 // ─────────────────────────────────────────────────
-// Direct streaming path (browser → gateway WebSocket)
+// Shared chat layout with file panel
+// ─────────────────────────────────────────────────
+
+function ChatWithFilePanel({
+  children,
+  uiMessages,
+}: {
+  children: React.ReactNode;
+  uiMessages: UIMessage[];
+}) {
+  const filePanelOpen = useAtomValue(filePanelOpenAtom);
+
+  return (
+    <div className="flex h-full overflow-hidden">
+      {/* Chat column */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {children}
+      </div>
+
+      {/* File browser panel */}
+      {filePanelOpen && <FileBrowserPanel messages={uiMessages} />}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Empty state icon (shared)
+// ─────────────────────────────────────────────────
+
+const EmptyStateIcon = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    className="h-8 w-8 text-primary/40"
+  >
+    <path d="M12 3c-1.2 0-2.4.6-3 1.7A3.6 3.6 0 0 0 4.5 9c-1.2 1-2 2.6-2 4.3 0 3 2.5 5.5 5.5 5.5h.5c.5 1.3 1.8 2.2 3.5 2.2s3-1 3.5-2.2h.5c3 0 5.5-2.5 5.5-5.5 0-1.7-.8-3.3-2-4.3A3.6 3.6 0 0 0 15 4.7C14.4 3.6 13.2 3 12 3z" />
+  </svg>
+);
+
+// ─────────────────────────────────────────────────
+// Shared hooks for slash command context
+// ─────────────────────────────────────────────────
+
+function useSlashCommandHandlers(
+  threadId: string,
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
+  const [currentModel, setCurrentModel] = useState(
+    "claude-sonnet-4-5-20250929",
+  );
+
+  const handleInject = useCallback(
+    async (content: string, role: "system" | "user") => {
+      const { injectChatContext } = await import(
+        "@/server-actions/openclaw-chat"
+      );
+      const result = await injectChatContext(threadId, content, role);
+      if (!result.ok) toast.error(result.error);
+    },
+    [threadId],
+  );
+
+  const handleSwitchModel = useCallback(
+    async (model: string) => {
+      const { patchSession } = await import("@/server-actions/sessions");
+      const result = await patchSession(threadId, { model });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      setCurrentModel(model);
+      queryClient.invalidateQueries({ queryKey: ["threads", threadId] });
+    },
+    [threadId, queryClient],
+  );
+
+  return { currentModel, setCurrentModel, handleInject, handleSwitchModel };
+}
+
+function useSlashCommandContext(
+  threadId: string,
+  handleInject: (content: string, role: "system" | "user") => Promise<void>,
+  handleSwitchModel: (model: string) => Promise<void>,
+  onSendMessage: (msg: string) => void,
+): SlashCommandContext {
+  return useMemo(
+    () => ({
+      threadId,
+      sessionKey: threadId,
+      onInject: handleInject,
+      onSwitchModel: handleSwitchModel,
+      onSendMessage,
+    }),
+    [threadId, handleInject, handleSwitchModel, onSendMessage],
+  );
+}
+
+// ─────────────────────────────────────────────────
+// Direct streaming path (browser -> gateway WebSocket)
 // ─────────────────────────────────────────────────
 
 function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
@@ -73,6 +177,28 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
     sendMessage,
     abort,
   } = useDirectChat(threadId);
+
+  const { currentModel, setCurrentModel, handleInject, handleSwitchModel } =
+    useSlashCommandHandlers(threadId, queryClient);
+
+  // Sync model from thread detail
+  useEffect(() => {
+    if (threadDetail?.model) setCurrentModel(threadDetail.model);
+  }, [threadDetail?.model, setCurrentModel]);
+
+  const sendMessageStable = useCallback(
+    (msg: string) => {
+      sendMessage(msg);
+    },
+    [sendMessage],
+  );
+
+  const slashCommandContext = useSlashCommandContext(
+    threadId,
+    handleInject,
+    handleSwitchModel,
+    sendMessageStable,
+  );
 
   // Clear pending user message once real messages arrive
   const hasRealMessages =
@@ -159,24 +285,14 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
 
   return (
     <ThreadProvider thread={openClawThread} isReadOnly={false}>
-      <div className="flex h-full flex-col overflow-hidden">
+      <ChatWithFilePanel uiMessages={uiMessages}>
         <OpenClawChatHeader onArchive={handleArchive} />
 
         <Conversation className="min-h-0 flex-1">
           <ConversationContent className="gap-4 px-4 py-6">
             {uiMessages.length === 0 && !isWorking ? (
               <ConversationEmptyState
-                icon={
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="h-8 w-8 text-primary/40"
-                  >
-                    <path d="M12 3c-1.2 0-2.4.6-3 1.7A3.6 3.6 0 0 0 4.5 9c-1.2 1-2 2.6-2 4.3 0 3 2.5 5.5 5.5 5.5h.5c.5 1.3 1.8 2.2 3.5 2.2s3-1 3.5-2.2h.5c3 0 5.5-2.5 5.5-5.5 0-1.7-.8-3.3-2-4.3A3.6 3.6 0 0 0 15 4.7C14.4 3.6 13.2 3 12 3z" />
-                  </svg>
-                }
+                icon={EmptyStateIcon}
                 title="Start a conversation"
                 description="Describe a coding task and the agent will get to work."
                 className="opacity-80"
@@ -215,8 +331,11 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
           onSend={handleSend}
           onStop={handleStop}
           isWorking={isWorking}
+          slashCommandContext={slashCommandContext}
+          currentModel={currentModel}
+          onModelChange={handleSwitchModel}
         />
-      </div>
+      </ChatWithFilePanel>
     </ThreadProvider>
   );
 }
@@ -243,14 +362,19 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
   const { data: historyData } = useQuery(threadMessagesQueryOptions(threadId));
 
   // Event-driven streaming messages from WebSocket
-  // Same null-vs-undefined cast as gatewayMessages — structurally equivalent at runtime
   const streamingMessages = useRealtimeChatMessages(
     threadId,
   ) as unknown as DBMessage[];
 
+  const { currentModel, setCurrentModel, handleInject, handleSwitchModel } =
+    useSlashCommandHandlers(threadId, queryClient);
+
+  // Sync model from thread detail
+  useEffect(() => {
+    if (threadDetail?.model) setCurrentModel(threadDetail.model);
+  }, [threadDetail?.model, setCurrentModel]);
+
   // Convert gateway history -> DBMessage[]
-  // Type assertion: message-adapter's DBMessage uses null where types.ts uses undefined —
-  // structurally equivalent at runtime, toUIMessages handles both.
   const gatewayMessages = useMemo((): DBMessage[] => {
     if (!historyData?.ok || !historyData.data.length) return [];
     return openClawHistoryToDBMessages(
@@ -305,8 +429,6 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
   );
 
   // Update working state from thread status
-  // This effect is necessary: it syncs external state (thread status from DB/realtime)
-  // into local UI state (isWorking) that drives the prompt box and loading indicator.
   useEffect(() => {
     if (threadDetail) {
       setIsWorking(
@@ -317,7 +439,6 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
 
   const handleSend = useCallback(
     async (message: string) => {
-      // Show optimistic user message until gateway reflects it
       setPendingUserMsg({
         type: "user",
         model: null,
@@ -336,12 +457,18 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
         setPendingUserMsg(null);
         return;
       }
-      // Trigger immediate refetch after send succeeds
       queryClient.invalidateQueries({
         queryKey: ["threads", "messages", threadId],
       });
     },
     [threadId, queryClient],
+  );
+
+  const slashCommandContext = useSlashCommandContext(
+    threadId,
+    handleInject,
+    handleSwitchModel,
+    handleSend,
   );
 
   const handleStop = useCallback(async () => {
@@ -361,7 +488,7 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
 
   return (
     <ThreadProvider thread={openClawThread} isReadOnly={false}>
-      <div className="flex h-full flex-col overflow-hidden">
+      <ChatWithFilePanel uiMessages={uiMessages}>
         <OpenClawChatHeader onArchive={handleArchive} />
 
         {/* Chat messages area -- flex-1 + min-h-0 ensures proper scroll containment */}
@@ -369,17 +496,7 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
           <ConversationContent className="gap-4 px-4 py-6">
             {uiMessages.length === 0 && !isWorking ? (
               <ConversationEmptyState
-                icon={
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="h-8 w-8 text-primary/40"
-                  >
-                    <path d="M12 3c-1.2 0-2.4.6-3 1.7A3.6 3.6 0 0 0 4.5 9c-1.2 1-2 2.6-2 4.3 0 3 2.5 5.5 5.5 5.5h.5c.5 1.3 1.8 2.2 3.5 2.2s3-1 3.5-2.2h.5c3 0 5.5-2.5 5.5-5.5 0-1.7-.8-3.3-2-4.3A3.6 3.6 0 0 0 15 4.7C14.4 3.6 13.2 3 12 3z" />
-                  </svg>
-                }
+                icon={EmptyStateIcon}
                 title="Start a conversation"
                 description="Describe a coding task and the agent will get to work."
                 className="opacity-80"
@@ -419,8 +536,11 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
           onSend={handleSend}
           onStop={handleStop}
           isWorking={isWorking}
+          slashCommandContext={slashCommandContext}
+          currentModel={currentModel}
+          onModelChange={handleSwitchModel}
         />
-      </div>
+      </ChatWithFilePanel>
     </ThreadProvider>
   );
 }
