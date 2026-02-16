@@ -1,0 +1,14 @@
+{
+  "assignee": null,
+  "claim_note": "",
+  "claimed_at": null,
+  "created_at": "2026-02-10T05:14:20.547008Z",
+  "depends_on": ["fn-1-add-vercel-sandbox-as-additional.1"],
+  "epic": "fn-1-add-vercel-sandbox-as-additional",
+  "id": "fn-1-add-vercel-sandbox-as-additional.2",
+  "priority": null,
+  "spec_path": ".flow/tasks/fn-1-add-vercel-sandbox-as-additional.2.md",
+  "status": "todo",
+  "title": "Add environment config, feature flags, and settings UI",
+  "updated_at": "2026-02-10T05:15:08.326021Z"
+}

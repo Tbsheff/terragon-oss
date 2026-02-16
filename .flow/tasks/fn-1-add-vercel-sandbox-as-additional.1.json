@@ -1,0 +1,14 @@
+{
+  "assignee": null,
+  "claim_note": "",
+  "claimed_at": null,
+  "created_at": "2026-02-10T05:14:16.026736Z",
+  "depends_on": [],
+  "epic": "fn-1-add-vercel-sandbox-as-additional",
+  "id": "fn-1-add-vercel-sandbox-as-additional.1",
+  "priority": null,
+  "spec_path": ".flow/tasks/fn-1-add-vercel-sandbox-as-additional.1.md",
+  "status": "todo",
+  "title": "Implement core VercelProvider and VercelSession",
+  "updated_at": "2026-02-10T05:14:50.352593Z"
+}

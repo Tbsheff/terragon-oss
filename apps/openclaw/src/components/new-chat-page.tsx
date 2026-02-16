@@ -25,7 +25,7 @@ export function NewChatPage() {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [prompt, setPrompt] = useState("");
-  const [selectedAgentId, setSelectedAgentId] = useState<string>("");
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("default");
   const [selectedModel, setSelectedModel] = useState<string>(MODELS[0].id);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -44,7 +44,7 @@ export function NewChatPage() {
     try {
       const result = await createThread({
         name: prompt.slice(0, 100),
-        agentId: selectedAgentId || undefined,
+        agentId: selectedAgentId === "default" ? undefined : selectedAgentId,
         model: selectedModel || undefined,
         initialPrompt: prompt,
       });
@@ -100,7 +100,7 @@ export function NewChatPage() {
                   <SelectValue placeholder="Default Agent" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Default Agent</SelectItem>
+                  <SelectItem value="default">Default Agent</SelectItem>
                   {agents.map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.emoji ? `${agent.emoji} ` : ""}

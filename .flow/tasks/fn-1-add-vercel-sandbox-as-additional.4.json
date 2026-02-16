@@ -1,0 +1,14 @@
+{
+  "assignee": null,
+  "claim_note": "",
+  "claimed_at": null,
+  "created_at": "2026-02-10T05:14:30.289458Z",
+  "depends_on": ["fn-1-add-vercel-sandbox-as-additional.1"],
+  "epic": "fn-1-add-vercel-sandbox-as-additional",
+  "id": "fn-1-add-vercel-sandbox-as-additional.4",
+  "priority": null,
+  "spec_path": ".flow/tasks/fn-1-add-vercel-sandbox-as-additional.4.md",
+  "status": "todo",
+  "title": "Terminal, broadcast, documentation and env file updates",
+  "updated_at": "2026-02-10T05:15:50.208350Z"
+}

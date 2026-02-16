@@ -1,0 +1,18 @@
+{
+  "branch_name": "fn-1-add-vercel-sandbox-as-additional",
+  "completion_review_status": "unknown",
+  "completion_reviewed_at": null,
+  "created_at": "2026-02-10T05:13:28.259639Z",
+  "default_impl": null,
+  "default_review": null,
+  "default_sync": null,
+  "depends_on_epics": [],
+  "id": "fn-1-add-vercel-sandbox-as-additional",
+  "next_task": 1,
+  "plan_review_status": "unknown",
+  "plan_reviewed_at": null,
+  "spec_path": ".flow/specs/fn-1-add-vercel-sandbox-as-additional.md",
+  "status": "open",
+  "title": "Add Vercel Sandbox as additional provider",
+  "updated_at": "2026-02-10T05:14:11.352056Z"
+}
