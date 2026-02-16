@@ -423,30 +423,6 @@ export type CronRunEntry = {
 };
 
 // ─────────────────────────────────────────────────
-// Memory Types
-// ─────────────────────────────────────────────────
-
-export type MemorySearchResult = {
-  text: string;
-  filePath: string;
-  lineStart: number;
-  lineEnd: number;
-  score: number;
-};
-
-export type MemorySearchParams = {
-  agentId: string;
-  query: string;
-  limit?: number;
-};
-
-export type MemoryFileContent = {
-  path: string;
-  content: string;
-  lines: number;
-};
-
-// ─────────────────────────────────────────────────
 // Terminal / PTY Types (future gateway extension)
 // ─────────────────────────────────────────────────
 

@@ -9,7 +9,6 @@ import {
   Bot,
   FileText,
   Clock,
-  Brain,
   LayoutGrid,
   Settings,
   Plus,
@@ -49,7 +48,6 @@ const NAV_ITEMS = [
   { href: "/agents", icon: Bot, label: "Agents" },
   { href: "/templates", icon: FileText, label: "Templates" },
   { href: "/automations", icon: Clock, label: "Cron Jobs" },
-  { href: "/memory", icon: Brain, label: "Memory" },
   { href: "/parallel", icon: LayoutGrid, label: "Parallel" },
 ] as const;
 

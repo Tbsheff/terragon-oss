@@ -25,9 +25,6 @@ import type {
   ChannelStatus,
   CronJob,
   CronRunEntry,
-  MemorySearchParams,
-  MemorySearchResult,
-  MemoryFileContent,
 } from "@/lib/openclaw-types";
 import { classifyConnectError } from "@/lib/openclaw-types";
 
@@ -463,27 +460,6 @@ export class OpenClawClient {
       "cron.status",
       {},
     );
-  }
-
-  // ── Memory RPC ──────────────────────────────────
-
-  memorySearch(params: MemorySearchParams): Promise<MemorySearchResult[]> {
-    return this.sendRequest<{ results: MemorySearchResult[] }>(
-      "memory.search",
-      params,
-    ).then((res) => res.results ?? []);
-  }
-
-  memoryGet(
-    agentId: string,
-    path: string,
-    options?: { lineStart?: number; lineCount?: number },
-  ): Promise<MemoryFileContent> {
-    return this.sendRequest<MemoryFileContent>("memory.get", {
-      agentId,
-      path,
-      ...options,
-    });
   }
 
   // ── Event Subscription ────────────────────────
