@@ -23,12 +23,12 @@ export function FileViewer() {
   if (!file) {
     return (
       <div className="flex flex-1 items-center justify-center text-muted-foreground text-sm">
-        <div className="flex flex-col items-center gap-2">
-          <FileCode className="h-8 w-8 opacity-40" />
-          <span>No file selected</span>
-          <span className="text-xs text-muted-foreground/60">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <FileCode className="size-8 opacity-40" />
+          <span className="text-balance font-medium">No file selected</span>
+          <p className="text-xs text-pretty text-muted-foreground/60">
             Click a file in the tree or a tool result to view it
-          </span>
+          </p>
         </div>
       </div>
     );
@@ -45,7 +45,9 @@ export function FileViewer() {
         <CodeBlockHeader>
           <CodeBlockTitle>
             <CodeBlockFilename>{filename}</CodeBlockFilename>
-            <span className="text-muted-foreground/60">{lineCount} lines</span>
+            <span className="tabular-nums text-muted-foreground/60">
+              {lineCount} lines
+            </span>
           </CodeBlockTitle>
           <CodeBlockActions>
             <CopyButton text={file.content} />
@@ -63,9 +65,7 @@ export function FileViewer() {
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(
-    0 as unknown as ReturnType<typeof setTimeout>,
-  );
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -86,9 +86,10 @@ function CopyButton({ text }: { text: string }) {
       variant="ghost"
       size="icon"
       onClick={handleCopy}
-      className="h-6 w-6 shrink-0"
+      aria-label={copied ? "Copied" : "Copy file contents"}
+      className="size-6 shrink-0 hover:bg-muted"
     >
-      <Icon size={12} />
+      <Icon className="size-3" />
     </Button>
   );
 }

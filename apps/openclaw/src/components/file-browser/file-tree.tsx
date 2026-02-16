@@ -86,13 +86,13 @@ function getFileIcon(filename: string) {
     case "json":
     case "jsonc":
       return (
-        <FileJson className="h-3.5 w-3.5 shrink-0 text-yellow-600 dark:text-yellow-400" />
+        <FileJson className="size-3.5 shrink-0 text-yellow-600 dark:text-yellow-400" />
       );
     case "md":
     case "mdx":
     case "txt":
       return (
-        <FileText className="h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+        <FileText className="size-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
       );
     case "ts":
     case "tsx":
@@ -110,10 +110,10 @@ function getFileIcon(filename: string) {
     case "kt":
     case "dart":
       return (
-        <FileCode className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+        <FileCode className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
       );
     default:
-      return <File className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
+      return <File className="size-3.5 shrink-0 text-muted-foreground" />;
   }
 }
 
@@ -131,12 +131,12 @@ export function FileTree({ files }: FileTreeProps) {
   if (tree.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center text-muted-foreground text-sm p-4">
-        <div className="flex flex-col items-center gap-2">
-          <Folder className="h-8 w-8 opacity-40" />
-          <span>No files yet</span>
-          <span className="text-xs text-muted-foreground/60">
-            Files will appear as the agent reads, writes, or edits them
-          </span>
+        <div className="flex flex-col items-center gap-2 text-center">
+          <Folder className="size-8 opacity-40" />
+          <span className="text-balance font-medium">No files yet</span>
+          <p className="text-xs text-pretty text-muted-foreground/60">
+            Send a message to the agent to start generating files
+          </p>
         </div>
       </div>
     );
@@ -186,14 +186,14 @@ function TreeNodeItem({
           >
             <ChevronRight
               className={cn(
-                "h-3 w-3 shrink-0 text-muted-foreground transition-transform",
+                "size-3 shrink-0 text-muted-foreground transition-transform",
                 isOpen && "rotate-90",
               )}
             />
             {isOpen ? (
-              <FolderOpen className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+              <FolderOpen className="size-3.5 shrink-0 text-blue-500" />
             ) : (
-              <Folder className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+              <Folder className="size-3.5 shrink-0 text-blue-500" />
             )}
             <span className="truncate font-medium text-foreground/90">
               {node.name}

@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { X, FolderTree, FileCode, GitCompare } from "lucide-react";
 
 const TABS: { value: FilePanelTab; label: string; icon: React.ReactNode }[] = [
-  { value: "tree", label: "Tree", icon: <FolderTree className="h-3 w-3" /> },
-  { value: "viewer", label: "Viewer", icon: <FileCode className="h-3 w-3" /> },
-  { value: "diff", label: "Diff", icon: <GitCompare className="h-3 w-3" /> },
+  { value: "tree", label: "Tree", icon: <FolderTree className="size-3" /> },
+  { value: "viewer", label: "Viewer", icon: <FileCode className="size-3" /> },
+  { value: "diff", label: "Diff", icon: <GitCompare className="size-3" /> },
 ];
 
 export function FilePanelHeader() {
@@ -22,7 +22,7 @@ export function FilePanelHeader() {
         : null;
 
   return (
-    <div className="shrink-0 border-b border-border/70 bg-card/50 backdrop-blur-sm">
+    <div className="shrink-0 border-b border-border/70 bg-card">
       {/* Tab row */}
       <div className="flex items-center justify-between px-2 pt-1.5">
         <div className="flex items-center gap-0.5">
@@ -46,9 +46,10 @@ export function FilePanelHeader() {
           variant="ghost"
           size="icon"
           onClick={close}
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          aria-label="Close file panel"
+          className="size-6 text-muted-foreground hover:text-foreground"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="size-3.5" />
         </Button>
       </div>
 
