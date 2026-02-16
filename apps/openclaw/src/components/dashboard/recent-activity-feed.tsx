@@ -58,7 +58,7 @@ export function RecentActivityFeed({ threads }: RecentActivityFeedProps) {
 
   return (
     <Card
-      className="animate-fade-in border-border/60 shadow-xs"
+      className="animate-fade-in border-border/60 shadow-xs border-t-2 border-t-primary/20"
       style={{ animationDelay: "300ms" }}
     >
       <CardHeader className="pb-2">

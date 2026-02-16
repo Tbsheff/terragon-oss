@@ -23,7 +23,7 @@ function timeAgo(iso: string): string {
 export function ErrorFeed({ errors }: ErrorFeedProps) {
   return (
     <Card
-      className="animate-fade-in border-border/60 shadow-xs"
+      className="animate-fade-in border-border/60 shadow-xs border-t-2 border-t-primary/20"
       style={{ animationDelay: "350ms" }}
     >
       <CardHeader className="pb-2">

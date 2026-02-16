@@ -16,7 +16,7 @@ type StatCardProps = {
 function StatCard({ label, value, icon: Icon, color, delay }: StatCardProps) {
   return (
     <Card
-      className="animate-fade-in border-border/60 shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+      className="animate-fade-in border-border/60 shadow-xs border-t-2 border-t-primary/20 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
       style={{ animationDelay: `${delay}ms` }}
     >
       <CardContent className="flex items-center gap-3 px-4 py-3.5">

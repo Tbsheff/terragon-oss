@@ -26,7 +26,7 @@ export function ActiveAgentsPanel({ threads }: ActiveAgentsPanelProps) {
 
   return (
     <Card
-      className="animate-fade-in border-border/60 shadow-xs"
+      className="animate-fade-in border-border/60 shadow-xs border-t-2 border-t-primary/20"
       style={{ animationDelay: "200ms" }}
     >
       <CardHeader className="pb-2">
@@ -82,7 +82,7 @@ function AgentCard({
     <Link
       href={`/task/${thread.id}`}
       className={cn(
-        "animate-fade-in group block rounded-lg border border-border/70 bg-card p-3.5 transition-all duration-200",
+        "animate-fade-in group block rounded-lg border border-border/60 bg-card p-3.5 transition-all duration-200",
         "hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30",
       )}
       style={{
