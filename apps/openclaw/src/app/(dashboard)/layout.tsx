@@ -1,5 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { NavRail } from "@/components/nav-rail";
 import { NotificationProvider } from "@/components/notification-provider";
 import { GatewayProvider } from "@/components/gateway-provider";
 import { DashboardTitleSync } from "./dashboard-title-sync";
@@ -10,13 +9,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider defaultOpen={true}>
+    <div className="flex min-h-svh w-full">
       <NotificationProvider />
       <DashboardTitleSync />
-      <AppSidebar />
-      <SidebarInset>
-        <GatewayProvider>{children}</GatewayProvider>
-      </SidebarInset>
-    </SidebarProvider>
+      <NavRail />
+      <GatewayProvider>
+        <div className="flex flex-col min-w-0 flex-1">{children}</div>
+      </GatewayProvider>
+    </div>
   );
 }
