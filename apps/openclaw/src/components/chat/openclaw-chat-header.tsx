@@ -14,12 +14,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Archive, Clock, Coins, AlertTriangle } from "lucide-react";
+import { Archive, Clock, Coins, AlertTriangle, FolderOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { PRStatusBadge } from "@/components/github/pr-status-badge";
 import { threadPRsQueryOptions } from "@/queries/github-queries";
 import { threadErrorsQueryOptions } from "@/queries/thread-queries";
 import { parseTokenUsage, formatTokenCount } from "@/lib/token-usage";
+import { useFilePanel } from "@/hooks/use-file-panel";
 
 export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
   const { thread } = useThread();
@@ -94,6 +95,7 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
 
           <div className="flex items-center gap-1.5 shrink-0">
             <ConnectionStatusBadge />
+            <FilesToggleButton />
             {onArchive && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -171,6 +173,28 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
         </div>
       )}
     </div>
+  );
+}
+
+function FilesToggleButton() {
+  const { isOpen, toggle } = useFilePanel();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          className={cn(
+            "h-7 w-7 text-muted-foreground hover:text-foreground",
+            isOpen && "bg-muted text-foreground",
+          )}
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{isOpen ? "Close files" : "Open files"}</TooltipContent>
+    </Tooltip>
   );
 }
 

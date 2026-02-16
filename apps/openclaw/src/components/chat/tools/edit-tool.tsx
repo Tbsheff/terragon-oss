@@ -9,6 +9,7 @@ import {
   GenericToolPartContentResultWithLines,
 } from "./generic-ui";
 import { formatToolParameters } from "./utils";
+import { useOpenDiff } from "@/hooks/use-file-panel";
 
 export function EditTool({
   toolPart,
@@ -35,6 +36,17 @@ function ToolPartEditResult({
   toolPart: Extract<AllToolParts, { name: "Edit" }>;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const openDiff = useOpenDiff();
+
+  const handleOpenDiff = () => {
+    if (toolPart.status !== "completed") return;
+    openDiff({
+      path: toolPart.parameters.file_path,
+      oldString: toolPart.parameters.old_string,
+      newString: toolPart.parameters.new_string,
+    });
+  };
+
   if (toolPart.status === "pending") {
     return (
       <GenericToolPartContentOneLine toolStatus="pending">
@@ -65,7 +77,8 @@ function ToolPartEditResult({
           <GenericToolPartClickToExpand
             label={expanded ? "Hide diff" : "Show diff"}
             onClick={() => setExpanded((x) => !x)}
-          />
+          />{" "}
+          <GenericToolPartClickToExpand label="Open" onClick={handleOpenDiff} />
         </span>
       </GenericToolPartContentRow>
       {expanded && (

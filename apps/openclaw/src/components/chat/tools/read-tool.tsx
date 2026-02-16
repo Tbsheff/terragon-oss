@@ -9,6 +9,8 @@ import {
   GenericToolPartContentResultWithLines,
 } from "./generic-ui";
 import { formatToolParameters } from "./utils";
+import { useOpenFile } from "@/hooks/use-file-panel";
+import { detectLanguage } from "@/lib/language-detect";
 
 export function ReadTool({
   toolPart,
@@ -58,6 +60,18 @@ function ReadToolContent({
   toolPart: Extract<AllToolParts, { name: "Read" }>;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const openFile = useOpenFile();
+
+  const handleOpenInPanel = () => {
+    if (toolPart.status !== "completed") return;
+    const content = formatReadResult(toolPart.result);
+    openFile({
+      path: toolPart.parameters.file_path,
+      content,
+      language: detectLanguage(toolPart.parameters.file_path),
+    });
+  };
+
   if (toolPart.status === "pending") {
     return (
       <GenericToolPartContentOneLine toolStatus="pending">
@@ -87,6 +101,10 @@ function ReadToolContent({
         <GenericToolPartClickToExpand
           label={expanded ? "Hide lines" : "Show lines"}
           onClick={() => setExpanded((x) => !x)}
+        />{" "}
+        <GenericToolPartClickToExpand
+          label="Open"
+          onClick={handleOpenInPanel}
         />
       </GenericToolPartContentRow>
       {expanded && (
