@@ -345,7 +345,7 @@ const fleetStatusConfig: Record<
 };
 
 function FleetStatusDot({ status }: { status: AgentFleetStatus }) {
-  const config = fleetStatusConfig[status];
+  const config = fleetStatusConfig[status] ?? fleetStatusConfig.idle;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
