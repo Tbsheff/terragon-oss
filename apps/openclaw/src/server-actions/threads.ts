@@ -142,6 +142,7 @@ export async function createThread(opts: {
   githubRepoFullName?: string;
   model?: string;
   pipelineTemplateId?: string;
+  initialPrompt?: string;
 }): Promise<{ id: string }> {
   // Use a deterministic session key
   const { nanoid } = await import("nanoid");
@@ -165,6 +166,7 @@ export async function createThread(opts: {
     name: opts.name,
     githubRepoFullName: opts.githubRepoFullName,
     archived: false,
+    initialPrompt: opts.initialPrompt,
   });
 
   // Register session with bridge
@@ -260,4 +262,15 @@ export async function updateThreadChat(
   }>,
 ): Promise<void> {
   // No-op: chat state is managed by the gateway.
+}
+
+export async function consumeInitialPrompt(
+  threadId: string,
+): Promise<string | null> {
+  const meta = await getSessionMeta(threadId);
+  if (!meta?.initialPrompt) return null;
+  const prompt = meta.initialPrompt;
+  // Clear the initial prompt so it's only consumed once
+  await setSessionMeta(threadId, { ...meta, initialPrompt: undefined });
+  return prompt;
 }

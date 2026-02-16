@@ -13,6 +13,7 @@ export type SessionMeta = {
   archived?: boolean;
   parentThreadId?: string;
   forkMessageIndex?: number;
+  initialPrompt?: string;
 };
 
 function sessionMetaKey(sessionKey: string): string {

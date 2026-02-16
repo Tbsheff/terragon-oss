@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
@@ -314,6 +314,22 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
     [sendMessage],
   );
 
+  // Auto-send initial prompt on first load
+  const initialPromptSentRef = useRef(false);
+  useEffect(() => {
+    if (!threadDetail?.id || initialPromptSentRef.current) return;
+    initialPromptSentRef.current = true;
+
+    const autoSend = async () => {
+      const { consumeInitialPrompt } = await import("@/server-actions/threads");
+      const prompt = await consumeInitialPrompt(threadId);
+      if (prompt) {
+        handleSend(prompt);
+      }
+    };
+    autoSend();
+  }, [threadDetail?.id, threadId, handleSend]);
+
   const handleStop = useCallback(async () => {
     try {
       await abort();
@@ -549,6 +565,22 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
     handleSwitchModel,
     handleSend,
   );
+
+  // Auto-send initial prompt on first load
+  const initialPromptSentRef = useRef(false);
+  useEffect(() => {
+    if (!threadDetail?.id || initialPromptSentRef.current) return;
+    initialPromptSentRef.current = true;
+
+    const autoSend = async () => {
+      const { consumeInitialPrompt } = await import("@/server-actions/threads");
+      const prompt = await consumeInitialPrompt(threadId);
+      if (prompt) {
+        handleSend(prompt);
+      }
+    };
+    autoSend();
+  }, [threadDetail?.id, threadId, handleSend]);
 
   const handleStop = useCallback(async () => {
     const { abortChat } = await import("@/server-actions/openclaw-chat");
