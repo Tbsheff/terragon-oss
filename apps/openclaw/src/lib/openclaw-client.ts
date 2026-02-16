@@ -347,7 +347,7 @@ export class OpenClawClient {
     settings: Partial<Omit<OpenClawSession, "key">>,
   ): Promise<OpenClawSession> {
     return this.sendRequest<OpenClawSession>("sessions.patch", {
-      sessionKey,
+      key: sessionKey,
       ...settings,
     });
   }
