@@ -14,7 +14,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Archive, Clock, Coins, AlertTriangle, FolderOpen } from "lucide-react";
+import {
+  Archive,
+  Clock,
+  Coins,
+  AlertTriangle,
+  FolderOpen,
+  GitFork,
+} from "lucide-react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { PRStatusBadge } from "@/components/github/pr-status-badge";
 import { threadPRsQueryOptions } from "@/queries/github-queries";
@@ -22,7 +30,13 @@ import { threadErrorsQueryOptions } from "@/queries/thread-queries";
 import { parseTokenUsage, formatTokenCount } from "@/lib/token-usage";
 import { useFilePanel } from "@/hooks/use-file-panel";
 
-export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
+export function OpenClawChatHeader({
+  onArchive,
+  parentThreadId,
+}: {
+  onArchive?: () => void;
+  parentThreadId?: string | null;
+}) {
   const { thread } = useThread();
 
   // Read pipeline state from kvStore via server action (decoupled from thread table)
@@ -83,6 +97,15 @@ export function OpenClawChatHeader({ onArchive }: { onArchive?: () => void }) {
             <h1 className="truncate text-sm font-semibold font-[var(--font-cabin)]">
               {thread.name ?? "Untitled Task"}
             </h1>
+            {parentThreadId && (
+              <Link
+                href={`/task/${parentThreadId}`}
+                className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              >
+                <GitFork className="h-3 w-3" />
+                <span>Forked</span>
+              </Link>
+            )}
             {hasPipeline && currentStage && currentStage !== "done" && (
               <PipelineStagePill stage={currentStage} />
             )}

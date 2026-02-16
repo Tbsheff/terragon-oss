@@ -35,6 +35,8 @@ export type ThreadDetail = ThreadListItem & {
   githubBranch: string | null;
   baseBranch: string | null;
   environmentId: string | null;
+  parentThreadId: string | null;
+  forkMessageIndex: number | null;
 };
 
 // ─────────────────────────────────────────────────
@@ -129,6 +131,8 @@ export async function getThread(id: string): Promise<ThreadDetail | null> {
     githubBranch: meta?.githubBranch ?? null,
     baseBranch: meta?.baseBranch ?? null,
     environmentId: meta?.environmentId ?? null,
+    parentThreadId: meta?.parentThreadId ?? null,
+    forkMessageIndex: meta?.forkMessageIndex ?? null,
   };
 }
 

@@ -15,6 +15,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { MessageToolbar } from "./message-toolbar";
 
 type UIUserOrAgentPart =
   | UIAgentMessage["parts"][number]
@@ -220,6 +221,8 @@ export const ChatMessageWithToolbar = memo(function ChatMessageWithToolbar({
   isFirstUserMessage = false,
   isAgentWorking = false,
   isLatestAgentMessage = false,
+  onFork,
+  onEditResend,
 }: {
   message: UIMessage;
   messageIndex: number;
@@ -228,6 +231,8 @@ export const ChatMessageWithToolbar = memo(function ChatMessageWithToolbar({
   isLatestMessage: boolean;
   isAgentWorking: boolean;
   isLatestAgentMessage: boolean;
+  onFork?: (messageIndex: number) => void;
+  onEditResend?: (messageIndex: number) => void;
 }) {
   return (
     <div
@@ -239,6 +244,13 @@ export const ChatMessageWithToolbar = memo(function ChatMessageWithToolbar({
         className={className}
         isLatestMessage={isLatestMessage}
         isAgentWorking={isAgentWorking}
+      />
+      <MessageToolbar
+        message={message}
+        messageIndex={messageIndex}
+        isAgentWorking={isAgentWorking}
+        onFork={onFork}
+        onEditResend={onEditResend}
       />
     </div>
   );

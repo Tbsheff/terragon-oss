@@ -11,6 +11,8 @@ export type SessionMeta = {
   tokenUsage?: string;
   environmentId?: string;
   archived?: boolean;
+  parentThreadId?: string;
+  forkMessageIndex?: number;
 };
 
 function sessionMetaKey(sessionKey: string): string {

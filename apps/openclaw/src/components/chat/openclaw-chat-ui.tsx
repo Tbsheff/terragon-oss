@@ -31,6 +31,8 @@ import {
 } from "@/components/ai-elements/conversation";
 import { filePanelOpenAtom } from "@/hooks/use-file-panel";
 import { FileBrowserPanel } from "@/components/file-browser/file-browser-panel";
+import { ForkDialog } from "./fork-dialog";
+import { EditResendDialog } from "./edit-resend-dialog";
 
 const DIRECT_STREAMING =
   process.env.NEXT_PUBLIC_DIRECT_STREAMING === "true" ||
@@ -158,6 +160,41 @@ function useSlashCommandContext(
 }
 
 // ─────────────────────────────────────────────────
+// Fork / Edit-Resend dialog state
+// ─────────────────────────────────────────────────
+
+type ForkDialogState = {
+  type: "fork" | "edit-resend";
+  messageIndex: number;
+} | null;
+
+function useForkDialogs(uiMessages: UIMessage[]) {
+  const [dialogState, setDialogState] = useState<ForkDialogState>(null);
+
+  const handleFork = useCallback((messageIndex: number) => {
+    setDialogState({ type: "fork", messageIndex });
+  }, []);
+
+  const handleEditResend = useCallback((messageIndex: number) => {
+    setDialogState({ type: "edit-resend", messageIndex });
+  }, []);
+
+  const closeDialog = useCallback(() => setDialogState(null), []);
+
+  const targetMessage = dialogState
+    ? (uiMessages[dialogState.messageIndex] ?? null)
+    : null;
+
+  return {
+    dialogState,
+    targetMessage,
+    handleFork,
+    handleEditResend,
+    closeDialog,
+  };
+}
+
+// ─────────────────────────────────────────────────
 // Direct streaming path (browser -> gateway WebSocket)
 // ─────────────────────────────────────────────────
 
@@ -245,6 +282,15 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
     }
   }, [threadDetail?.status]);
 
+  // Fork / edit-resend dialogs
+  const {
+    dialogState,
+    targetMessage,
+    handleFork,
+    handleEditResend,
+    closeDialog,
+  } = useForkDialogs(uiMessages);
+
   const handleSend = useCallback(
     async (message: string) => {
       setPendingUserMsg({
@@ -286,7 +332,10 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
   return (
     <ThreadProvider thread={openClawThread} isReadOnly={false}>
       <ChatWithFilePanel uiMessages={uiMessages}>
-        <OpenClawChatHeader onArchive={handleArchive} />
+        <OpenClawChatHeader
+          onArchive={handleArchive}
+          parentThreadId={threadDetail?.parentThreadId ?? null}
+        />
 
         <Conversation className="min-h-0 flex-1">
           <ConversationContent className="gap-4 px-4 py-6">
@@ -302,6 +351,8 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
                 <ChatMessages
                   messages={uiMessages}
                   isAgentWorking={isWorking}
+                  onFork={handleFork}
+                  onEditResend={handleEditResend}
                 />
                 {isWorking && uiMessages.length === 0 && (
                   <WorkingMessage message="Agent is starting..." />
@@ -334,6 +385,25 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
           slashCommandContext={slashCommandContext}
           currentModel={currentModel}
           onModelChange={handleSwitchModel}
+        />
+
+        <ForkDialog
+          open={dialogState?.type === "fork"}
+          onOpenChange={(open) => {
+            if (!open) closeDialog();
+          }}
+          sourceThreadId={threadId}
+          messageIndex={dialogState?.messageIndex ?? 0}
+          message={targetMessage}
+        />
+        <EditResendDialog
+          open={dialogState?.type === "edit-resend"}
+          onOpenChange={(open) => {
+            if (!open) closeDialog();
+          }}
+          sourceThreadId={threadId}
+          messageIndex={dialogState?.messageIndex ?? 0}
+          message={targetMessage}
         />
       </ChatWithFilePanel>
     </ThreadProvider>
@@ -437,6 +507,15 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
     }
   }, [threadDetail?.status]);
 
+  // Fork / edit-resend dialogs
+  const {
+    dialogState,
+    targetMessage,
+    handleFork,
+    handleEditResend,
+    closeDialog,
+  } = useForkDialogs(uiMessages);
+
   const handleSend = useCallback(
     async (message: string) => {
       setPendingUserMsg({
@@ -489,7 +568,10 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
   return (
     <ThreadProvider thread={openClawThread} isReadOnly={false}>
       <ChatWithFilePanel uiMessages={uiMessages}>
-        <OpenClawChatHeader onArchive={handleArchive} />
+        <OpenClawChatHeader
+          onArchive={handleArchive}
+          parentThreadId={threadDetail?.parentThreadId ?? null}
+        />
 
         {/* Chat messages area -- flex-1 + min-h-0 ensures proper scroll containment */}
         <Conversation className="min-h-0 flex-1">
@@ -506,6 +588,8 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
                 <ChatMessages
                   messages={uiMessages}
                   isAgentWorking={isWorking}
+                  onFork={handleFork}
+                  onEditResend={handleEditResend}
                 />
                 {isWorking && uiMessages.length === 0 && (
                   <WorkingMessage message="Agent is starting..." />
@@ -539,6 +623,25 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
           slashCommandContext={slashCommandContext}
           currentModel={currentModel}
           onModelChange={handleSwitchModel}
+        />
+
+        <ForkDialog
+          open={dialogState?.type === "fork"}
+          onOpenChange={(open) => {
+            if (!open) closeDialog();
+          }}
+          sourceThreadId={threadId}
+          messageIndex={dialogState?.messageIndex ?? 0}
+          message={targetMessage}
+        />
+        <EditResendDialog
+          open={dialogState?.type === "edit-resend"}
+          onOpenChange={(open) => {
+            if (!open) closeDialog();
+          }}
+          sourceThreadId={threadId}
+          messageIndex={dialogState?.messageIndex ?? 0}
+          message={targetMessage}
         />
       </ChatWithFilePanel>
     </ThreadProvider>

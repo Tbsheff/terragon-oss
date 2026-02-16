@@ -6,9 +6,13 @@ import { LeafLoading } from "./leaf-loading";
 export const ChatMessages = memo(function ChatMessages({
   messages,
   isAgentWorking,
+  onFork,
+  onEditResend,
 }: {
   messages: UIMessage[];
   isAgentWorking: boolean;
+  onFork?: (messageIndex: number) => void;
+  onEditResend?: (messageIndex: number) => void;
 }) {
   // Find the latest agent message
   let latestAgentMessageIndex = -1;
@@ -35,6 +39,8 @@ export const ChatMessages = memo(function ChatMessages({
             isLatestMessage={isLatestMessage}
             isFirstUserMessage={isFirstUserMessage}
             isLatestAgentMessage={isLatestAgentMessage}
+            onFork={onFork}
+            onEditResend={onEditResend}
           />
         );
       })}
