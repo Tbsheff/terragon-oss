@@ -123,9 +123,16 @@ export default function CredentialsSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-[300px] w-full" />
+      <div className="mx-auto max-w-2xl p-6 space-y-6">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-9 rounded-md" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </div>
+        <Skeleton className="h-px w-full" />
+        <Skeleton className="h-[300px] w-full rounded-xl" />
       </div>
     );
   }
@@ -136,7 +143,7 @@ export default function CredentialsSettingsPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/settings">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Back to settings">
                 <ArrowLeft className="size-4" />
               </Button>
             </Link>
@@ -144,10 +151,10 @@ export default function CredentialsSettingsPage() {
           <TooltipContent>Back to settings</TooltipContent>
         </Tooltip>
         <div>
-          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
             Credentials
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-pretty">
             Manage API keys for AI providers
           </p>
         </div>
@@ -256,12 +263,16 @@ export default function CredentialsSettingsPage() {
                   <div className="flex items-center gap-3">
                     <Key className="size-4 text-muted-foreground" />
                     <div>
-                      <div className="text-sm font-medium">{cred.name}</div>
+                      <div className="text-sm font-medium truncate">
+                        {cred.name}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {providerLabels[cred.provider as Provider] ??
                           cred.provider}{" "}
                         &middot; Added{" "}
-                        {new Date(cred.createdAt).toLocaleDateString()}
+                        <span className="tabular-nums">
+                          {new Date(cred.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -291,6 +302,7 @@ export default function CredentialsSettingsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label={`Delete ${cred.name}`}
                         onClick={() => setDeleteConfirm(cred.id)}
                       >
                         <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />

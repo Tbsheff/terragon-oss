@@ -90,7 +90,7 @@ export function PipelineConfig({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Settings2 className="h-4 w-4 text-muted-foreground" />
+          <Settings2 className="size-4 text-muted-foreground" />
           Pipeline Stages
         </div>
         <div className="flex items-center gap-1">
@@ -115,9 +115,10 @@ export function PipelineConfig({
               "text-muted-foreground hover:text-foreground hover:bg-accent",
               disabled && "opacity-50 cursor-not-allowed",
             )}
+            aria-label="Reset to all stages"
             title="Reset to all stages"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw className="size-3.5" />
           </button>
         </div>
       </div>
@@ -171,7 +172,7 @@ export function PipelineConfig({
               />
               {/* Selection indicator */}
               {isSelected && (
-                <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary" />
+                <div className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary" />
               )}
             </button>
           );
@@ -179,7 +180,7 @@ export function PipelineConfig({
       </div>
 
       {/* Summary */}
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground text-pretty">
         {selectedStages.length} of {PIPELINE_STAGES.length} stages selected
         {selectedStages.length < PIPELINE_STAGES.length && (
           <>

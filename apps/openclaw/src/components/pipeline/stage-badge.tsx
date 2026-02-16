@@ -101,7 +101,7 @@ export function StageBadge({
       >
         <Icon
           className={cn(
-            "h-3 w-3",
+            "size-3",
             config.color,
             config.animate && "animate-spin",
           )}
@@ -134,7 +134,7 @@ export function StageBadge({
         className,
       )}
     >
-      <Icon className={cn("h-3 w-3", config.animate && "animate-spin")} />
+      <Icon className={cn("size-3", config.animate && "animate-spin")} />
       <span>{label}</span>
       {retryCount != null && retryCount > 0 && (
         <span className="text-red-400 font-bold text-[10px]">

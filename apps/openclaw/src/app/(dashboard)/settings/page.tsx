@@ -53,10 +53,10 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl p-6">
       <div className="mb-6">
-        <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+        <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
           Settings
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1 text-pretty">
           Configure your OpenClaw dashboard and gateway connection
         </p>
       </div>

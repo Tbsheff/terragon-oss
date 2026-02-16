@@ -75,10 +75,10 @@ export default function TemplatesPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="px-6 py-3">
-        <h1 className="text-lg font-semibold font-[var(--font-cabin)]">
+        <h1 className="text-lg font-semibold font-[var(--font-cabin)] text-balance">
           Templates
         </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5 text-pretty">
           Pipeline and prompt templates for common workflows
         </p>
       </div>
@@ -93,11 +93,11 @@ export default function TemplatesPage() {
         <div className="px-6 pt-4">
           <TabsList>
             <TabsTrigger value="pipeline">
-              <Workflow className="h-3.5 w-3.5" />
+              <Workflow className="size-3.5" />
               Pipeline Templates
             </TabsTrigger>
             <TabsTrigger value="prompt">
-              <MessageSquareText className="h-3.5 w-3.5" />
+              <MessageSquareText className="size-3.5" />
               Prompt Templates
             </TabsTrigger>
           </TabsList>
@@ -157,12 +157,12 @@ function PipelineTemplatesList({
               onClick={onSeed}
               disabled={isSeeding}
             >
-              <Wand2 className="h-3.5 w-3.5" />
+              <Wand2 className="size-3.5" />
               {isSeeding ? "Seeding..." : "Seed Defaults"}
             </Button>
           )}
           <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="size-3.5" />
             Create
           </Button>
         </div>
@@ -175,7 +175,7 @@ function PipelineTemplatesList({
       {templates.length === 0 && !showCreate && (
         <Card className="animate-fade-in">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <Workflow className="h-10 w-10 text-muted-foreground/40" />
+            <Workflow className="size-10 text-muted-foreground/40" />
             <p className="mt-3 text-sm font-medium text-muted-foreground">
               No pipeline templates yet
             </p>
@@ -189,7 +189,7 @@ function PipelineTemplatesList({
               onClick={onSeed}
               disabled={isSeeding}
             >
-              <Wand2 className="h-3.5 w-3.5" />
+              <Wand2 className="size-3.5" />
               {isSeeding ? "Seeding..." : "Seed Defaults"}
             </Button>
           </CardContent>
@@ -229,10 +229,11 @@ function PipelineTemplatesList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        aria-label={`Delete ${t.name}`}
+                        className="size-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         onClick={() => deleteMutation.mutate(t.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="size-3.5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Delete template</TooltipContent>
@@ -323,7 +324,7 @@ function CreatePipelineTemplateForm({ onClose }: { onClose: () => void }) {
                     setSelectedStages(next);
                   }}
                 >
-                  {isSelected && <Check className="h-3 w-3" />}
+                  {isSelected && <Check className="size-3" />}
                   {PIPELINE_STAGE_LABELS[s]}
                 </Button>
               );
@@ -386,7 +387,7 @@ function PromptTemplatesList({
           {templates.length} template{templates.length !== 1 ? "s" : ""}
         </p>
         <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="size-3.5" />
           Create
         </Button>
       </div>
@@ -438,7 +439,7 @@ function PromptTemplatesList({
       {templates.length === 0 && !showCreate && (
         <Card className="animate-fade-in">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <FileText className="h-10 w-10 text-muted-foreground/40" />
+            <FileText className="size-10 text-muted-foreground/40" />
             <p className="mt-3 text-sm font-medium text-muted-foreground">
               No prompt templates yet
             </p>
@@ -451,7 +452,7 @@ function PromptTemplatesList({
               className="mt-4"
               onClick={() => setShowCreate(true)}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="size-3.5" />
               Create Template
             </Button>
           </CardContent>
@@ -474,10 +475,11 @@ function PromptTemplatesList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        aria-label={`Delete ${t.name}`}
+                        className="size-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         onClick={() => deleteMutation.mutate(t.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="size-3.5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Delete template</TooltipContent>

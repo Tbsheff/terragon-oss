@@ -58,9 +58,11 @@ function MetricCard({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold tabular-nums">{value}</div>
         {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+          <p className="text-xs text-muted-foreground mt-1 text-pretty">
+            {subtitle}
+          </p>
         )}
         {barValue !== undefined && barMax !== undefined && barColor && (
           <div className="mt-3">
@@ -95,13 +97,21 @@ export function ResourceDashboard({
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[120px]" />
+            <div key={i} className="rounded-xl border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="size-4 rounded" />
+              </div>
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-2 w-full rounded-full" />
+            </div>
           ))}
         </div>
-        <Skeleton className="h-[300px]" />
+        <Skeleton className="h-[300px] rounded-xl" />
       </div>
     );
   }

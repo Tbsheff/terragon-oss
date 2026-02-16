@@ -95,7 +95,7 @@ export function CostChart({ entries }: { entries: CostEntry[] }) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Token Costs</CardTitle>
-            <CardDescription>
+            <CardDescription className="tabular-nums">
               Total: {formatCost(totalCost)} &middot;{" "}
               {totalInput.toLocaleString()} input /{" "}
               {totalOutput.toLocaleString()} output tokens
@@ -119,7 +119,7 @@ export function CostChart({ entries }: { entries: CostEntry[] }) {
       </CardHeader>
       <CardContent>
         {aggregated.length === 0 ? (
-          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground text-pretty">
             No cost data available
           </div>
         ) : (
@@ -151,7 +151,7 @@ export function CostChart({ entries }: { entries: CostEntry[] }) {
                         </span>
                       )}
                     </span>
-                    <span className="font-mono">
+                    <span className="font-mono tabular-nums">
                       {formatCost(entry.totalCost)}
                     </span>
                   </div>
@@ -172,11 +172,11 @@ export function CostChart({ entries }: { entries: CostEntry[] }) {
             })}
             <div className="flex items-center gap-4 pt-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-chart-2" />
+                <div className="size-2 rounded-full bg-chart-2" />
                 Input tokens
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-chart-4" />
+                <div className="size-2 rounded-full bg-chart-4" />
                 Output tokens
               </div>
             </div>

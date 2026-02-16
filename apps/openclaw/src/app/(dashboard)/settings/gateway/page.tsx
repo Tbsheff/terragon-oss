@@ -117,9 +117,16 @@ export default function GatewaySettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-[400px] w-full" />
+      <div className="mx-auto max-w-2xl p-6 space-y-6">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-9 rounded-md" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+        <Skeleton className="h-px w-full" />
+        <Skeleton className="h-[380px] w-full rounded-xl" />
       </div>
     );
   }
@@ -130,7 +137,7 @@ export default function GatewaySettingsPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/settings">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Back to settings">
                 <ArrowLeft className="size-4" />
               </Button>
             </Link>
@@ -138,10 +145,10 @@ export default function GatewaySettingsPage() {
           <TooltipContent>Back to settings</TooltipContent>
         </Tooltip>
         <div>
-          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
             Gateway Config
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-pretty">
             Configure the OpenClaw gateway runtime settings
           </p>
         </div>
@@ -153,10 +160,10 @@ export default function GatewaySettingsPage() {
           <CardContent className="py-8">
             <div className="flex flex-col items-center text-center">
               <Server className="mb-3 size-10 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground text-pretty">
                 Unable to connect to gateway
               </p>
-              <p className="text-xs text-muted-foreground/70 mt-1">
+              <p className="text-xs text-muted-foreground/70 mt-1 text-pretty">
                 {configError ?? "Check your connection settings"}
               </p>
               <Link href="/settings/connection" className="mt-3">

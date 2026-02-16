@@ -54,18 +54,18 @@ function CheckIcon({
   conclusion: string | null;
 }) {
   if (status === "in_progress" || status === "queued") {
-    return <Loader2 className="h-3.5 w-3.5 text-yellow-500 animate-spin" />;
+    return <Loader2 className="size-3.5 text-yellow-500 animate-spin" />;
   }
   if (conclusion === "success") {
-    return <Check className="h-3.5 w-3.5 text-green-500" />;
+    return <Check className="size-3.5 text-green-500" />;
   }
   if (conclusion === "failure" || conclusion === "timed_out") {
-    return <X className="h-3.5 w-3.5 text-red-500" />;
+    return <X className="size-3.5 text-red-500" />;
   }
   if (conclusion === "skipped" || conclusion === "neutral") {
-    return <CircleDot className="h-3.5 w-3.5 text-muted-foreground" />;
+    return <CircleDot className="size-3.5 text-muted-foreground" />;
   }
-  return <CircleDot className="h-3.5 w-3.5 text-muted-foreground" />;
+  return <CircleDot className="size-3.5 text-muted-foreground" />;
 }
 
 function PRCard({
@@ -92,21 +92,23 @@ function PRCard({
         <div className="flex items-center gap-2">
           <GitPullRequest
             className={cn(
-              "h-4 w-4",
+              "size-4",
               statusColor[pr.prStatus] ?? "text-foreground",
             )}
           />
           <CardTitle className="text-sm">
-            #{pr.prNumber} {pr.prTitle ?? "Untitled PR"}
+            <span className="tabular-nums">#{pr.prNumber}</span>{" "}
+            {pr.prTitle ?? "Untitled PR"}
           </CardTitle>
           {pr.prUrl && (
             <a
               href={pr.prUrl}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`Open PR #${pr.prNumber} on GitHub`}
               className="ml-auto text-muted-foreground hover:text-foreground"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="size-3.5" />
             </a>
           )}
         </div>
@@ -133,7 +135,7 @@ function PRCard({
             <div className="flex items-center gap-1.5 text-xs">
               <GitMerge
                 className={cn(
-                  "h-3 w-3",
+                  "size-3",
                   pr.mergeableState === "clean"
                     ? "text-green-500"
                     : "text-yellow-500",
@@ -172,9 +174,10 @@ function PRCard({
                       href={check.detailsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={`View ${check.name} details`}
                       className="text-muted-foreground hover:text-foreground"
                     >
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink className="size-3" />
                     </a>
                   )}
                 </div>
@@ -197,7 +200,7 @@ export function PRDetailCard({ threadId }: { threadId: string }) {
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground p-4">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        <Loader2 className="size-3.5 animate-spin" />
         Loading PR status...
       </div>
     );

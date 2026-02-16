@@ -94,7 +94,7 @@ export function OpenClawTaskList() {
         {activeThreads.length === 0 ? (
           <div className="flex flex-col items-center gap-1.5 px-2 py-6 text-muted-foreground group-data-[collapsible=icon]:hidden">
             <Leaf className="size-5 opacity-40" />
-            <p className="text-xs">No active tasks</p>
+            <p className="text-xs text-pretty">No active tasks</p>
           </div>
         ) : (
           activeThreads.map((t, index) => {

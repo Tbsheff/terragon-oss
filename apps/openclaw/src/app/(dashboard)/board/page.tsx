@@ -152,7 +152,7 @@ function BoardCard({
           <div className="flex items-start gap-1.5">
             {isError && (
               <span
-                className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-destructive animate-pulse"
+                className="mt-0.5 size-2 flex-shrink-0 rounded-full bg-destructive animate-pulse"
                 title="Error"
               />
             )}
@@ -164,7 +164,7 @@ function BoardCard({
           {/* Repo name */}
           {thread.githubRepoFullName ? (
             <p className="mt-1.5 text-[11px] text-muted-foreground/60 truncate flex items-center gap-1">
-              <GitBranch className="h-3 w-3 flex-shrink-0" />
+              <GitBranch className="size-3 flex-shrink-0" />
               {thread.githubRepoFullName}
             </p>
           ) : (
@@ -178,7 +178,7 @@ function BoardCard({
             {/* Elapsed time */}
             {elapsed && (
               <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
-                <Clock className="h-2.5 w-2.5" />
+                <Clock className="size-2.5" />
                 {elapsed}
               </span>
             )}
@@ -199,7 +199,7 @@ function BoardCard({
                   PR_STATUS_COLORS[thread.latestPR.prStatus] ?? "",
                 )}
               >
-                <GitPullRequest className="h-2.5 w-2.5" />#
+                <GitPullRequest className="size-2.5" />#
                 {thread.latestPR.prNumber}
               </Badge>
             )}
@@ -210,7 +210,7 @@ function BoardCard({
                 variant="outline"
                 className="text-[10px] px-1.5 py-0 gap-0.5 h-4 border-destructive/30 text-destructive bg-destructive/5"
               >
-                <AlertCircle className="h-2.5 w-2.5" />
+                <AlertCircle className="size-2.5" />
                 Error
               </Badge>
             )}
@@ -249,15 +249,15 @@ export default function BoardPage() {
       <div className="px-6 py-3">
         <div className="flex items-center gap-2.5">
           <div className="flex items-center justify-center rounded-lg bg-primary/10 p-1.5">
-            <Kanban className="h-4 w-4 text-primary" />
+            <Kanban className="size-4 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold font-[var(--font-cabin)] tracking-tight">
+            <h1 className="text-lg font-semibold font-[var(--font-cabin)] tracking-tight text-balance">
               Board
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {totalActive} active task{totalActive !== 1 ? "s" : ""} across
-              pipeline stages
+            <p className="text-xs text-muted-foreground mt-0.5 text-pretty">
+              <span className="tabular-nums">{totalActive}</span> active task
+              {totalActive !== 1 ? "s" : ""} across pipeline stages
             </p>
           </div>
         </div>
@@ -294,7 +294,7 @@ export default function BoardPage() {
                       <div className="flex items-center gap-2">
                         <span
                           className={cn(
-                            "h-2.5 w-2.5 rounded-full",
+                            "size-2.5 rounded-full",
                             STAGE_DOT_COLORS[col.stage],
                           )}
                         />
@@ -324,8 +324,8 @@ export default function BoardPage() {
                     ))}
                     {columnThreads.length === 0 && (
                       <div className="flex h-24 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/40">
-                        <Inbox className="h-4 w-4 text-muted-foreground/30" />
-                        <p className="text-[11px] text-muted-foreground/40">
+                        <Inbox className="size-4 text-muted-foreground/30" />
+                        <p className="text-[11px] text-muted-foreground/40 text-pretty">
                           No tasks
                         </p>
                       </div>

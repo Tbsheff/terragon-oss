@@ -48,17 +48,22 @@ export function PRStatusBadge({
         className,
       )}
     >
-      <GitPullRequest className="h-3 w-3" />
-      PR #{prNumber}
+      <GitPullRequest className="size-3" />
+      PR <span className="tabular-nums">#{prNumber}</span>
       {checksStatus && checksStatus !== "none" && (
-        <span className={cn("h-2 w-2 rounded-full", dotColor)} />
+        <span className={cn("size-2 rounded-full", dotColor)} />
       )}
     </Badge>
   );
 
   if (prUrl) {
     return (
-      <a href={prUrl} target="_blank" rel="noopener noreferrer">
+      <a
+        href={prUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`View PR #${prNumber} on GitHub`}
+      >
         {content}
       </a>
     );

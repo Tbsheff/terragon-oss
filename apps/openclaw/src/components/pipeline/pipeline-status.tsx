@@ -70,12 +70,16 @@ function StageDuration({ entry }: { entry: PipelineStageHistory | undefined }) {
   if (!entry) return null;
 
   if (entry.status === "running" && liveElapsed) {
-    return <span className="text-[10px] text-primary">{liveElapsed}</span>;
+    return (
+      <span className="text-[10px] text-primary tabular-nums">
+        {liveElapsed}
+      </span>
+    );
   }
 
   if (entry.completedAt) {
     return (
-      <span className="text-[10px] text-muted-foreground">
+      <span className="text-[10px] text-muted-foreground tabular-nums">
         {formatDuration(entry.startedAt, entry.completedAt)}
       </span>
     );

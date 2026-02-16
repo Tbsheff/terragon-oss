@@ -110,15 +110,16 @@ export function PRStatusPill({
         checksCfg ? `${statusCfg.label} - ${checksCfg.label}` : statusCfg.label
       }
     >
-      <StatusIcon className="h-3 w-3" />
+      <StatusIcon className="size-3" />
       <span>
-        {prNumber ? `#${prNumber}` : ""} {statusCfg.label}
+        {prNumber ? <span className="tabular-nums">#{prNumber}</span> : ""}{" "}
+        {statusCfg.label}
       </span>
       {checksCfg && (
         <span className={cn("ml-0.5 flex items-center", checksCfg.colorClass)}>
           <checksCfg.icon
             className={cn(
-              "h-3 w-3",
+              "size-3",
               checksStatus === "pending" && "animate-spin",
             )}
           />
@@ -133,6 +134,7 @@ export function PRStatusPill({
         href={prUrl}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label={`View PR ${prNumber ? `#${prNumber}` : ""} on GitHub`}
         className="inline-flex hover:opacity-80 transition-opacity"
       >
         {content}

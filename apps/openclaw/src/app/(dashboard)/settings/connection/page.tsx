@@ -34,6 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { cn } from "@/lib/utils";
 import {
   getConnection,
   updateConnection,
@@ -114,9 +115,16 @@ export default function ConnectionSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-[400px] w-full" />
+      <div className="mx-auto max-w-2xl p-6 space-y-6">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-9 rounded-md" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-60" />
+          </div>
+        </div>
+        <Skeleton className="h-px w-full" />
+        <Skeleton className="h-[380px] w-full rounded-xl" />
       </div>
     );
   }
@@ -127,7 +135,7 @@ export default function ConnectionSettingsPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/settings">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Back to settings">
                 <ArrowLeft className="size-4" />
               </Button>
             </Link>
@@ -135,10 +143,10 @@ export default function ConnectionSettingsPage() {
           <TooltipContent>Back to settings</TooltipContent>
         </Tooltip>
         <div>
-          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
             Connection
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-pretty">
             Configure the Mac Mini gateway connection
           </p>
         </div>
@@ -188,6 +196,7 @@ export default function ConnectionSettingsPage() {
               <Input
                 id="port"
                 type="number"
+                className="tabular-nums"
                 value={currentForm.port}
                 onChange={(e) =>
                   setForm({ ...currentForm, port: e.target.value })
@@ -215,6 +224,7 @@ export default function ConnectionSettingsPage() {
             <Input
               id="maxConcurrent"
               type="number"
+              className="tabular-nums"
               min={1}
               max={20}
               value={currentForm.maxConcurrentTasks}
@@ -248,11 +258,12 @@ export default function ConnectionSettingsPage() {
 
           {testResult && (
             <div
-              className={`animate-fade-in flex items-center gap-2 rounded-md border p-3 text-sm ${
+              className={cn(
+                "animate-fade-in flex items-center gap-2 rounded-md border p-3 text-sm",
                 testResult.success
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                  : "border-red-500/30 bg-red-500/10 text-red-400"
-              }`}
+                  : "border-red-500/30 bg-red-500/10 text-red-400",
+              )}
             >
               {testResult.success ? (
                 <>

@@ -40,6 +40,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { cn } from "@/lib/utils";
 import {
   getSettings,
   updateSettings,
@@ -136,9 +137,19 @@ export default function GitHubSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-2xl p-6 space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-[400px] w-full" />
+      <div className="mx-auto max-w-2xl p-6 space-y-6">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-9 rounded-md" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-56" />
+          </div>
+        </div>
+        <Skeleton className="h-px w-full" />
+        <div className="space-y-6">
+          <Skeleton className="h-[220px] w-full rounded-xl" />
+          <Skeleton className="h-[260px] w-full rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -149,7 +160,7 @@ export default function GitHubSettingsPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/settings">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Back to settings">
                 <ArrowLeft className="size-4" />
               </Button>
             </Link>
@@ -157,10 +168,10 @@ export default function GitHubSettingsPage() {
           <TooltipContent>Back to settings</TooltipContent>
         </Tooltip>
         <div>
-          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight">
+          <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
             GitHub
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-pretty">
             Configure GitHub integration and PR settings
           </p>
         </div>
@@ -213,11 +224,12 @@ export default function GitHubSettingsPage() {
 
             {validationResult && (
               <div
-                className={`animate-fade-in flex items-center gap-2 rounded-md border p-3 text-sm ${
+                className={cn(
+                  "animate-fade-in flex items-center gap-2 rounded-md border p-3 text-sm",
                   validationResult.valid
                     ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                    : "border-red-500/30 bg-red-500/10 text-red-400"
-                }`}
+                    : "border-red-500/30 bg-red-500/10 text-red-400",
+                )}
               >
                 {validationResult.valid ? (
                   <>
