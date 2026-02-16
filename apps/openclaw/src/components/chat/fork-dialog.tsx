@@ -61,18 +61,18 @@ export function ForkDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="border-border/60 shadow-xs">
         <DialogHeader>
-          <DialogTitle className="text-balance">
+          <DialogTitle className="font-[var(--font-cabin)] tracking-tight text-balance">
             Fork from this point
           </DialogTitle>
-          <DialogDescription className="text-pretty">
+          <DialogDescription className="text-xs text-pretty">
             Create a new conversation branching from this message.
           </DialogDescription>
         </DialogHeader>
 
         {preview && (
-          <div className="rounded-md border border-border/50 bg-muted/30 p-3 text-sm text-muted-foreground line-clamp-3">
+          <div className="rounded-md border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground line-clamp-3">
             {preview}
           </div>
         )}
@@ -83,6 +83,7 @@ export function ForkDialog({
           onChange={(e) => setNewMessage(e.target.value)}
           rows={4}
           autoFocus
+          className="bg-muted/20 border-border/60"
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               handleSubmit();
@@ -92,7 +93,7 @@ export function ForkDialog({
 
         <DialogFooter>
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Shield, ShieldCheck, ShieldX, Terminal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { ExecApprovalDecision } from "@/lib/openclaw-types";
 import { resolveExecApproval } from "@/server-actions/exec-approvals";
@@ -50,7 +51,7 @@ export function ExecApprovalCard({
           "animate-fade-in flex items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-sm",
           resolved === "deny"
             ? "border-destructive/30 bg-destructive/5 text-destructive"
-            : "border-primary/30 bg-primary/5 text-primary",
+            : "border-emerald-500/30 bg-emerald-500/5 text-emerald-600",
         )}
       >
         {resolved === "deny" ? (
@@ -73,7 +74,7 @@ export function ExecApprovalCard({
   return (
     <div
       className={cn(
-        "animate-fade-in rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5",
+        "animate-fade-in rounded-lg border border-amber-500/20 bg-amber-500/5 p-3.5 shadow-xs",
       )}
     >
       <div className="flex items-start gap-3">
@@ -81,7 +82,7 @@ export function ExecApprovalCard({
           <Shield className="size-4 text-amber-600" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-balance text-foreground">
+          <p className="font-[var(--font-cabin)] text-sm font-medium tracking-tight text-balance text-foreground">
             Exec approval requested
           </p>
           <p className="mt-0.5 text-xs text-pretty text-muted-foreground">
@@ -91,7 +92,7 @@ export function ExecApprovalCard({
           <div
             className={cn(
               "mt-2 flex items-center gap-2 rounded-md border border-border/60",
-              "bg-card px-3 py-2",
+              "bg-muted/20 px-3 py-2",
             )}
           >
             <Terminal className="size-3.5 shrink-0 text-muted-foreground" />
@@ -107,13 +108,15 @@ export function ExecApprovalCard({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
+      <Separator className="my-3 opacity-60" />
+
+      <div className="flex items-center gap-2">
         <Button
           size="sm"
           variant="outline"
           aria-label="Allow command once"
           className={cn(
-            "h-7 border-primary/40 text-primary hover:bg-primary/10",
+            "h-7 border-primary/30 text-primary hover:bg-primary/10",
           )}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate("allow_once")}
@@ -125,7 +128,7 @@ export function ExecApprovalCard({
           variant="outline"
           aria-label="Always allow this command"
           className={cn(
-            "h-7 border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10",
+            "h-7 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10",
           )}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate("always_allow")}
@@ -137,7 +140,7 @@ export function ExecApprovalCard({
           variant="outline"
           aria-label="Deny command execution"
           className={cn(
-            "h-7 border-destructive/40 text-destructive hover:bg-destructive/10",
+            "h-7 border-destructive/30 text-destructive hover:bg-destructive/10",
           )}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate("deny")}

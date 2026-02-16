@@ -56,11 +56,11 @@ export default function SettingsPage() {
         <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
           Settings
         </h1>
-        <p className="text-sm text-muted-foreground mt-1 text-pretty">
+        <p className="text-xs text-muted-foreground mt-1 text-pretty">
           Configure your OpenClaw dashboard and gateway connection
         </p>
       </div>
-      <Separator className="mb-6" />
+      <Separator className="mb-6 opacity-60" />
       <div className="grid gap-3">
         {settingsSections.map((section, index) => {
           const Icon = iconMap[section.icon];
@@ -71,7 +71,7 @@ export default function SettingsPage() {
               className="group animate-fade-in"
               style={{ animationDelay: `${index * 80}ms` }}
             >
-              <Card className="cursor-pointer transition-all duration-200 hover:shadow-md hover:bg-muted/30">
+              <Card className="cursor-pointer border-border/60 shadow-xs transition-all duration-200 hover:shadow-md hover:bg-muted/30">
                 <CardHeader className="py-4">
                   <div className="flex items-center gap-3">
                     {Icon && (
@@ -80,10 +80,10 @@ export default function SettingsPage() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base">
+                      <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
                         {section.title}
                       </CardTitle>
-                      <CardDescription className="line-clamp-1">
+                      <CardDescription className="line-clamp-1 text-xs">
                         {section.description}
                       </CardDescription>
                     </div>

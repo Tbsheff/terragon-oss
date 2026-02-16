@@ -241,27 +241,30 @@ export function TerminalPanel({
   return (
     <div
       className={cn(
-        "flex flex-col border-t border-border bg-sidebar transition-all",
+        "flex flex-col border-t border-border/60 bg-sidebar transition-all",
         isExpanded ? "h-[60%]" : "h-64",
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/50 px-3 py-1.5">
+      <div className="flex items-center justify-between border-b border-border/40 px-3 py-1.5">
         <div className="flex items-center gap-2">
           <Terminal className="size-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="font-[var(--font-cabin)] text-xs font-medium tracking-tight text-muted-foreground">
             Terminal
           </span>
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-medium",
-              mode === "observe"
-                ? "bg-blue-500/10 text-blue-400"
-                : "bg-amber-500/10 text-amber-400",
-            )}
-          >
-            {mode === "observe" ? "Observe" : "Interactive"}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <div
+              className={cn(
+                "size-2 rounded-full",
+                mode === "observe"
+                  ? "bg-blue-400 animate-pulse"
+                  : "bg-amber-400 animate-pulse",
+              )}
+            />
+            <span className="text-[10px] font-medium text-muted-foreground">
+              {mode === "observe" ? "Observe" : "Interactive"}
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <button

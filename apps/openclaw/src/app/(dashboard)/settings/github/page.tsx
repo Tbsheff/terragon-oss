@@ -24,7 +24,6 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -139,16 +138,16 @@ export default function GitHubSettingsPage() {
     return (
       <div className="mx-auto max-w-2xl p-6 space-y-6">
         <div className="flex items-center gap-3">
-          <Skeleton className="size-9 rounded-md" />
+          <Skeleton className="size-9 rounded-md border-border/60" />
           <div className="space-y-2">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-56" />
+            <Skeleton className="h-6 w-32 border-border/60" />
+            <Skeleton className="h-4 w-56 border-border/60" />
           </div>
         </div>
-        <Skeleton className="h-px w-full" />
+        <Skeleton className="h-px w-full border-border/60" />
         <div className="space-y-6">
-          <Skeleton className="h-[220px] w-full rounded-xl" />
-          <Skeleton className="h-[260px] w-full rounded-xl" />
+          <Skeleton className="h-[220px] w-full rounded-xl border-border/60" />
+          <Skeleton className="h-[260px] w-full rounded-xl border-border/60" />
         </div>
       </div>
     );
@@ -160,7 +159,12 @@ export default function GitHubSettingsPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/settings">
-              <Button variant="ghost" size="icon" aria-label="Back to settings">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label="Back to settings"
+              >
                 <ArrowLeft className="size-4" />
               </Button>
             </Link>
@@ -171,35 +175,39 @@ export default function GitHubSettingsPage() {
           <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
             GitHub
           </h1>
-          <p className="text-sm text-muted-foreground text-pretty">
+          <p className="text-xs text-muted-foreground text-pretty">
             Configure GitHub integration and PR settings
           </p>
         </div>
       </div>
-      <Separator className="mb-6" />
+      <Separator className="mb-6 opacity-60" />
 
       <div className="space-y-6">
         {/* PAT Card */}
-        <Card className="animate-fade-in">
+        <Card className="animate-fade-in border-t-2 border-t-primary/20 border-border/60 shadow-xs">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Personal Access Token</CardTitle>
-                <CardDescription>
+                <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
+                  Personal Access Token
+                </CardTitle>
+                <CardDescription className="text-xs">
                   Used for branch creation, commits, and PR management
                 </CardDescription>
               </div>
               {githubAuth?.username && (
-                <Badge variant="outline">
-                  <Github className="mr-1 size-3" />
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Github className="size-3" />
                   {githubAuth.username}
-                </Badge>
+                </div>
               )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pat">GitHub PAT</Label>
+              <Label htmlFor="pat" className="text-xs text-muted-foreground">
+                GitHub PAT
+              </Label>
               <div className="flex gap-2">
                 <Input
                   id="pat"
@@ -207,7 +215,7 @@ export default function GitHubSettingsPage() {
                   value={currentPat}
                   onChange={(e) => setPatInput(e.target.value)}
                   placeholder="ghp_..."
-                  className="flex-1"
+                  className="flex-1 bg-muted/20 border-border/60"
                 />
                 <Button
                   variant="outline"
@@ -251,21 +259,29 @@ export default function GitHubSettingsPage() {
         </Card>
 
         {/* PR Settings Card */}
-        <Card className="animate-fade-in">
+        <Card className="animate-fade-in border-t-2 border-t-primary/20 border-border/60 shadow-xs">
           <CardHeader>
-            <CardTitle>Pull Request Settings</CardTitle>
-            <CardDescription>
+            <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
+              Pull Request Settings
+            </CardTitle>
+            <CardDescription className="text-xs">
               Configure how PRs are created by agents
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="branchPrefix">Branch Prefix</Label>
+              <Label
+                htmlFor="branchPrefix"
+                className="text-xs text-muted-foreground"
+              >
+                Branch Prefix
+              </Label>
               <Input
                 id="branchPrefix"
                 value={currentBranchPrefix}
                 onChange={(e) => setBranchPrefix(e.target.value)}
                 placeholder="openclaw/"
+                className="bg-muted/20 border-border/60"
               />
               <p className="text-xs text-muted-foreground">
                 Prefix for auto-created branches (e.g. openclaw/fix-bug-123)
@@ -273,9 +289,9 @@ export default function GitHubSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>PR Type</Label>
+              <Label className="text-xs text-muted-foreground">PR Type</Label>
               <Select value={currentPrType} onValueChange={(v) => setPrType(v)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-muted/20 border-border/60">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,10 +301,17 @@ export default function GitHubSettingsPage() {
               </Select>
             </div>
 
+            <Separator className="opacity-60" />
+
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="autoCreate">Auto-create PR</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <Label
+                  htmlFor="autoCreate"
+                  className="text-xs text-muted-foreground"
+                >
+                  Auto-create PR
+                </Label>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">
                   Automatically create a PR when agent pushes commits
                 </p>
               </div>
@@ -299,7 +322,7 @@ export default function GitHubSettingsPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-end border-t border-border/40 pt-4">
             <Button onClick={handleSave} disabled={isPending}>
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
               Save

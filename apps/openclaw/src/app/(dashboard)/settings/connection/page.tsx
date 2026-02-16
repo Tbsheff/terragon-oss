@@ -4,14 +4,7 @@ import { useState, useTransition } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Loader2,
-  Wifi,
-  WifiOff,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +18,6 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -117,14 +109,14 @@ export default function ConnectionSettingsPage() {
     return (
       <div className="mx-auto max-w-2xl p-6 space-y-6">
         <div className="flex items-center gap-3">
-          <Skeleton className="size-9 rounded-md" />
+          <Skeleton className="size-9 rounded-md border-border/60" />
           <div className="space-y-2">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-60" />
+            <Skeleton className="h-6 w-32 border-border/60" />
+            <Skeleton className="h-4 w-60 border-border/60" />
           </div>
         </div>
-        <Skeleton className="h-px w-full" />
-        <Skeleton className="h-[380px] w-full rounded-xl" />
+        <Skeleton className="h-px w-full border-border/60" />
+        <Skeleton className="h-[380px] w-full rounded-xl border-border/60" />
       </div>
     );
   }
@@ -135,7 +127,12 @@ export default function ConnectionSettingsPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/settings">
-              <Button variant="ghost" size="icon" aria-label="Back to settings">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label="Back to settings"
+              >
                 <ArrowLeft className="size-4" />
               </Button>
             </Link>
@@ -146,42 +143,43 @@ export default function ConnectionSettingsPage() {
           <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
             Connection
           </h1>
-          <p className="text-sm text-muted-foreground text-pretty">
+          <p className="text-xs text-muted-foreground text-pretty">
             Configure the Mac Mini gateway connection
           </p>
         </div>
       </div>
-      <Separator className="mb-6" />
+      <Separator className="mb-6 opacity-60" />
 
-      <Card className="animate-fade-in">
+      <Card className="animate-fade-in border-t-2 border-t-primary/20 border-border/60 shadow-xs">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Gateway Connection</CardTitle>
+            <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
+              Gateway Connection
+            </CardTitle>
             {connection?.lastHealthStatus && (
-              <Badge
-                variant={
-                  connection.lastHealthStatus === "healthy"
-                    ? "default"
-                    : "destructive"
-                }
-              >
-                {connection.lastHealthStatus === "healthy" ? (
-                  <Wifi className="mr-1 size-3" />
-                ) : (
-                  <WifiOff className="mr-1 size-3" />
-                )}
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div
+                  className={cn(
+                    "size-2 rounded-full",
+                    connection.lastHealthStatus === "healthy"
+                      ? "bg-emerald-500 animate-pulse"
+                      : "bg-red-500",
+                  )}
+                />
                 {connection.lastHealthStatus}
-              </Badge>
+              </div>
             )}
           </div>
-          <CardDescription>
+          <CardDescription className="text-xs">
             Host and authentication for the OpenClaw gateway
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="host">Host</Label>
+              <Label htmlFor="host" className="text-xs text-muted-foreground">
+                Host
+              </Label>
               <Input
                 id="host"
                 value={currentForm.host}
@@ -189,14 +187,17 @@ export default function ConnectionSettingsPage() {
                   setForm({ ...currentForm, host: e.target.value })
                 }
                 placeholder="mac-mini.tailnet"
+                className="bg-muted/20 border-border/60"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="port">Port</Label>
+              <Label htmlFor="port" className="text-xs text-muted-foreground">
+                Port
+              </Label>
               <Input
                 id="port"
                 type="number"
-                className="tabular-nums"
+                className="tabular-nums bg-muted/20 border-border/60"
                 value={currentForm.port}
                 onChange={(e) =>
                   setForm({ ...currentForm, port: e.target.value })
@@ -207,7 +208,12 @@ export default function ConnectionSettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="authToken">Auth Token</Label>
+            <Label
+              htmlFor="authToken"
+              className="text-xs text-muted-foreground"
+            >
+              Auth Token
+            </Label>
             <Input
               id="authToken"
               type="password"
@@ -216,15 +222,21 @@ export default function ConnectionSettingsPage() {
                 setForm({ ...currentForm, authToken: e.target.value })
               }
               placeholder="Enter gateway auth token"
+              className="bg-muted/20 border-border/60"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="maxConcurrent">Max Concurrent Tasks</Label>
+            <Label
+              htmlFor="maxConcurrent"
+              className="text-xs text-muted-foreground"
+            >
+              Max Concurrent Tasks
+            </Label>
             <Input
               id="maxConcurrent"
               type="number"
-              className="tabular-nums"
+              className="tabular-nums bg-muted/20 border-border/60"
               min={1}
               max={20}
               value={currentForm.maxConcurrentTasks}
@@ -240,10 +252,14 @@ export default function ConnectionSettingsPage() {
             </p>
           </div>
 
+          <Separator className="opacity-60" />
+
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="useTls">Use TLS</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <Label htmlFor="useTls" className="text-xs text-muted-foreground">
+                Use TLS
+              </Label>
+              <p className="text-xs text-muted-foreground/70 mt-0.5">
                 Connect to gateway using wss:// instead of ws://
               </p>
             </div>
@@ -284,7 +300,7 @@ export default function ConnectionSettingsPage() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex justify-between border-t border-border/40 pt-4">
           <Button variant="outline" onClick={handleTest} disabled={isTesting}>
             {isTesting && <Loader2 className="mr-2 size-4 animate-spin" />}
             Test Connection

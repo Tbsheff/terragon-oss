@@ -16,7 +16,6 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -125,14 +124,14 @@ export default function CredentialsSettingsPage() {
     return (
       <div className="mx-auto max-w-2xl p-6 space-y-6">
         <div className="flex items-center gap-3">
-          <Skeleton className="size-9 rounded-md" />
+          <Skeleton className="size-9 rounded-md border-border/60" />
           <div className="space-y-2">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-6 w-32 border-border/60" />
+            <Skeleton className="h-4 w-48 border-border/60" />
           </div>
         </div>
-        <Skeleton className="h-px w-full" />
-        <Skeleton className="h-[300px] w-full rounded-xl" />
+        <Skeleton className="h-px w-full border-border/60" />
+        <Skeleton className="h-[300px] w-full rounded-xl border-border/60" />
       </div>
     );
   }
@@ -143,7 +142,12 @@ export default function CredentialsSettingsPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/settings">
-              <Button variant="ghost" size="icon" aria-label="Back to settings">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label="Back to settings"
+              >
                 <ArrowLeft className="size-4" />
               </Button>
             </Link>
@@ -154,19 +158,21 @@ export default function CredentialsSettingsPage() {
           <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
             Credentials
           </h1>
-          <p className="text-sm text-muted-foreground text-pretty">
+          <p className="text-xs text-muted-foreground text-pretty">
             Manage API keys for AI providers
           </p>
         </div>
       </div>
-      <Separator className="mb-6" />
+      <Separator className="mb-6 opacity-60" />
 
-      <Card className="animate-fade-in">
+      <Card className="animate-fade-in border-t-2 border-t-primary/20 border-border/60 shadow-xs">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>API Keys</CardTitle>
-              <CardDescription>
+              <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
+                API Keys
+              </CardTitle>
+              <CardDescription className="text-xs">
                 Stored credentials used by the OpenClaw gateway
               </CardDescription>
             </div>
@@ -193,14 +199,16 @@ export default function CredentialsSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {showAdd && (
-            <div className="animate-fade-in rounded-md border bg-muted/20 p-4 space-y-3">
+            <div className="animate-fade-in rounded-md border border-border/60 bg-muted/20 p-4 space-y-3">
               <div className="space-y-2">
-                <Label>Provider</Label>
+                <Label className="text-xs text-muted-foreground">
+                  Provider
+                </Label>
                 <Select
                   value={newProvider}
                   onValueChange={(v) => setNewProvider(v as Provider)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-muted/20 border-border/60">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -213,24 +221,37 @@ export default function CredentialsSettingsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="credName">Name</Label>
+                <Label
+                  htmlFor="credName"
+                  className="text-xs text-muted-foreground"
+                >
+                  Name
+                </Label>
                 <Input
                   id="credName"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g. Production API Key"
+                  className="bg-muted/20 border-border/60"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="credValue">API Key</Label>
+                <Label
+                  htmlFor="credValue"
+                  className="text-xs text-muted-foreground"
+                >
+                  API Key
+                </Label>
                 <Input
                   id="credValue"
                   type="password"
                   value={newValue}
                   onChange={(e) => setNewValue(e.target.value)}
                   placeholder="sk-..."
+                  className="bg-muted/20 border-border/60"
                 />
               </div>
+              <Separator className="opacity-60" />
               <div className="flex justify-end gap-2">
                 <Button
                   variant="ghost"
@@ -254,7 +275,7 @@ export default function CredentialsSettingsPage() {
           )}
 
           {creds && creds.length > 0 ? (
-            <div className="divide-y rounded-md border">
+            <div className="divide-y divide-border/40 rounded-md border border-border/60">
               {creds.map((cred) => (
                 <div
                   key={cred.id}
@@ -277,9 +298,9 @@ export default function CredentialsSettingsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
+                    <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                       {cred.provider}
-                    </Badge>
+                    </span>
                     {deleteConfirm === cred.id ? (
                       <div className="flex items-center gap-1">
                         <Button
@@ -314,7 +335,7 @@ export default function CredentialsSettingsPage() {
             </div>
           ) : (
             !showAdd && (
-              <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-8 text-center">
+              <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border/60 py-8 text-center">
                 <Key className="mb-2 size-8 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">
                   No credentials configured yet

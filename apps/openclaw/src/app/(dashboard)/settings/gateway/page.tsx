@@ -119,14 +119,14 @@ export default function GatewaySettingsPage() {
     return (
       <div className="mx-auto max-w-2xl p-6 space-y-6">
         <div className="flex items-center gap-3">
-          <Skeleton className="size-9 rounded-md" />
+          <Skeleton className="size-9 rounded-md border-border/60" />
           <div className="space-y-2">
-            <Skeleton className="h-6 w-36" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-6 w-36 border-border/60" />
+            <Skeleton className="h-4 w-64 border-border/60" />
           </div>
         </div>
-        <Skeleton className="h-px w-full" />
-        <Skeleton className="h-[380px] w-full rounded-xl" />
+        <Skeleton className="h-px w-full border-border/60" />
+        <Skeleton className="h-[380px] w-full rounded-xl border-border/60" />
       </div>
     );
   }
@@ -137,7 +137,12 @@ export default function GatewaySettingsPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/settings">
-              <Button variant="ghost" size="icon" aria-label="Back to settings">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label="Back to settings"
+              >
                 <ArrowLeft className="size-4" />
               </Button>
             </Link>
@@ -148,15 +153,15 @@ export default function GatewaySettingsPage() {
           <h1 className="font-[var(--font-cabin)] text-2xl font-bold tracking-tight text-balance">
             Gateway Config
           </h1>
-          <p className="text-sm text-muted-foreground text-pretty">
+          <p className="text-xs text-muted-foreground text-pretty">
             Configure the OpenClaw gateway runtime settings
           </p>
         </div>
       </div>
-      <Separator className="mb-6" />
+      <Separator className="mb-6 opacity-60" />
 
       {configError || isError ? (
-        <Card className="animate-fade-in">
+        <Card className="animate-fade-in border-border/60 shadow-xs">
           <CardContent className="py-8">
             <div className="flex flex-col items-center text-center">
               <Server className="mb-3 size-10 text-muted-foreground/40" />
@@ -176,12 +181,14 @@ export default function GatewaySettingsPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          <Card className="animate-fade-in">
+          <Card className="animate-fade-in border-t-2 border-t-primary/20 border-border/60 shadow-xs">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Runtime Settings</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="font-[var(--font-cabin)] text-base tracking-tight">
+                    Runtime Settings
+                  </CardTitle>
+                  <CardDescription className="text-xs">
                     Default model and thinking configuration
                   </CardDescription>
                 </div>
@@ -202,24 +209,31 @@ export default function GatewaySettingsPage() {
             <CardContent className="space-y-4">
               {showRawJson ? (
                 <div className="space-y-2">
-                  <Label htmlFor="jsonConfig">Config JSON</Label>
+                  <Label
+                    htmlFor="jsonConfig"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Config JSON
+                  </Label>
                   <textarea
                     id="jsonConfig"
                     value={jsonInput}
                     onChange={(e) => setJsonInput(e.target.value)}
-                    className="flex min-h-[300px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
+                    className="flex min-h-[300px] w-full rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-sm font-mono shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     spellCheck={false}
                   />
                 </div>
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label>Default Model</Label>
+                    <Label className="text-xs text-muted-foreground">
+                      Default Model
+                    </Label>
                     <Select
                       value={currentModel}
                       onValueChange={(v) => setDefaultModel(v)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-muted/20 border-border/60">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -233,12 +247,14 @@ export default function GatewaySettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Thinking Level</Label>
+                    <Label className="text-xs text-muted-foreground">
+                      Thinking Level
+                    </Label>
                     <Select
                       value={currentThinking}
                       onValueChange={(v) => setThinking(v)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-muted/20 border-border/60">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -255,19 +271,22 @@ export default function GatewaySettingsPage() {
                   </div>
 
                   {config && (
-                    <div className="space-y-2">
-                      <Label className="text-muted-foreground">
-                        Current Config
-                      </Label>
-                      <pre className="overflow-auto rounded-md border bg-muted/20 p-3 text-xs font-mono max-h-[200px] leading-relaxed">
-                        {JSON.stringify(config, null, 2)}
-                      </pre>
-                    </div>
+                    <>
+                      <Separator className="opacity-60" />
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">
+                          Current Config
+                        </Label>
+                        <pre className="overflow-auto rounded-md border border-border/60 bg-muted/20 p-3 text-xs font-mono max-h-[200px] leading-relaxed">
+                          {JSON.stringify(config, null, 2)}
+                        </pre>
+                      </div>
+                    </>
                   )}
                 </>
               )}
             </CardContent>
-            <CardFooter className="flex justify-end">
+            <CardFooter className="flex justify-end border-t border-border/40 pt-4">
               <Button onClick={handleSave} disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Save

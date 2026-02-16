@@ -70,10 +70,12 @@ export function EditResendDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="border-border/60 shadow-xs">
         <DialogHeader>
-          <DialogTitle className="text-balance">Edit &amp; resend</DialogTitle>
-          <DialogDescription className="text-pretty">
+          <DialogTitle className="font-[var(--font-cabin)] tracking-tight text-balance">
+            Edit &amp; resend
+          </DialogTitle>
+          <DialogDescription className="text-xs text-pretty">
             Edit your message and resend it in a new forked conversation.
           </DialogDescription>
         </DialogHeader>
@@ -83,6 +85,7 @@ export function EditResendDialog({
           onChange={(e) => setEditedMessage(e.target.value)}
           rows={6}
           autoFocus
+          className="bg-muted/20 border-border/60"
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               handleSubmit();
@@ -92,7 +95,7 @@ export function EditResendDialog({
 
         <DialogFooter>
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
