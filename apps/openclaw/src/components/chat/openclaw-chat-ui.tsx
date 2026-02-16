@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
+import { useRouter } from "next/navigation";
 import { ThreadProvider, type OpenClawThread } from "./thread-context";
 import { OpenClawChatHeader } from "./openclaw-chat-header";
 import { OpenClawPromptBox } from "./openclaw-promptbox";
@@ -200,6 +201,7 @@ function useForkDialogs(uiMessages: UIMessage[]) {
 
 function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [pendingUserMsg, setPendingUserMsg] = useState<DBMessage | null>(null);
   const [isWorking, setIsWorking] = useState(false);
 
@@ -345,11 +347,31 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
     queryClient.invalidateQueries({ queryKey: ["threads"] });
   }, [threadId, queryClient]);
 
+  const handleResetSession = useCallback(async () => {
+    const { resetSession } = await import("@/server-actions/threads");
+    await resetSession(threadId);
+    queryClient.invalidateQueries({
+      queryKey: ["threads", "messages", threadId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["threads", "detail", threadId],
+    });
+  }, [threadId, queryClient]);
+
+  const handleDeleteSession = useCallback(async () => {
+    const { deleteSession } = await import("@/server-actions/threads");
+    await deleteSession(threadId);
+    queryClient.invalidateQueries({ queryKey: ["threads"] });
+    router.push("/");
+  }, [threadId, queryClient, router]);
+
   return (
     <ThreadProvider thread={openClawThread} isReadOnly={false}>
       <ChatWithFilePanel uiMessages={uiMessages}>
         <OpenClawChatHeader
           onArchive={handleArchive}
+          onResetSession={handleResetSession}
+          onDeleteSession={handleDeleteSession}
           parentThreadId={threadDetail?.parentThreadId ?? null}
         />
 
@@ -432,6 +454,7 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
 
 function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [pendingUserMsg, setPendingUserMsg] = useState<DBMessage | null>(null);
   const [isWorking, setIsWorking] = useState(false);
 
@@ -597,11 +620,31 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
     queryClient.invalidateQueries({ queryKey: ["threads"] });
   }, [threadId, queryClient]);
 
+  const handleResetSession = useCallback(async () => {
+    const { resetSession } = await import("@/server-actions/threads");
+    await resetSession(threadId);
+    queryClient.invalidateQueries({
+      queryKey: ["threads", "messages", threadId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["threads", "detail", threadId],
+    });
+  }, [threadId, queryClient]);
+
+  const handleDeleteSession = useCallback(async () => {
+    const { deleteSession } = await import("@/server-actions/threads");
+    await deleteSession(threadId);
+    queryClient.invalidateQueries({ queryKey: ["threads"] });
+    router.push("/");
+  }, [threadId, queryClient, router]);
+
   return (
     <ThreadProvider thread={openClawThread} isReadOnly={false}>
       <ChatWithFilePanel uiMessages={uiMessages}>
         <OpenClawChatHeader
           onArchive={handleArchive}
+          onResetSession={handleResetSession}
+          onDeleteSession={handleDeleteSession}
           parentThreadId={threadDetail?.parentThreadId ?? null}
         />
 

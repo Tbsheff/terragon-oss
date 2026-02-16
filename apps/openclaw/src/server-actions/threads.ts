@@ -274,3 +274,24 @@ export async function consumeInitialPrompt(
   await setSessionMeta(threadId, { ...meta, initialPrompt: undefined });
   return prompt;
 }
+
+export async function resetSession(threadId: string): Promise<void> {
+  const client = getOpenClawClient();
+  try {
+    await client.sessionsReset(threadId);
+  } catch {
+    // Gateway may not support reset — ignore
+  }
+}
+
+export async function deleteSession(threadId: string): Promise<void> {
+  const client = getOpenClawClient();
+  try {
+    await client.sessionsDelete(threadId);
+  } catch {
+    // Gateway may not support delete — ignore
+  }
+  await deleteSessionMeta(threadId);
+  // Also clean up pipeline state if any
+  await db.delete(kvStore).where(eq(kvStore.key, `pipeline:${threadId}`));
+}

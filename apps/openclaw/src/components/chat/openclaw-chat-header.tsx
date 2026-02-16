@@ -21,7 +21,17 @@ import {
   AlertTriangle,
   FolderOpen,
   GitFork,
+  MoreHorizontal,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { PRStatusBadge } from "@/components/github/pr-status-badge";
@@ -32,9 +42,13 @@ import { useFilePanel } from "@/hooks/use-file-panel";
 
 export function OpenClawChatHeader({
   onArchive,
+  onResetSession,
+  onDeleteSession,
   parentThreadId,
 }: {
   onArchive?: () => void;
+  onResetSession?: () => void;
+  onDeleteSession?: () => void;
   parentThreadId?: string | null;
 }) {
   const { thread } = useThread();
@@ -159,22 +173,44 @@ export function OpenClawChatHeader({
         <div className="flex items-center gap-1.5 shrink-0">
           <ConnectionStatusBadge />
           <FilesToggleButton />
-          {onArchive && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onArchive}
-                  aria-label="Archive task"
-                  className="size-7 text-muted-foreground hover:text-foreground"
-                >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Session options"
+                className="size-7 text-muted-foreground hover:text-foreground"
+              >
+                <MoreHorizontal className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onResetSession && (
+                <DropdownMenuItem onClick={onResetSession}>
+                  <RotateCcw className="size-3.5" />
+                  Reset Conversation
+                </DropdownMenuItem>
+              )}
+              {onArchive && (
+                <DropdownMenuItem onClick={onArchive}>
                   <Archive className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Archive task</TooltipContent>
-            </Tooltip>
-          )}
+                  Archive
+                </DropdownMenuItem>
+              )}
+              {onDeleteSession && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={onDeleteSession}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete Session
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
