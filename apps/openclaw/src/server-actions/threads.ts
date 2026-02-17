@@ -19,8 +19,8 @@ import { getSettings } from "./settings";
 // ─────────────────────────────────────────────────
 
 /**
- * Resolve which agent to spawn: explicit > user setting > first agent on gateway.
- * Never assumes a hardcoded agent ID exists.
+ * Resolve which agent to spawn: explicit > user setting.
+ * Returns undefined if no agent can be determined — callers handle gracefully.
  */
 export async function resolveAgentId(
   explicit?: string,
@@ -28,17 +28,7 @@ export async function resolveAgentId(
   if (explicit) return explicit;
 
   const s = await getSettings();
-  if (s?.defaultAgent) return s.defaultAgent;
-
-  // Last resort: ask the gateway for its first agent
-  try {
-    const client = getOpenClawClient();
-    const agents = await client.agentsList();
-    if (agents.length > 0) return agents[0]!.id;
-  } catch {
-    // Gateway unavailable — caller handles the undefined
-  }
-  return undefined;
+  return s?.defaultAgent ?? undefined;
 }
 
 // ─────────────────────────────────────────────────
@@ -93,7 +83,7 @@ function sessionToThreadListItem(
     id: session.key,
     name: meta?.name ?? session.agentId ?? null,
     status,
-    agent: session.agentId ?? "claudeCode",
+    agent: session.agentId ?? "unknown",
     model: session.model ?? null,
     githubRepoFullName: meta?.githubRepoFullName ?? null,
     pipelineState: meta?.pipelineState ?? null,
@@ -118,7 +108,7 @@ function metaToThreadListItem(
     id: sessionKey,
     name: meta.name ?? null,
     status: "draft",
-    agent: "claudeCode",
+    agent: "pending",
     model: null,
     githubRepoFullName: meta.githubRepoFullName ?? null,
     pipelineState: meta.pipelineState ?? null,

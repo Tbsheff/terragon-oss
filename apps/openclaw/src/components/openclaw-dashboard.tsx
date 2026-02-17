@@ -199,7 +199,7 @@ export function OpenClawDashboard() {
                       id="agent-select"
                       className="h-8 text-sm"
                     >
-                      <SelectValue placeholder="Default (claudeCode)" />
+                      <SelectValue placeholder="Select agent..." />
                     </SelectTrigger>
                     <SelectContent>
                       {agents.map((a) => (

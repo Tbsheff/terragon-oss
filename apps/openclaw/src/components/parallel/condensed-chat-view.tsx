@@ -72,7 +72,7 @@ export function CondensedChatView({ threadId }: CondensedChatViewProps) {
     () =>
       toUIMessages({
         dbMessages,
-        agent: "claudeCode",
+        agent: threadDetail?.agent ?? "unknown",
         threadStatus: (threadDetail?.status as ThreadStatus) ?? null,
       }),
     [dbMessages, threadDetail?.status],

@@ -25,7 +25,7 @@ export function ThreadListGrouped({ archived }: { archived: boolean }) {
     if (!threads?.length) return [];
     const map = new Map<string, ThreadListItemType[]>();
     for (const t of threads) {
-      const key = t.agent || "claudeCode";
+      const key = t.agent || "unknown";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(t);
     }

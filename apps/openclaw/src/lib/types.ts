@@ -2,7 +2,7 @@
 // Inlined types from @terragon/agent/types
 // ─────────────────────────────────────────────────
 
-export type AIAgent = "claudeCode" | "gemini" | "amp" | "codex" | "opencode";
+export type AIAgent = string;
 
 export type AIModel = string;
 

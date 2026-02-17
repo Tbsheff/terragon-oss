@@ -11,8 +11,8 @@ import { Tool, ToolHeader, ToolContent } from "@/components/ai-elements/tool";
 /**
  * Simplified normalizeToolCall for OpenClaw.
  * In the full Terragon codebase this maps agent-specific tool names
- * to canonical Claude tool names. For OpenClaw we always use claudeCode
- * so minimal normalization is needed.
+ * to canonical Claude tool names. Minimal normalization is needed
+ * since OpenClaw agents use standard tool names.
  */
 function normalizeToolCall<
   T extends { name: string; parameters: Record<string, any>; result?: string },

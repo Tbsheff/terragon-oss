@@ -28,8 +28,17 @@ export async function forkThread(opts: {
     const { nanoid } = await import("nanoid");
     const sessionKey = `session-${nanoid()}`;
 
-    // 4. Spawn new session — resolve from user settings or gateway
-    const agentId = await resolveAgentId();
+    // 4. Inherit source thread's agent, fall back to user default
+    let sourceAgentId: string | undefined;
+    try {
+      const sessions = await client.sessionsList();
+      sourceAgentId = sessions.find(
+        (s) => s.key === opts.sourceThreadId,
+      )?.agentId;
+    } catch {
+      // Gateway list unavailable — fall through
+    }
+    const agentId = await resolveAgentId(sourceAgentId);
     if (!agentId) {
       return {
         ok: false,

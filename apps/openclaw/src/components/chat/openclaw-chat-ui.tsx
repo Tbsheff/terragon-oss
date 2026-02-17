@@ -269,7 +269,7 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
     () =>
       toUIMessages({
         dbMessages,
-        agent: "claudeCode",
+        agent: threadDetail?.agent ?? "unknown",
         threadStatus: (threadDetail?.status as ThreadStatus) ?? null,
       }),
     [dbMessages, threadDetail?.status],
@@ -533,7 +533,7 @@ function ServerActionChatUI({ threadId }: OpenClawChatUIProps) {
     () =>
       toUIMessages({
         dbMessages,
-        agent: "claudeCode",
+        agent: threadDetail?.agent ?? "unknown",
         threadStatus: (threadDetail?.status as ThreadStatus) ?? null,
       }),
     [dbMessages, threadDetail?.status],
