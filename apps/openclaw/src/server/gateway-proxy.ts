@@ -68,20 +68,49 @@ export class GatewayProxy {
           if (!frame.params.auth) frame.params.auth = {};
           frame.params.auth.token = settings.token;
 
+          // Ensure operator.read/write scopes are always requested
+          if (Array.isArray(frame.params.scopes)) {
+            const scopes = new Set(frame.params.scopes as string[]);
+            scopes.add("operator.read");
+            scopes.add("operator.write");
+            frame.params.scopes = [...scopes];
+          }
+
+          console.log("[GatewayProxy] connect scopes:", frame.params.scopes);
+
           // Open upstream connection to real gateway
           upstream = new WebSocket(settings.url);
 
           upstream.on("open", () => {
-            // Send the modified connect message upstream
+            console.log("[GatewayProxy] upstream connected, sending auth");
             upstream!.send(JSON.stringify(frame));
           });
 
           // Forward upstream → client
           upstream.on("message", (upData) => {
+            const raw = typeof upData === "string" ? upData : upData.toString();
+            try {
+              const f = JSON.parse(raw);
+              if (f.type === "res") {
+                if (f.error) {
+                  console.log(
+                    `[GatewayProxy] upstream res: FAIL ${f.error.code}: ${f.error.message}`,
+                  );
+                } else if (f.ok) {
+                  // Log features from hello response
+                  if (f.payload?.features) {
+                    const feat = f.payload.features as Record<string, unknown>;
+                    console.log(
+                      `[GatewayProxy] hello features: methods=${JSON.stringify(feat.methods)}`,
+                    );
+                  } else {
+                    console.log(`[GatewayProxy] upstream res: OK`);
+                  }
+                }
+              }
+            } catch {}
             if (client.readyState === WebSocket.OPEN) {
-              client.send(
-                typeof upData === "string" ? upData : upData.toString(),
-              );
+              client.send(raw);
             }
           });
 
@@ -105,6 +134,10 @@ export class GatewayProxy {
 
       // After connect: forward client → upstream transparently
       if (upstream && upstream.readyState === WebSocket.OPEN) {
+        try {
+          const f = JSON.parse(raw);
+          console.log(`[GatewayProxy] client→upstream: ${f.method ?? f.type}`);
+        } catch {}
         upstream.send(raw);
       }
     });

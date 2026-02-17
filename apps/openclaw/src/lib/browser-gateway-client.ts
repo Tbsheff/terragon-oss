@@ -28,10 +28,15 @@ import { classifyConnectError } from "@/lib/openclaw-types";
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
-const CLIENT_ID = "browser-client";
+// Must match the gateway's accepted client schema.
+// The proxy handles auth — gateway doesn't need to distinguish browser vs backend.
+const CLIENT_ID = "gateway-client";
 const CLIENT_VERSION = "0.1.0";
+const CLIENT_MODE = "backend";
 const CONNECT_ROLE = "operator";
 const CONNECT_SCOPES = [
+  "operator.read",
+  "operator.write",
   "operator.admin",
   "operator.approvals",
   "operator.pairing",
@@ -107,7 +112,7 @@ export class BrowserGatewayClient {
           id: CLIENT_ID,
           version: CLIENT_VERSION,
           platform: "browser",
-          mode: "browser",
+          mode: CLIENT_MODE,
         },
         role: CONNECT_ROLE,
         scopes: CONNECT_SCOPES,
@@ -117,6 +122,34 @@ export class BrowserGatewayClient {
         userAgent: `openclaw-browser/${CLIENT_VERSION} ${navigator.userAgent.slice(0, 50)}`,
         locale: navigator.language ?? "en",
       });
+
+      const doConnect = () => {
+        this.setState("authenticating");
+        this.sendRequest<HelloPayload>(
+          "connect",
+          buildConnectParams() as unknown as Record<string, unknown>,
+        )
+          .then((hello) => {
+            this.setState("connected");
+            this.markReady();
+            this.emit("connected", hello);
+            if (!handshakeResolved) {
+              handshakeResolved = true;
+              resolve(hello);
+            }
+          })
+          .catch((err) => {
+            const structured = classifyConnectError(
+              undefined,
+              (err as Error).message,
+            );
+            this.emit("connect-error", structured);
+            if (!handshakeResolved) {
+              handshakeResolved = true;
+              reject(err);
+            }
+          });
+      };
 
       this.ws.addEventListener("message", (event: MessageEvent) => {
         try {
@@ -130,35 +163,9 @@ export class BrowserGatewayClient {
           }
 
           if (frame.type === "event") {
-            // Auth challenge — send connect params
-            if (frame.event === "connect.challenge") {
-              this.setState("authenticating");
-              this.sendRequest<HelloPayload>(
-                "connect",
-                buildConnectParams() as unknown as Record<string, unknown>,
-              )
-                .then((hello) => {
-                  this.setState("connected");
-                  this.markReady();
-                  this.emit("connected", hello);
-                  if (!handshakeResolved) {
-                    handshakeResolved = true;
-                    resolve(hello);
-                  }
-                })
-                .catch((err) => {
-                  const structured = classifyConnectError(
-                    undefined,
-                    (err as Error).message,
-                  );
-                  this.emit("connect-error", structured);
-                  if (!handshakeResolved) {
-                    handshakeResolved = true;
-                    reject(err);
-                  }
-                });
-              return;
-            }
+            // Ignore connect.challenge — in proxy mode we send connect
+            // on WebSocket open, before the upstream challenge arrives.
+            if (frame.event === "connect.challenge") return;
 
             // Route exec approval events
             if (frame.event === "exec.approval.requested") {
@@ -176,12 +183,15 @@ export class BrowserGatewayClient {
       });
 
       this.ws.addEventListener("open", () => {
-        // On reconnect, re-do handshake automatically
+        // On reconnect, reset pending requests before re-authenticating
         if (handshakeResolved) {
           this.setState("reconnecting");
           this.resetReady();
           this.rejectAllPending("Connection lost — reconnecting");
         }
+        // Send connect immediately — proxy expects it as the first message.
+        // (No connect.challenge needed; the proxy injects auth server-side.)
+        doConnect();
       });
 
       this.ws.addEventListener("close", (event) => {

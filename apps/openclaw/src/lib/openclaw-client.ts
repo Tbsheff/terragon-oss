@@ -48,6 +48,8 @@ const CLIENT_MODE = "backend";
 const CLIENT_VERSION = "0.1.0";
 const CONNECT_ROLE = "operator";
 const CONNECT_SCOPES = [
+  "operator.read",
+  "operator.write",
   "operator.admin",
   "operator.approvals",
   "operator.pairing",
