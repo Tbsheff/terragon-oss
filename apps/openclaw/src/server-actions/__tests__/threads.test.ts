@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createThread, listThreads } from "@/server-actions/threads";
+import {
+  createThread,
+  listThreads,
+  resolveAgentId,
+} from "@/server-actions/threads";
 import type { OpenClawSession } from "@/lib/openclaw-types";
 
 // Mock the database module
@@ -26,9 +30,10 @@ vi.mock("@/server/bridge-registry", () => ({
   getBridge: () => null,
 }));
 
-// Mock settings — returns defaultAgent so resolveAgentId doesn't hit raw DB
+// Mock settings — controllable per-test
+const mockGetSettings = vi.fn();
 vi.mock("@/server-actions/settings", () => ({
-  getSettings: vi.fn().mockResolvedValue({ defaultAgent: "test-agent" }),
+  getSettings: (...args: unknown[]) => mockGetSettings(...args),
 }));
 
 describe("threads server actions", () => {
@@ -74,6 +79,8 @@ describe("threads server actions", () => {
     vi.mocked(getOpenClawClient).mockReturnValue(
       mockClient as unknown as ReturnType<typeof getOpenClawClient>,
     );
+
+    mockGetSettings.mockResolvedValue({ defaultAgent: "test-agent" });
   });
 
   afterEach(() => {
@@ -225,6 +232,65 @@ describe("threads server actions", () => {
       expect(working?.status).toBe("working");
       expect(done?.status).toBe("working-done");
       expect(draft?.status).toBe("draft");
+    });
+  });
+
+  describe("resolveAgentId", () => {
+    it("should return explicit agent when provided", async () => {
+      const result = await resolveAgentId("leo");
+      expect(result).toBe("leo");
+    });
+
+    it("should fall back to settings.defaultAgent", async () => {
+      const result = await resolveAgentId();
+      expect(result).toBe("test-agent");
+    });
+
+    it("should return undefined when no explicit and no default", async () => {
+      mockGetSettings.mockResolvedValue({ defaultAgent: null });
+      const result = await resolveAgentId();
+      expect(result).toBeUndefined();
+    });
+
+    it("should return undefined when settings unavailable", async () => {
+      mockGetSettings.mockResolvedValue(null);
+      const result = await resolveAgentId();
+      expect(result).toBeUndefined();
+    });
+
+    it("should prefer explicit over settings default", async () => {
+      mockGetSettings.mockResolvedValue({ defaultAgent: "default-one" });
+      const result = await resolveAgentId("explicit-one");
+      expect(result).toBe("explicit-one");
+    });
+  });
+
+  describe("createThread with explicit agentId", () => {
+    it("should pass explicit agentId to sessions.spawn", async () => {
+      mockClient.sessionsSpawn.mockResolvedValue({
+        key: "session-test123",
+        agentId: "leo",
+      });
+
+      await createThread({
+        name: "Chat with Leo",
+        agentId: "leo",
+      });
+
+      expect(mockClient.sessionsSpawn).toHaveBeenCalledWith({
+        agentId: "leo",
+        sessionKey: "session-test123",
+        model: undefined,
+      });
+    });
+
+    it("should skip spawn when no agent can be resolved", async () => {
+      mockGetSettings.mockResolvedValue({ defaultAgent: null });
+
+      const result = await createThread({ name: "No Agent" });
+
+      expect(result.id).toBe("session-test123");
+      expect(mockClient.sessionsSpawn).not.toHaveBeenCalled();
     });
   });
 });
