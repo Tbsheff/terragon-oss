@@ -26,9 +26,9 @@ vi.mock("@/server/bridge-registry", () => ({
   getBridge: () => null,
 }));
 
-// Mock settings — returns defaultAgent so createThread doesn't hit raw DB
+// Mock settings — returns defaultAgent so resolveAgentId doesn't hit raw DB
 vi.mock("@/server-actions/settings", () => ({
-  getSettings: vi.fn().mockResolvedValue({ defaultAgent: "claudeCode" }),
+  getSettings: vi.fn().mockResolvedValue({ defaultAgent: "test-agent" }),
 }));
 
 describe("threads server actions", () => {
@@ -95,7 +95,7 @@ describe("threads server actions", () => {
 
       expect(result.id).toBe("session-test123");
       expect(mockClient.sessionsSpawn).toHaveBeenCalledWith({
-        agentId: "claudeCode",
+        agentId: "test-agent",
         sessionKey: "session-test123",
         model: "sonnet",
       });

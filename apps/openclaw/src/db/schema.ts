@@ -23,7 +23,7 @@ export const environment = sqliteTable("environment", {
 export const settings = sqliteTable("settings", {
   id: text("id").primaryKey().default("default"),
   defaultModel: text("default_model").default("sonnet"),
-  defaultAgent: text("default_agent").default("claudeCode"),
+  defaultAgent: text("default_agent"),
   theme: text("theme", { enum: ["light", "dark", "system"] }).default("dark"),
   branchPrefix: text("branch_prefix").default("openclaw/"),
   autoCreatePR: integer("auto_create_pr", { mode: "boolean" }).default(true),

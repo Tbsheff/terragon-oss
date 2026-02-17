@@ -15,6 +15,33 @@ import {
 import { getSettings } from "./settings";
 
 // ─────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────
+
+/**
+ * Resolve which agent to spawn: explicit > user setting > first agent on gateway.
+ * Never assumes a hardcoded agent ID exists.
+ */
+export async function resolveAgentId(
+  explicit?: string,
+): Promise<string | undefined> {
+  if (explicit) return explicit;
+
+  const s = await getSettings();
+  if (s?.defaultAgent) return s.defaultAgent;
+
+  // Last resort: ask the gateway for its first agent
+  try {
+    const client = getOpenClawClient();
+    const agents = await client.agentsList();
+    if (agents.length > 0) return agents[0]!.id;
+  } catch {
+    // Gateway unavailable — caller handles the undefined
+  }
+  return undefined;
+}
+
+// ─────────────────────────────────────────────────
 // Types (preserved for React Query compatibility)
 // ─────────────────────────────────────────────────
 
@@ -189,28 +216,26 @@ export async function createThread(opts: {
   const { nanoid } = await import("nanoid");
   const sessionKey = `session-${nanoid()}`;
 
-  // Resolve agent: explicit > user default > "claudeCode"
-  let agentId = opts.agentId;
-  if (!agentId) {
-    const s = await getSettings();
-    agentId = s?.defaultAgent ?? "claudeCode";
-  }
+  // Resolve agent: explicit > user default > first gateway agent
+  const agentId = await resolveAgentId(opts.agentId);
 
   // Fire-and-forget: try to spawn a session on the gateway.
   // Don't await — thread creation shouldn't block on gateway availability.
-  try {
-    const client = getOpenClawClient();
-    client
-      .sessionsSpawn({
-        agentId,
-        sessionKey,
-        model: opts.model,
-      })
-      .catch(() => {
-        // Gateway unavailable or doesn't support sessions.spawn — ignore
-      });
-  } catch {
-    // Client creation failed — ignore
+  if (agentId) {
+    try {
+      const client = getOpenClawClient();
+      client
+        .sessionsSpawn({
+          agentId,
+          sessionKey,
+          model: opts.model,
+        })
+        .catch(() => {
+          // Gateway unavailable or doesn't support sessions.spawn — ignore
+        });
+    } catch {
+      // Client creation failed — ignore
+    }
   }
 
   // Store metadata in kvStore

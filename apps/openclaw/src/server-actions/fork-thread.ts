@@ -3,7 +3,7 @@
 import { getClient, notConnected, type ActionResult } from "./action-utils";
 import { setSessionMeta, getSessionMeta } from "./session-meta-store";
 import { compactHistoryUpTo } from "@/lib/history-utils";
-import { getSettings } from "./settings";
+import { resolveAgentId } from "./threads";
 
 export async function forkThread(opts: {
   sourceThreadId: string;
@@ -28,9 +28,14 @@ export async function forkThread(opts: {
     const { nanoid } = await import("nanoid");
     const sessionKey = `session-${nanoid()}`;
 
-    // 4. Spawn new session — use user's default agent
-    const s = await getSettings();
-    const agentId = s?.defaultAgent ?? "claudeCode";
+    // 4. Spawn new session — resolve from user settings or gateway
+    const agentId = await resolveAgentId();
+    if (!agentId) {
+      return {
+        ok: false,
+        error: "No agents configured. Create an agent first.",
+      };
+    }
     await client.sessionsSpawn({ agentId, sessionKey });
 
     // 5. Inject compacted context
