@@ -2,7 +2,11 @@
 
 import { useConnection, type ConnectionStatus } from "@/hooks/use-connection";
 import { cn } from "@/lib/utils";
-import { SidebarMenuButton } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const statusConfig: Record<
   ConnectionStatus,
@@ -70,14 +74,21 @@ export function ConnectionStatusBadge() {
         .join(" \u00b7 ");
 
   return (
-    <SidebarMenuButton
-      tooltip={tooltipLines}
-      className="cursor-default hover:bg-transparent active:bg-transparent"
-    >
-      <StatusDot status={status} config={config} />
-      <span className="truncate text-muted-foreground text-xs text-pretty">
-        {isLoading ? "Checking..." : config.label}
-      </span>
-    </SidebarMenuButton>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-default"
+        >
+          <StatusDot status={status} config={config} />
+          <span className="truncate text-muted-foreground text-xs text-pretty">
+            {isLoading ? "Checking..." : config.label}
+          </span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <p className="text-xs">{tooltipLines}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

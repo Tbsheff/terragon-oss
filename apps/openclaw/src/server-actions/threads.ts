@@ -9,7 +9,7 @@ import {
   getSessionMeta,
   setSessionMeta,
   deleteSessionMeta,
-  batchGetSessionMeta,
+  getAllSessionMeta,
   type SessionMeta,
 } from "./session-meta-store";
 
@@ -77,6 +77,30 @@ function sessionToThreadListItem(
   };
 }
 
+/**
+ * Build a ThreadListItem from local metadata alone (no gateway session).
+ * Used when the session hasn't been created on the gateway yet or spawn failed.
+ */
+function metaToThreadListItem(
+  sessionKey: string,
+  meta: SessionMeta,
+): ThreadListItem {
+  const now = new Date().toISOString();
+  return {
+    id: sessionKey,
+    name: meta.name ?? null,
+    status: "draft",
+    agent: "claudeCode",
+    model: null,
+    githubRepoFullName: meta.githubRepoFullName ?? null,
+    pipelineState: meta.pipelineState ?? null,
+    tokenUsage: meta.tokenUsage ?? null,
+    archived: meta.archived ?? false,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 // ─────────────────────────────────────────────────
 // Server Actions
 // ─────────────────────────────────────────────────
@@ -84,22 +108,28 @@ function sessionToThreadListItem(
 export async function listThreads(opts?: {
   archived?: boolean;
 }): Promise<ThreadListItem[]> {
-  const client = getOpenClawClient();
-  const sessions = await client.sessionsList();
+  // Load all local session metadata first — this is the source of truth
+  // for which threads were created through our UI.
+  const allMeta = await getAllSessionMeta();
 
-  // Batch load all session metadata in a single query
-  const sessionKeys = sessions.map((s) => s.key);
-  const metaMap = await batchGetSessionMeta(sessionKeys);
+  // Try to enrich with gateway session data
+  let sessionMap = new Map<string, OpenClawSession>();
+  try {
+    const client = getOpenClawClient();
+    const sessions = await client.sessionsList();
+    for (const s of sessions) {
+      sessionMap.set(s.key, s);
+    }
+  } catch {
+    // Gateway unavailable — use local metadata only
+  }
 
   const items: ThreadListItem[] = [];
-  for (const session of sessions) {
-    const meta = metaMap.get(session.key) ?? null;
-
-    // Only show sessions created through our UI (have local metadata).
-    // Gateway may have many stale sessions from other clients.
-    if (!meta) continue;
-
-    const item = sessionToThreadListItem(session, meta);
+  for (const [sessionKey, meta] of allMeta) {
+    const session = sessionMap.get(sessionKey);
+    const item = session
+      ? sessionToThreadListItem(session, meta)
+      : metaToThreadListItem(sessionKey, meta);
 
     // Filter by archived status if requested
     if (opts?.archived !== undefined && item.archived !== opts.archived) {
@@ -118,21 +148,31 @@ export async function listThreads(opts?: {
 }
 
 export async function getThread(id: string): Promise<ThreadDetail | null> {
-  const client = getOpenClawClient();
-  const sessions = await client.sessionsList();
-  const session = sessions.find((s) => s.key === id);
-  if (!session) return null;
-
   const meta = await getSessionMeta(id);
-  const base = sessionToThreadListItem(session, meta);
+  // No local metadata means we never created this thread
+  if (!meta) return null;
+
+  // Try to enrich with gateway session data
+  let base: ThreadListItem;
+  try {
+    const client = getOpenClawClient();
+    const sessions = await client.sessionsList();
+    const session = sessions.find((s) => s.key === id);
+    base = session
+      ? sessionToThreadListItem(session, meta)
+      : metaToThreadListItem(id, meta);
+  } catch {
+    // Gateway unavailable — use local metadata only
+    base = metaToThreadListItem(id, meta);
+  }
 
   return {
     ...base,
-    githubBranch: meta?.githubBranch ?? null,
-    baseBranch: meta?.baseBranch ?? null,
-    environmentId: meta?.environmentId ?? null,
-    parentThreadId: meta?.parentThreadId ?? null,
-    forkMessageIndex: meta?.forkMessageIndex ?? null,
+    githubBranch: meta.githubBranch ?? null,
+    baseBranch: meta.baseBranch ?? null,
+    environmentId: meta.environmentId ?? null,
+    parentThreadId: meta.parentThreadId ?? null,
+    forkMessageIndex: meta.forkMessageIndex ?? null,
   };
 }
 
@@ -148,17 +188,21 @@ export async function createThread(opts: {
   const { nanoid } = await import("nanoid");
   const sessionKey = `session-${nanoid()}`;
 
-  // Try to spawn a session on the gateway with our preferred key
+  // Fire-and-forget: try to spawn a session on the gateway.
+  // Don't await — thread creation shouldn't block on gateway availability.
   try {
     const client = getOpenClawClient();
-    await client.sessionsSpawn({
-      agentId: opts.agentId ?? "claudeCode",
-      sessionKey,
-      model: opts.model,
-    });
+    client
+      .sessionsSpawn({
+        agentId: opts.agentId ?? "claudeCode",
+        sessionKey,
+        model: opts.model,
+      })
+      .catch(() => {
+        // Gateway unavailable or doesn't support sessions.spawn — ignore
+      });
   } catch {
-    // Gateway unavailable or doesn't support sessions.spawn — fall back to local-only creation
-    // Thread creation always succeeds even if gateway is down
+    // Client creation failed — ignore
   }
 
   // Store metadata in kvStore

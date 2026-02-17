@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { kvStore } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, like } from "drizzle-orm";
 
 export type SessionMeta = {
   name?: string;
@@ -55,6 +55,28 @@ export async function setSessionMeta(
 
 export async function deleteSessionMeta(sessionKey: string): Promise<void> {
   await db.delete(kvStore).where(eq(kvStore.key, sessionMetaKey(sessionKey)));
+}
+
+/**
+ * Load all session metadata entries from the kvStore.
+ * Returns a Map of sessionKey → SessionMeta for every "session-meta:*" row.
+ */
+export async function getAllSessionMeta(): Promise<Map<string, SessionMeta>> {
+  const rows = await db
+    .select()
+    .from(kvStore)
+    .where(like(kvStore.key, "session-meta:%"));
+
+  const metaMap = new Map<string, SessionMeta>();
+  for (const row of rows) {
+    const sessionKey = row.key.replace("session-meta:", "");
+    try {
+      metaMap.set(sessionKey, JSON.parse(row.value) as SessionMeta);
+    } catch {
+      // Skip invalid JSON
+    }
+  }
+  return metaMap;
 }
 
 export async function batchGetSessionMeta(
