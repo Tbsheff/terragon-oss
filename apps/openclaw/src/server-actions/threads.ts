@@ -12,6 +12,7 @@ import {
   getAllSessionMeta,
   type SessionMeta,
 } from "./session-meta-store";
+import { getSettings } from "./settings";
 
 // ─────────────────────────────────────────────────
 // Types (preserved for React Query compatibility)
@@ -188,13 +189,20 @@ export async function createThread(opts: {
   const { nanoid } = await import("nanoid");
   const sessionKey = `session-${nanoid()}`;
 
+  // Resolve agent: explicit > user default > "claudeCode"
+  let agentId = opts.agentId;
+  if (!agentId) {
+    const s = await getSettings();
+    agentId = s?.defaultAgent ?? "claudeCode";
+  }
+
   // Fire-and-forget: try to spawn a session on the gateway.
   // Don't await — thread creation shouldn't block on gateway availability.
   try {
     const client = getOpenClawClient();
     client
       .sessionsSpawn({
-        agentId: opts.agentId ?? "claudeCode",
+        agentId,
         sessionKey,
         model: opts.model,
       })

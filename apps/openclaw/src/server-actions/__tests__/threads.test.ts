@@ -26,6 +26,11 @@ vi.mock("@/server/bridge-registry", () => ({
   getBridge: () => null,
 }));
 
+// Mock settings — returns defaultAgent so createThread doesn't hit raw DB
+vi.mock("@/server-actions/settings", () => ({
+  getSettings: vi.fn().mockResolvedValue({ defaultAgent: "claudeCode" }),
+}));
+
 describe("threads server actions", () => {
   let mockClient: {
     sessionsList: ReturnType<typeof vi.fn>;

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { createThread } from "@/server-actions/threads";
 import { listAgents } from "@/server-actions/agents";
+import { getSettings } from "@/server-actions/settings";
 import { threadListQueryOptions } from "@/queries/thread-queries";
 import { dashboardStatsQueryOptions } from "@/queries/dashboard-queries";
 import { useRealtimeGlobal } from "@/hooks/use-realtime";
@@ -98,6 +99,17 @@ export function OpenClawDashboard() {
       return result.data;
     },
   });
+  const { data: appSettings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: () => getSettings(),
+  });
+
+  // Pre-select user's default agent once settings load
+  useEffect(() => {
+    if (appSettings?.defaultAgent && !selectedAgentId) {
+      setSelectedAgentId(appSettings.defaultAgent);
+    }
+  }, [appSettings?.defaultAgent, selectedAgentId]);
 
   const handleCreate = useCallback(async () => {
     if (!prompt.trim()) return;
