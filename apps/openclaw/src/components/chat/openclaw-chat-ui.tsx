@@ -16,6 +16,7 @@ import {
   useExecApprovals,
 } from "@/hooks/use-realtime";
 import { useDirectChat } from "@/hooks/use-direct-chat";
+import { useGateway } from "@/components/gateway-provider";
 import { ExecApprovalCard } from "./exec-approval-card";
 import { openClawHistoryToDBMessages } from "@/lib/message-adapter";
 import type { DBMessage, ThreadStatus, UIMessage } from "@/lib/types";
@@ -206,6 +207,7 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
   const [isWorking, setIsWorking] = useState(false);
 
   const { data: threadDetail } = useQuery(threadDetailQueryOptions(threadId));
+  const { connectionState } = useGateway();
   useRealtimeThread(threadId);
   const { pending: pendingApprovals } = useExecApprovals(threadId);
 
@@ -316,10 +318,11 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
     [sendMessage],
   );
 
-  // Auto-send initial prompt on first load
+  // Auto-send initial prompt on first load — wait for gateway connection
   const initialPromptSentRef = useRef(false);
   useEffect(() => {
     if (!threadDetail?.id || initialPromptSentRef.current) return;
+    if (connectionState !== "connected") return;
     initialPromptSentRef.current = true;
 
     const autoSend = async () => {
@@ -330,7 +333,7 @@ function DirectStreamingChatUI({ threadId }: OpenClawChatUIProps) {
       }
     };
     autoSend();
-  }, [threadDetail?.id, threadId, handleSend]);
+  }, [threadDetail?.id, threadId, handleSend, connectionState]);
 
   const handleStop = useCallback(async () => {
     try {
